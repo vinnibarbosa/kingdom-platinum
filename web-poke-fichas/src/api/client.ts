@@ -57,6 +57,13 @@ export const api = {
     });
   },
 
+  registrar(username: string, senha: string) {
+    return request<AuthResponse>('/auth/registrar', {
+      method: 'POST',
+      body: JSON.stringify({ username, senha }),
+    });
+  },
+
   logout() {
     return request<void>('/auth/logout', { method: 'POST' });
   },
