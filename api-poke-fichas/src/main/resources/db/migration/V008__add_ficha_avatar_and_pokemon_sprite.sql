@@ -1,0 +1,5 @@
+ALTER TABLE fichas
+    ADD COLUMN IF NOT EXISTS avatar VARCHAR(120);
+
+ALTER TABLE ficha_pokemons
+    ADD COLUMN IF NOT EXISTS sprite TEXT;

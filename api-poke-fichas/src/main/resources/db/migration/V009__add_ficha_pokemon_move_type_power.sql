@@ -1,0 +1,3 @@
+ALTER TABLE ficha_pokemon_movimentos
+    ADD COLUMN IF NOT EXISTS tipo VARCHAR(40),
+    ADD COLUMN IF NOT EXISTS poder INTEGER;

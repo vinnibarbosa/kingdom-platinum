@@ -1,0 +1,3 @@
+ALTER TABLE fichas
+    ADD COLUMN IF NOT EXISTS mini_upgrade INTEGER,
+    ADD COLUMN IF NOT EXISTS slot_upgrade INTEGER;

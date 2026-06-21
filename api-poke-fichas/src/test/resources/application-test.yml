@@ -1,0 +1,77 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+        hbm2ddl:
+          auto: create-drop
+        jdbc:
+          time_zone: America/Sao_Paulo
+          batch_size: 20
+          order_inserts: true
+          order_updates: true
+        cache:
+          use_second_level_cache: false
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: false
+
+  security:
+    jwt:
+      secret: pokefichasTestSecretKeyForTesting2025AtLeast256BitsLongForHS256Algorithm
+      expiration: 900000
+      refresh-expiration: 2592000000
+      cookie:
+        domain:
+        secure: false
+        http-only: true
+        same-site: Strict
+        max-age: 2592000
+
+server:
+  port: 0
+  servlet:
+    context-path: /api
+
+logging:
+  level:
+    com.br.pokefichas: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.flywaydb: WARN
+    org.springframework.web: WARN
+    org.springframework.test: INFO
+    root: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    enabled: true

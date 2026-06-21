@@ -1,0 +1,1 @@
+-- Entidades moved to V001 because usuarios depends on id_entidade from the initial schema.

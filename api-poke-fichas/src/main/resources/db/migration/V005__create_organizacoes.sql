@@ -1,0 +1,1 @@
+-- Organizacoes fazem parte do schema inicial em V001.

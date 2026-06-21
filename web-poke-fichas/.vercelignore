@@ -1,0 +1,19 @@
+.angular
+dist
+node_modules
+out-tsc
+*.log
+
+# Implementação React/Vite antiga; o produto atual é Angular.
+src/api
+src/components
+src/context
+src/pages
+src/types
+src/utils
+src/App.tsx
+src/main.tsx
+src/index.css
+src/assets
+vite.config.ts
+eslint.config.js
