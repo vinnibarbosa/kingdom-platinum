@@ -55,10 +55,6 @@ interface PokemonApiSprites {
   front_default?: string | null;
   front_shiny?: string | null;
   other?: {
-    showdown?: {
-      front_default?: string | null;
-      front_shiny?: string | null;
-    };
     home?: {
       front_default?: string | null;
       front_shiny?: string | null;
@@ -1565,6 +1561,7 @@ export class FichaPageComponent implements OnInit {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
         normalized.pokemons.forEach((pokemon) => this.loadPokemonDexData(pokemon));
+        this.replaceAnimatedPokemonSprites(normalized);
         this.hydrateMissingMoveStyles(normalized);
         this.loading.set(false);
       },
@@ -3243,19 +3240,23 @@ export class FichaPageComponent implements OnInit {
       .catch(() => this.scheduleAutoSave());
   }
 
+  private replaceAnimatedPokemonSprites(ficha: Ficha): void {
+    ficha.pokemons
+      .filter((pokemon) => pokemon.sprite?.includes('/sprites/pokemon/other/showdown/'))
+      .forEach((pokemon) => this.applyPokemonFeatureSprite(pokemon));
+  }
+
   private pickDefaultSprite(sprites?: PokemonApiSprites): string | undefined {
-    return sprites?.other?.showdown?.front_default
-      ?? sprites?.front_default
+    return sprites?.other?.['official-artwork']?.front_default
       ?? sprites?.other?.home?.front_default
-      ?? sprites?.other?.['official-artwork']?.front_default
+      ?? sprites?.front_default
       ?? undefined;
   }
 
   private pickShinySprite(sprites?: PokemonApiSprites): string | undefined {
-    return sprites?.other?.showdown?.front_shiny
-      ?? sprites?.front_shiny
+    return sprites?.other?.['official-artwork']?.front_shiny
       ?? sprites?.other?.home?.front_shiny
-      ?? sprites?.other?.['official-artwork']?.front_shiny
+      ?? sprites?.front_shiny
       ?? undefined;
   }
 
