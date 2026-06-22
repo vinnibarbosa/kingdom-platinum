@@ -1,8 +1,6 @@
 package com.br.pokefichas.commons.security;
 
 import com.br.pokefichas.commons.exception.AuthenticationException;
-import com.br.pokefichas.domain.core.entidade.model.Entidade;
-import com.br.pokefichas.domain.core.entidade.repository.EntidadeQuery;
 import com.br.pokefichas.domain.core.usuario.model.Usuario;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,14 +27,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioDetailsService usuarioDetailsService;
-    private final EntidadeQuery entidadeQuery;
 
     public JwtAuthenticationFilter(final JwtTokenProvider jwtTokenProvider,
-                                   final UsuarioDetailsService usuarioDetailsService,
-                                   final EntidadeQuery entidadeQuery) {
+                                   final UsuarioDetailsService usuarioDetailsService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.usuarioDetailsService = usuarioDetailsService;
-        this.entidadeQuery = entidadeQuery;
     }
 
     @Override
@@ -55,33 +50,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void tryAuthenticate(final HttpServletRequest request, final String token) {
         try {
-            if (!jwtTokenProvider.validateToken(token)) {
-                return;
-            }
-
-            final String username = jwtTokenProvider.extractUsername(token);
-            final Long idUsuario = jwtTokenProvider.extractIdUsuario(token);
-            final Long idEntidade = jwtTokenProvider.extractIdEntidade(token);
-            final Long idOrganizacao = jwtTokenProvider.extractIdOrganizacao(token);
+            final JwtTokenProvider.AuthenticationClaims claims =
+                    jwtTokenProvider.extractAuthenticationClaims(token);
+            final String username = claims.username();
+            final Long idUsuario = claims.idUsuario();
+            final Long idEntidade = claims.idEntidade();
+            final Long idOrganizacao = claims.idOrganizacao();
             if (username == null || idUsuario == null || idEntidade == null || idOrganizacao == null
                     || SecurityContextHolder.getContext().getAuthentication() != null) {
                 return;
             }
 
             final UserDetails userDetails = usuarioDetailsService.loadByIdAndTenant(idUsuario, idEntidade);
-            if (!jwtTokenProvider.validateToken(token, userDetails.getUsername())) {
+            if (!username.equals(userDetails.getUsername())) {
                 return;
             }
 
-            final Entidade entidade = entidadeQuery.findByIdWithoutContext(idEntidade).orElse(null);
-            if (entidade == null || !idOrganizacao.equals(entidade.getIdOrganizacao())) {
+            if (!(userDetails instanceof Usuario usuario)
+                    || !idOrganizacao.equals(usuario.getIdOrganizacao())) {
                 log.warn("Claim idOrganizacao={} divergente da Entidade {} no banco | URI: {}",
                         idOrganizacao, idEntidade, request.getRequestURI());
                 return;
-            }
-
-            if (userDetails instanceof Usuario usuario) {
-                usuario.setIdOrganizacao(idOrganizacao);
             }
 
             final UsernamePasswordAuthenticationToken authentication =

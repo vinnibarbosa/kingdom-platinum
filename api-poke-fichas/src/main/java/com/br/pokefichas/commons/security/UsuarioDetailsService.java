@@ -25,7 +25,7 @@ public class UsuarioDetailsService implements UserDetailsService {
 
     @Transactional(readOnly = true)
     public UserDetails loadByIdAndTenant(final Long idUsuario, final Long idEntidade) {
-        return usuarioQuery.findByIdAndIdEntidadeWithoutTenant(idUsuario, idEntidade)
+        return usuarioQuery.findForAuthentication(idUsuario, idEntidade)
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "Usuario nao encontrado para id " + idUsuario + " no tenant " + idEntidade
                 ));

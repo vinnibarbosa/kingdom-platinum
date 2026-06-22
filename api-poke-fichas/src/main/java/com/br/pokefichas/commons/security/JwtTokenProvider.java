@@ -81,6 +81,26 @@ public class JwtTokenProvider {
         }
     }
 
+    public AuthenticationClaims extractAuthenticationClaims(final String token) {
+        try {
+            final Claims claims = extractAllClaims(token);
+            if (claims.getExpiration().before(new Date())) {
+                throw AuthenticationException.expiredToken();
+            }
+
+            return new AuthenticationClaims(
+                    claims.getSubject(),
+                    parseLongClaim(claims, CLAIM_USUARIO_ID),
+                    parseLongClaim(claims, CLAIM_ID_ENTIDADE),
+                    parseLongClaim(claims, CLAIM_ID_ORGANIZACAO)
+            );
+        } catch (final ExpiredJwtException e) {
+            throw AuthenticationException.expiredToken();
+        } catch (final JwtException | IllegalArgumentException e) {
+            throw AuthenticationException.invalidToken();
+        }
+    }
+
     public String extractUsername(final String token) {
         return extractAllClaims(token).getSubject();
     }
@@ -146,7 +166,20 @@ public class JwtTokenProvider {
                 .getPayload();
     }
 
+    private Long parseLongClaim(final Claims claims, final String claimName) {
+        final String value = claims.get(claimName, String.class);
+        return value != null ? Long.valueOf(value) : null;
+    }
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public record AuthenticationClaims(
+            String username,
+            Long idUsuario,
+            Long idEntidade,
+            Long idOrganizacao
+    ) {
     }
 }

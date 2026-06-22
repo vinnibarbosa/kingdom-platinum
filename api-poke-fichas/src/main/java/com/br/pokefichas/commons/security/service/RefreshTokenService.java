@@ -29,11 +29,15 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(final Usuario usuario) {
+        refreshTokenCommand.revokeByUsuario(usuario);
+        return issueRefreshToken(usuario);
+    }
+
+    @Transactional
+    public RefreshToken issueRefreshToken(final Usuario usuario) {
         if (usuario == null) {
             throw new IllegalArgumentException("Usuario nao pode ser nulo");
         }
-
-        refreshTokenCommand.revokeByUsuario(usuario);
 
         final String token = generateToken();
         final LocalDateTime expiryDate = jwtTokenProvider.getRefreshTokenExpiryDate();
