@@ -27,7 +27,7 @@ public class UsuarioDomainService {
 
     public void validarUnicidadeUsernameCriacao(final Usuario usuario) {
         if (query.existsByUsername(usuario.getUsername())) {
-            throw new BusinessException("Ja existe um usuario com o username " + usuario.getUsername());
+            throw new BusinessException("Este nome de usuário já está em uso");
         }
     }
 

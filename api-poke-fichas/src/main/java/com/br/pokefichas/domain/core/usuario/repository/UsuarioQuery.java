@@ -32,11 +32,17 @@ public class UsuarioQuery {
     }
 
     public Optional<Usuario> findByUsername(final String username) {
-        return repository.findUniqueOptional(Usuario.class, usuario.username.eq(username));
+        return repository.findUniqueOptional(
+                Usuario.class,
+                usuario.username.trim().lower().eq(Usuario.normalizeUsername(username))
+        );
     }
 
     public Optional<Usuario> findByUsernameWithoutTenant(final String username) {
-        return repository.findUniqueOptionalWithoutTenantFilter(Usuario.class, usuario.username.eq(username));
+        return repository.findUniqueOptionalWithoutTenantFilter(
+                Usuario.class,
+                usuario.username.trim().lower().eq(Usuario.normalizeUsername(username))
+        );
     }
 
     public Optional<Usuario> findForAuthentication(final String username) {
@@ -44,7 +50,7 @@ public class UsuarioQuery {
                 .select(usuario, entidade.idOrganizacao)
                 .from(usuario)
                 .join(entidade).on(entidade.id.eq(usuario.idEntidade))
-                .where(usuario.username.eq(username))
+                .where(usuario.username.trim().lower().eq(Usuario.normalizeUsername(username)))
                 .fetchOne();
 
         return toAuthenticationUser(result);
@@ -74,7 +80,10 @@ public class UsuarioQuery {
     }
 
     public boolean existsByUsername(final String username) {
-        return repository.existsWithoutTenant(Usuario.class, usuario.username.eq(username));
+        return repository.existsWithoutTenant(
+                Usuario.class,
+                usuario.username.trim().lower().eq(Usuario.normalizeUsername(username))
+        );
     }
 
     public boolean existsAnyWithoutTenant() {

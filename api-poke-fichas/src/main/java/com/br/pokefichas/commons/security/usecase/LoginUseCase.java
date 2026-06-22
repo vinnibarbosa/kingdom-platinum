@@ -9,6 +9,7 @@ import com.br.pokefichas.commons.security.mapper.AuthMapper;
 import com.br.pokefichas.commons.security.model.RefreshToken;
 import com.br.pokefichas.commons.security.service.RefreshTokenService;
 import com.br.pokefichas.domain.core.usuario.model.Usuario;
+import com.br.pokefichas.domain.core.usuario.repository.UsuarioCommand;
 import com.br.pokefichas.domain.core.usuario.repository.UsuarioQuery;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -19,17 +20,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoginUseCase {
 
     private final UsuarioQuery usuarioQuery;
+    private final UsuarioCommand usuarioCommand;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final AuthMapper authMapper;
 
     public LoginUseCase(final UsuarioQuery usuarioQuery,
+                        final UsuarioCommand usuarioCommand,
                         final PasswordEncoder passwordEncoder,
                         final JwtTokenProvider jwtTokenProvider,
                         final RefreshTokenService refreshTokenService,
                         final AuthMapper authMapper) {
         this.usuarioQuery = usuarioQuery;
+        this.usuarioCommand = usuarioCommand;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenService = refreshTokenService;
@@ -38,14 +42,25 @@ public class LoginUseCase {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public AuthResponse handle(final AuthRequest request) {
-        final Usuario usuario = usuarioQuery.findForAuthentication(request.username())
+        Usuario usuario = usuarioQuery.findForAuthentication(request.username())
                 .orElseThrow(AuthenticationException::invalidCredentials);
 
         if (!usuario.isAtivo()) {
             throw AuthenticationException.invalidCredentials();
         }
 
-        if (!passwordEncoder.matches(request.senha(), usuario.getSenha())) {
+        if (usuario.isSenhaRedefinicaoPendente()) {
+            if (request.senha().length() < 4 || request.senha().length() > 100) {
+                throw AuthenticationException.invalidCredentials();
+            }
+            final boolean claimed = usuarioCommand.claimPendingPasswordWithoutTenant(
+                    usuario.getId(),
+                    passwordEncoder.encode(request.senha())
+            );
+            if (!claimed) {
+                throw AuthenticationException.invalidCredentials();
+            }
+        } else if (!passwordEncoder.matches(request.senha(), usuario.getSenha())) {
             throw AuthenticationException.invalidCredentials();
         }
 

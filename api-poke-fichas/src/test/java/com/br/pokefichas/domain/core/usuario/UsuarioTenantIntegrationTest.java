@@ -40,7 +40,7 @@ class UsuarioTenantIntegrationTest {
 
         assertThatThrownBy(() -> usuarioCommand.save(criarUsuario(entidadeB.getId(), "usuario.tenant")))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Ja existe um usuario com o username usuario.tenant");
+                .hasMessage("Este nome de usuário já está em uso");
     }
 
     @Test
@@ -52,7 +52,7 @@ class UsuarioTenantIntegrationTest {
 
         assertThatThrownBy(() -> criarUsuario(entidade.getId(), "usuario.tenant"))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("Ja existe um usuario com o username usuario.tenant");
+                .hasMessage("Este nome de usuário já está em uso");
     }
 
     private Organizacao criarOrganizacao(final String nome) {

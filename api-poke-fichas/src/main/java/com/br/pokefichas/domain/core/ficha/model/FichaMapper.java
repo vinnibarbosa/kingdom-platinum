@@ -312,6 +312,7 @@ public class FichaMapper {
                 .nome(request.nome())
                 .categoria(request.categoria())
                 .tipo(request.tipo())
+                .style(request.style())
                 .poder(request.poder())
                 .accuracy(request.accuracy())
                 .ordem(ObjectUtil.getIfExists(request.ordem(), ordem -> ordem, 0))
@@ -398,6 +399,7 @@ public class FichaMapper {
                 movimento.getNome(),
                 movimento.getCategoria(),
                 movimento.getTipo(),
+                movimento.getStyle(),
                 movimento.getPoder(),
                 movimento.getAccuracy(),
                 movimento.getOrdem()

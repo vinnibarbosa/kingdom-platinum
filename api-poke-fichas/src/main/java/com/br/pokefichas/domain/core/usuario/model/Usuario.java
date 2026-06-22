@@ -21,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Entity
@@ -57,6 +58,12 @@ public class Usuario extends TenantBaseEntity<Long> implements UserDetails {
     @Column(name = "ativo")
     private boolean ativo = true;
 
+    @Column(name = "auth_version", nullable = false)
+    private int authVersion;
+
+    @Column(name = "senha_redefinicao_pendente", nullable = false)
+    private boolean senhaRedefinicaoPendente;
+
     @Transient
     private Long idOrganizacao;
 
@@ -78,6 +85,10 @@ public class Usuario extends TenantBaseEntity<Long> implements UserDetails {
         return username;
     }
 
+    public static String normalizeUsername(final String username) {
+        return username == null ? null : username.trim().toLowerCase(Locale.ROOT);
+    }
+
     public String getNome() {
         return nome;
     }
@@ -92,6 +103,14 @@ public class Usuario extends TenantBaseEntity<Long> implements UserDetails {
 
     public boolean isAtivo() {
         return ativo;
+    }
+
+    public int getAuthVersion() {
+        return authVersion;
+    }
+
+    public boolean isSenhaRedefinicaoPendente() {
+        return senhaRedefinicaoPendente;
     }
 
     public Long getIdOrganizacao() {
@@ -183,7 +202,7 @@ public class Usuario extends TenantBaseEntity<Long> implements UserDetails {
         }
 
         public Builder username(final String username) {
-            entity.username = username;
+            entity.username = normalizeUsername(username);
             return this;
         }
 
@@ -199,6 +218,11 @@ public class Usuario extends TenantBaseEntity<Long> implements UserDetails {
 
         public Builder senha(final String senha) {
             entity.senha = senha;
+            return this;
+        }
+
+        public Builder senhaRedefinicaoPendente(final boolean senhaRedefinicaoPendente) {
+            entity.senhaRedefinicaoPendente = senhaRedefinicaoPendente;
             return this;
         }
 

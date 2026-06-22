@@ -87,4 +87,5 @@ public class AuthController {
         cookieUtil.addCookie(httpResponse, cookieUtil.deleteRefreshTokenCookie());
         return ResponseEntity.ok().build();
     }
+
 }

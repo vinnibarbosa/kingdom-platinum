@@ -404,6 +404,21 @@ public class JpaRepository {
         return clause.execute();
     }
 
+    public <T> long updateWithAuditWithoutTenantFilter(final Class<T> entityClass,
+                                                       final Consumer<JPAUpdateClause> consumer,
+                                                       final Predicate... predicates) {
+        final PathBuilder<T> entityPath = pathBuilderFactory.create(entityClass);
+        final JPAUpdateClause clause = new JPAUpdateClause(em, entityPath, jpqlTemplate);
+
+        consumer.accept(clause);
+        applyAuditUpdate(clause, entityClass, entityPath);
+        if (predicates != null && predicates.length > 0) {
+            clause.where(predicates);
+        }
+
+        return clause.execute();
+    }
+
     public <T> long delete(final Class<T> entityClass, final Predicate... predicates) {
         return delete(entityClass, query -> query.where(predicates));
     }

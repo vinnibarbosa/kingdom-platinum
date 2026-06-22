@@ -27,6 +27,7 @@ public class JwtTokenProvider {
     private static final String CLAIM_ID_ENTIDADE = "idEntidade";
     private static final String CLAIM_ID_ORGANIZACAO = "idOrganizacao";
     private static final String CLAIM_PERFIL = "perfil";
+    private static final String CLAIM_AUTH_VERSION = "authVersion";
 
     private final String secretKey;
     private final long accessTokenExpiration;
@@ -55,6 +56,7 @@ public class JwtTokenProvider {
         claims.put(CLAIM_ID_ORGANIZACAO, Objects.requireNonNull(usuario.getIdOrganizacao(),
                 "Usuario autenticado precisa possuir idOrganizacao").toString());
         claims.put(CLAIM_PERFIL, usuario.getPerfil().name());
+        claims.put(CLAIM_AUTH_VERSION, usuario.getAuthVersion());
 
         return createToken(claims, usuario.getUsername(), accessTokenExpiration);
     }
@@ -92,7 +94,8 @@ public class JwtTokenProvider {
                     claims.getSubject(),
                     parseLongClaim(claims, CLAIM_USUARIO_ID),
                     parseLongClaim(claims, CLAIM_ID_ENTIDADE),
-                    parseLongClaim(claims, CLAIM_ID_ORGANIZACAO)
+                    parseLongClaim(claims, CLAIM_ID_ORGANIZACAO),
+                    parseIntegerClaim(claims, CLAIM_AUTH_VERSION)
             );
         } catch (final ExpiredJwtException e) {
             throw AuthenticationException.expiredToken();
@@ -171,6 +174,14 @@ public class JwtTokenProvider {
         return value != null ? Long.valueOf(value) : null;
     }
 
+    private Integer parseIntegerClaim(final Claims claims, final String claimName) {
+        final Object value = claims.get(claimName);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return value != null ? Integer.valueOf(value.toString()) : null;
+    }
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
@@ -179,7 +190,8 @@ public class JwtTokenProvider {
             String username,
             Long idUsuario,
             Long idEntidade,
-            Long idOrganizacao
+            Long idOrganizacao,
+            Integer authVersion
     ) {
     }
 }

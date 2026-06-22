@@ -91,7 +91,7 @@ public class FichaController {
     }
 
     @DeleteMapping("/{id}")
-    @Secured({"ROLE_ADMIN", "ROLE_DONO", "ROLE_GERENTE", "ROLE_OPERADOR"})
+    @Secured("ROLE_ADMIN")
     @Operation(summary = "Excluir ficha")
     public ResponseEntity<Void> delete(@PathVariable final Long id) {
         excluir.handle(id);

@@ -16,4 +16,26 @@ public class UsuarioCommand {
     public Usuario save(final Usuario usuario) {
         return repository.save(usuario);
     }
+
+    public void markPasswordResetPendingWithoutTenant(final Long id, final int authVersion) {
+        repository.updateWithAuditWithoutTenantFilter(
+                Usuario.class,
+                update -> update
+                        .set(com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.senhaRedefinicaoPendente, true)
+                        .set(com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.authVersion, authVersion),
+                com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.id.eq(id)
+        );
+    }
+
+    public boolean claimPendingPasswordWithoutTenant(final Long id, final String senha) {
+        final long updated = repository.updateWithAuditWithoutTenantFilter(
+                Usuario.class,
+                update -> update
+                        .set(com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.senha, senha)
+                        .set(com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.senhaRedefinicaoPendente, false),
+                com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.id.eq(id),
+                com.br.pokefichas.domain.core.usuario.model.QUsuario.usuario.senhaRedefinicaoPendente.isTrue()
+        );
+        return updated == 1;
+    }
 }

@@ -19,6 +19,7 @@ import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete
 import { FichaApiService } from '../../services/ficha-api.service';
 import { AuthService } from '../../services/auth.service';
 import { display, fichaToPayload, money } from '../../services/ficha-utils';
+import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
 
 type FichaTab = 'dados' | 'historia' | 'pokemon' | 'inventario' | 'conquistas' | 'extras';
 
@@ -32,6 +33,7 @@ interface PokemonDexMove {
   name: string;
   category?: string;
   type?: string;
+  style?: string;
   power?: number;
   accuracy?: number;
 }
@@ -324,7 +326,6 @@ const ITEMDEX_ICONS: Record<string, string> = {
               <app-ficha-history [fichaId]="current.id" />
               <app-ficha-delete
                 [fichaId]="current.id"
-                [fichaIdOrganizacao]="current.idOrganizacao"
                 [fichaNome]="current.nome"
               />
               <label
@@ -624,6 +625,10 @@ const ITEMDEX_ICONS: Record<string, string> = {
                   </select>
                 </label>
                 <label>Apelido<input [(ngModel)]="pokemon.apelido" /></label>
+                <label *ngIf="hasCustomSprite(pokemon)">
+                  Espécie
+                  <input [(ngModel)]="pokemon.especie" placeholder="Nome da espécie" />
+                </label>
                 <label>
                   Gênero
                   <select [(ngModel)]="pokemon.genero">
@@ -779,6 +784,15 @@ const ITEMDEX_ICONS: Record<string, string> = {
                     <option *ngFor="let type of moveTypes" [value]="type.name">{{ type.label }}</option>
                   </select>
                 </div>
+                <select
+                  class="move-style-select"
+                  [class.has-style]="!!movimento.style"
+                  [style.--contest-style-color]="contestStyleColor(movimento.style)"
+                  [(ngModel)]="movimento.style"
+                >
+                  <option value="" disabled>Style</option>
+                  <option *ngFor="let style of contestStyles" [value]="style">{{ style }}</option>
+                </select>
                 <input type="number" placeholder="Power" [(ngModel)]="movimento.poder" />
                 <input type="number" placeholder="Accuracy" [(ngModel)]="movimento.accuracy" />
               </div>
@@ -828,48 +842,85 @@ const ITEMDEX_ICONS: Record<string, string> = {
           </section>
 
           <section class="tab-panel" *ngIf="tab() === 'conquistas'">
-            <div class="collection-head">
+            <button
+              type="button"
+              class="collection-head achievement-case-toggle"
+              [attr.aria-expanded]="badgeCaseOpen()"
+              aria-controls="badge-case-content"
+              (click)="badgeCaseOpen.set(!badgeCaseOpen())"
+            >
               <h3>Insígnias</h3>
-              <span>Badge case</span>
-            </div>
-            <div class="badge-case">
-              <button
-                type="button"
-                class="badge-slot"
-                *ngFor="let badge of badgeOptions; let slot = index"
-                [class.filled]="badgeConquista(current, slot)"
-                (click)="openBadgePicker(slot)"
-              >
-                <span class="badge-icon" [class.empty]="!badgeConquista(current, slot)">
-                  <img
-                    *ngIf="badgeIcon(current, slot, badge) as icon"
-                    [class.badge-placeholder]="!badgeConquista(current, slot)"
-                    [src]="icon"
-                    [alt]="badgeConquista(current, slot)?.nome || badge.label"
-                  />
-                </span>
-                <strong>{{ badge.label }}</strong>
-              </button>
+              <span class="achievement-case-meta">
+                Badge case
+                <i class="achievement-case-chevron" [class.open]="badgeCaseOpen()" aria-hidden="true"></i>
+              </span>
+            </button>
+            <div
+              id="badge-case-content"
+              class="achievement-case-collapse"
+              [class.open]="badgeCaseOpen()"
+            >
+              <div class="achievement-case-collapse-inner">
+                <div class="badge-case">
+                  <button
+                    type="button"
+                    class="badge-slot"
+                    *ngFor="let badge of badgeOptions; let slot = index"
+                    [class.filled]="badgeConquista(current, slot)"
+                    (click)="openBadgePicker(slot)"
+                  >
+                    <span class="badge-icon" [class.empty]="!badgeConquista(current, slot)">
+                      <img
+                        *ngIf="badgeIcon(current, slot, badge) as icon"
+                        [class.badge-placeholder]="!badgeConquista(current, slot)"
+                        [src]="icon"
+                        [alt]="badgeConquista(current, slot)?.nome || badge.label"
+                      />
+                    </span>
+                    <strong>{{ badge.label }}</strong>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div class="collection-head">
+            <button
+              type="button"
+              class="collection-head achievement-case-toggle"
+              [attr.aria-expanded]="ribbonCaseOpen()"
+              aria-controls="ribbon-case-content"
+              (click)="ribbonCaseOpen.set(!ribbonCaseOpen())"
+            >
               <h3>Ribbons</h3>
-              <button type="button" class="button ghost" (click)="addConquista(current, 'ribbon')">Adicionar</button>
-            </div>
-            <div class="achievement-card-grid">
-              <button
-                type="button"
-                class="achievement-card"
-                *ngFor="let conquista of current.conquistas; let i = index; trackBy: trackByConquista"
-                [class.hidden-achievement]="conquista.tipo !== 'ribbon'"
-                (click)="openConquistaEditor(i)"
-              >
-                <span class="achievement-card-image">
-                  <img *ngIf="conquista.imagem" [src]="conquista.imagem" [alt]="conquista.nome || 'Ribbon'" />
-                  <span *ngIf="!conquista.imagem">?</span>
-                </span>
-                <strong>{{ conquista.nome || 'Ribbon' }}</strong>
-              </button>
+              <span class="achievement-case-meta">
+                Ribbon case
+                <i class="achievement-case-chevron" [class.open]="ribbonCaseOpen()" aria-hidden="true"></i>
+              </span>
+            </button>
+            <div
+              id="ribbon-case-content"
+              class="achievement-case-collapse"
+              [class.open]="ribbonCaseOpen()"
+            >
+              <div class="achievement-case-collapse-inner">
+                <div class="ribbon-case">
+                  <button
+                    type="button"
+                    class="ribbon-slot"
+                    *ngFor="let ribbon of ribbonOptions; let slot = index"
+                    [class.filled]="ribbonConquista(current, slot)"
+                    (click)="openRibbonPicker(slot)"
+                  >
+                    <span class="ribbon-icon" [class.empty]="!ribbonConquista(current, slot)">
+                      <img
+                        [class.ribbon-placeholder]="!ribbonConquista(current, slot)"
+                        [src]="ribbonIcon(current, slot, ribbon)"
+                        [alt]="ribbon.label"
+                      />
+                    </span>
+                    <strong>{{ ribbon.label }}</strong>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div class="collection-head">
@@ -1033,27 +1084,29 @@ const ITEMDEX_ICONS: Record<string, string> = {
             <button type="button" class="button ghost" (click)="closeSpritePicker()">Fechar</button>
           </div>
 
-          <div class="custom-sprite-row">
-            <button type="button" class="button ghost" (click)="customSpriteInput.click()">Usar sprite personalizado</button>
+          <div class="sprite-modal-controls">
+            <div class="custom-sprite-row">
+              <button type="button" class="button ghost" (click)="customSpriteInput.click()">Usar sprite personalizado</button>
+              <input
+                #customSpriteInput
+                class="visually-hidden"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                (change)="selectCustomSpriteImage($event, selectedPokemon)"
+              />
+            </div>
+
+            <div class="custom-sprite-preview" *ngIf="selectedPokemon.sprite">
+              <img [src]="selectedPokemon.sprite" [alt]="selectedPokemon.apelido || selectedPokemon.especie || 'Pokémon'" />
+              <span>Sprite atual</span>
+            </div>
+
             <input
-              #customSpriteInput
-              class="visually-hidden"
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              (change)="selectCustomSpriteImage($event, selectedPokemon)"
+              placeholder="Buscar por nome ou número, exemplo: pikachu ou 25"
+              [ngModel]="spriteSearch()"
+              (ngModelChange)="spriteSearch.set($event)"
             />
           </div>
-
-          <div class="custom-sprite-preview" *ngIf="selectedPokemon.sprite">
-            <img [src]="selectedPokemon.sprite" [alt]="selectedPokemon.apelido || selectedPokemon.especie || 'Pokémon'" />
-            <span>Sprite atual</span>
-          </div>
-
-          <input
-            placeholder="Buscar por nome ou número, exemplo: pikachu ou 25"
-            [ngModel]="spriteSearch()"
-            (ngModelChange)="spriteSearch.set($event)"
-          />
 
           <div class="sprite-grid">
             <button
@@ -1094,6 +1147,28 @@ const ITEMDEX_ICONS: Record<string, string> = {
           </div>
 
           <button type="button" class="button ghost" (click)="clearBadge(current)">Remover</button>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" *ngIf="ribbonPickerSlot() !== null && ficha() as current" (click)="closeRibbonPicker()">
+        <div class="badge-modal ribbon-modal" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Ribbons</span>
+              <h3>Escolher ribbon</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="closeRibbonPicker()">Fechar</button>
+          </div>
+
+          <div class="ribbon-picker-grid" *ngIf="ribbonOptionForOpenSlot() as ribbon">
+            <button type="button" class="ribbon-picker-option" (click)="selectRibbon(current, ribbon)">
+              <span class="ribbon-icon large">
+                <img [src]="ribbon.icon" [alt]="ribbon.label" />
+              </span>
+            </button>
+          </div>
+
+          <button type="button" class="button ghost" (click)="clearRibbon(current)">Remover</button>
         </div>
       </div>
 
@@ -1302,11 +1377,15 @@ export class FichaPageComponent implements OnInit {
   protected readonly registroHistoryOpen = signal(false);
   protected readonly relacionadoDraft = signal<{ pessoa: FichaRelacionado; index: number | null } | null>(null);
   protected readonly badgePickerSlot = signal<number | null>(null);
+  protected readonly ribbonPickerSlot = signal<number | null>(null);
+  protected readonly badgeCaseOpen = signal(false);
+  protected readonly ribbonCaseOpen = signal(false);
   protected readonly draggingPokemon = signal<FichaPokemon | null>(null);
-  protected readonly defaultTheme = '#2f6f55';
+  protected readonly defaultTheme = '#586a9b';
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
   protected readonly generos = ['Masculino', 'Feminino', 'Intersexo'];
+  protected readonly contestStyles = ['Cool', 'Beauty', 'Cute', 'Smart', 'Tough'];
   protected readonly features = ['Normal', 'Shiny', 'Modified'];
   protected readonly moveCategories = [
     { name: 'physical', label: 'Physical' },
@@ -1344,6 +1423,13 @@ export class FichaPageComponent implements OnInit {
     { id: 'insignia-6', label: 'Sweet Everest Badge', icon: '/assets/badges/sweet-everest-badge.png' },
     { id: 'insignia-7', label: 'Dark Aura Badge', icon: '/assets/badges/dark-aura-badge.png' },
     { id: 'insignia-8', label: 'Seven Lights Badge', icon: '/assets/badges/seven-lights-badge.png' },
+  ];
+  protected readonly ribbonOptions: BadgeOption[] = [
+    { id: 'ribbon-cool', label: 'Cool Ribbon', icon: '/assets/ribbons/cool-ribbon.png' },
+    { id: 'ribbon-beauty', label: 'Beauty Ribbon', icon: '/assets/ribbons/beauty-ribbon.png' },
+    { id: 'ribbon-cute', label: 'Cute Ribbon', icon: '/assets/ribbons/cute-ribbon.png' },
+    { id: 'ribbon-smart', label: 'Smart Ribbon', icon: '/assets/ribbons/smart-ribbon.png' },
+    { id: 'ribbon-tough', label: 'Tough Ribbon', icon: '/assets/ribbons/tough-ribbon.png' },
   ];
   protected readonly pokemonMechanics: PokemonMechanicOption[] = [
     { name: 'mega', label: 'Mega Evolução', icon: 'mega.png', color: '#42d0c6' },
@@ -1479,6 +1565,7 @@ export class FichaPageComponent implements OnInit {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
         normalized.pokemons.forEach((pokemon) => this.loadPokemonDexData(pokemon));
+        this.hydrateMissingMoveStyles(normalized);
         this.loading.set(false);
       },
       error: () => {
@@ -1526,6 +1613,7 @@ export class FichaPageComponent implements OnInit {
           selectedIndex === null || selectedIndex >= normalized.pokemons.length ? null : selectedIndex
         );
         normalized.pokemons.forEach((pokemon) => this.loadPokemonDexData(pokemon));
+        this.hydrateMissingMoveStyles(normalized);
         this.success.set('');
         this.saving.set(false);
       },
@@ -2113,6 +2201,73 @@ export class FichaPageComponent implements OnInit {
     return `insignia-${slot + 1}`;
   }
 
+  protected ribbonConquista(ficha: Ficha, slot: number): FichaConquista | undefined {
+    const option = this.ribbonOptions[slot];
+    if (!option) {
+      return undefined;
+    }
+    const expectedName = this.normalizeSearch(option.label);
+    return ficha.conquistas.find((conquista) =>
+      conquista.tipo === 'ribbon' && this.normalizeSearch(conquista.nome) === expectedName
+    );
+  }
+
+  protected ribbonIcon(ficha: Ficha, slot: number, fallback: BadgeOption): string {
+    return this.ribbonConquista(ficha, slot)?.imagem || fallback.icon || '';
+  }
+
+  protected ribbonOptionForOpenSlot(): BadgeOption | undefined {
+    const slot = this.ribbonPickerSlot();
+    return slot === null ? undefined : this.ribbonOptions[slot];
+  }
+
+  protected openRibbonPicker(slot: number): void {
+    this.ribbonPickerSlot.set(slot);
+  }
+
+  protected closeRibbonPicker(): void {
+    this.ribbonPickerSlot.set(null);
+  }
+
+  protected selectRibbon(ficha: Ficha, ribbon: BadgeOption): void {
+    const slot = this.ribbonPickerSlot();
+    if (slot === null) {
+      return;
+    }
+
+    const existing = this.ribbonConquista(ficha, slot);
+    if (existing) {
+      existing.nome = ribbon.label;
+      existing.imagem = ribbon.icon;
+    } else {
+      ficha.conquistas.push({
+        tipo: 'ribbon',
+        nome: ribbon.label,
+        imagem: ribbon.icon,
+        ordem: ficha.conquistas.length,
+      });
+    }
+
+    this.closeRibbonPicker();
+    this.scheduleAutoSave();
+  }
+
+  protected clearRibbon(ficha: Ficha): void {
+    const slot = this.ribbonPickerSlot();
+    if (slot === null) {
+      return;
+    }
+
+    const conquista = this.ribbonConquista(ficha, slot);
+    const index = conquista ? ficha.conquistas.indexOf(conquista) : -1;
+    if (index >= 0) {
+      ficha.conquistas.splice(index, 1);
+      this.scheduleAutoSave();
+    }
+
+    this.closeRibbonPicker();
+  }
+
   protected remove<T>(items: T[], index: number): void {
     items.splice(index, 1);
     this.scheduleAutoSave();
@@ -2161,6 +2316,10 @@ export class FichaPageComponent implements OnInit {
 
   protected closeSpritePicker(): void {
     this.spritePickerFor.set(null);
+  }
+
+  protected hasCustomSprite(pokemon: FichaPokemon): boolean {
+    return pokemon.sprite?.startsWith('data:image/') ?? false;
   }
 
   protected selectSprite(pokemon: FichaPokemon, sprite: PokemonSpriteChoice): void {
@@ -2216,6 +2375,7 @@ export class FichaPageComponent implements OnInit {
       movimento.nome = '';
       movimento.categoria = '';
       movimento.tipo = '';
+      movimento.style = '';
       movimento.poder = undefined;
       movimento.accuracy = undefined;
       this.scheduleAutoSave();
@@ -2224,19 +2384,35 @@ export class FichaPageComponent implements OnInit {
 
     this.customMoveEditors.delete(movimento);
     movimento.nome = value;
+    movimento.categoria = '';
+    movimento.tipo = '';
+    movimento.style = '';
+    movimento.poder = undefined;
+    movimento.accuracy = undefined;
     this.selectMove(pokemon, movimento, value);
   }
 
   protected closeEmptyCustomMove(movimento: FichaPokemonMovimento): void {
-    if (!movimento.nome.trim()) {
-      this.customMoveEditors.delete(movimento);
-    }
+    setTimeout(() => {
+      const hasCustomData = Boolean(
+        movimento.nome?.trim()
+        || movimento.categoria?.trim()
+        || movimento.tipo?.trim()
+        || movimento.style?.trim()
+        || movimento.poder !== undefined
+        || movimento.accuracy !== undefined
+      );
+      if (!hasCustomData) {
+        this.customMoveEditors.delete(movimento);
+      }
+    });
   }
 
   protected selectMove(pokemon: FichaPokemon, movimento: FichaPokemonMovimento, moveName: string): void {
     if (!moveName.trim()) {
       movimento.categoria = '';
       movimento.tipo = '';
+      movimento.style = '';
       movimento.poder = undefined;
       movimento.accuracy = undefined;
       this.scheduleAutoSave();
@@ -2254,39 +2430,21 @@ export class FichaPageComponent implements OnInit {
     movimento.nome = move.name;
     movimento.categoria = move.category ?? movimento.categoria ?? '';
     movimento.tipo = move.type ?? movimento.tipo ?? '';
+    movimento.style = move.style ?? movimento.style ?? '';
     movimento.poder = move.power ?? movimento.poder;
     movimento.accuracy = move.accuracy ?? movimento.accuracy;
-    if (!move.category || !move.type || move.power === undefined || move.accuracy === undefined) {
+    if (!move.category || !move.type || !move.style || move.power === undefined || move.accuracy === undefined) {
       this.loadMoveDetails(pokemon, movimento, move.name);
     }
     this.scheduleAutoSave();
   }
 
   protected moveTypeColor(type?: string): string {
-    const colors: Record<string, string> = {
-      normal: '#9fa19f',
-      fire: '#e62829',
-      water: '#2980ef',
-      electric: '#fac000',
-      grass: '#3fa129',
-      ice: '#3dcef3',
-      fighting: '#ff8000',
-      poison: '#9141cb',
-      ground: '#915121',
-      flying: '#81b9ef',
-      psychic: '#ef4179',
-      bug: '#91a119',
-      rock: '#afa981',
-      ghost: '#704170',
-      dragon: '#5060e1',
-      dark: '#624d4e',
-      steel: '#60a1b8',
-      fairy: '#ef70ef',
-      light: '#e7cf67',
-      scent: '#43b78f',
-    };
+    return pokemonMoveTypeColor(type);
+  }
 
-    return colors[this.pokemonKey(type)] ?? '#d9d2c2';
+  protected contestStyleColor(style?: string): string {
+    return pokemonContestStyleColor(style);
   }
 
   protected selectedMoveType(type?: string): MoveTypeOption | undefined {
@@ -2630,7 +2788,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected themeDark(themeName?: string): string {
-    return `color-mix(in srgb, ${this.themeAccent(themeName)} 62%, #111918)`;
+    return `color-mix(in srgb, ${this.themeAccent(themeName)} 62%, #171a24)`;
   }
 
   protected themeHighlight(themeName?: string): string {
@@ -2988,15 +3146,18 @@ export class FichaPageComponent implements OnInit {
       .then((data: {
         accuracy?: number | null;
         damage_class?: { name: string };
+        contest_type?: { name: string } | null;
         power?: number | null;
         type?: { name: string };
       }) => {
         const category = data.damage_class?.name ?? '';
         const type = data.type?.name ?? '';
+        const style = data.contest_type?.name ? this.displayPokemonText(data.contest_type.name) : '';
         const power = data.power ?? undefined;
         const accuracy = data.accuracy ?? undefined;
         movimento.categoria = category;
         movimento.tipo = type;
+        movimento.style = style || movimento.style;
         movimento.poder = power;
         movimento.accuracy = accuracy;
         this.scheduleAutoSave();
@@ -3012,7 +3173,7 @@ export class FichaPageComponent implements OnInit {
             ...cache,
             [key]: {
               ...details,
-              moves: details.moves.map((move) => move.name === moveName ? { ...move, category, type, power, accuracy } : move),
+              moves: details.moves.map((move) => move.name === moveName ? { ...move, category, type, style, power, accuracy } : move),
             },
           };
         });
@@ -3099,7 +3260,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   private createMoveSlots(): FichaPokemonMovimento[] {
-    return Array.from({ length: 8 }, (_, index) => ({ nome: '', categoria: '', tipo: '', ordem: index }));
+    return Array.from({ length: 8 }, (_, index) => ({ nome: '', categoria: '', tipo: '', style: '', ordem: index }));
   }
 
   private toPokemonStats(stats: { base_stat: number; stat: { name: string } }[]): NonNullable<PokemonDexDetails['stats']> {
@@ -3272,10 +3433,35 @@ export class FichaPageComponent implements OnInit {
       nome: movimentos[index]?.nome ?? '',
       categoria: movimentos[index]?.categoria ?? '',
       tipo: movimentos[index]?.tipo ?? '',
+      style: movimentos[index]?.style ?? '',
       poder: movimentos[index]?.poder,
       accuracy: movimentos[index]?.accuracy,
       ordem: movimentos[index]?.ordem ?? index,
     }));
+  }
+
+  private hydrateMissingMoveStyles(ficha: Ficha): void {
+    const movements = ficha.pokemons
+      .flatMap((pokemon) => pokemon.movimentos ?? [])
+      .filter((move) => Boolean(move.nome?.trim()) && !move.style?.trim());
+
+    if (!movements.length) {
+      return;
+    }
+
+    Promise.all(movements.map(async (move) => ({ move, style: await loadPokemonMoveStyle(move.nome) })))
+      .then((results) => {
+        let changed = false;
+        results.forEach(({ move, style }) => {
+          if (style && !move.style?.trim()) {
+            move.style = style;
+            changed = true;
+          }
+        });
+        if (changed) {
+          this.scheduleAutoSave();
+        }
+      });
   }
 
   protected scheduleAutoSave(): void {
@@ -3337,6 +3523,9 @@ export class FichaPageComponent implements OnInit {
       cinza: '#64706c',
     };
     const value = themeName?.trim() || this.defaultTheme;
+    if (value.toLowerCase() === '#2f6f55') {
+      return this.defaultTheme;
+    }
     return /^#[0-9a-fA-F]{6}$/.test(value) ? value : legacyThemes[value] ?? this.defaultTheme;
   }
 }

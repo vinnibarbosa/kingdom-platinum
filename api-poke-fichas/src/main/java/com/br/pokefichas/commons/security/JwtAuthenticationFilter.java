@@ -73,6 +73,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            final Integer tokenAuthVersion = claims.authVersion();
+            if ((tokenAuthVersion == null && usuario.getAuthVersion() != 0)
+                    || (tokenAuthVersion != null && tokenAuthVersion != usuario.getAuthVersion())) {
+                log.info("Token revogado para o usuario {} | URI: {}", username, request.getRequestURI());
+                return;
+            }
+
             final UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userDetails,

@@ -5,6 +5,7 @@ public record FichaPokemonMovimentoResponse(
         String nome,
         String categoria,
         String tipo,
+        String style,
         Integer poder,
         Integer accuracy,
         Integer ordem

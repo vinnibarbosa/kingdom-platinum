@@ -5,10 +5,12 @@ import com.br.pokefichas.commons.page.Page;
 import com.br.pokefichas.domain.core.usuario.dto.AtualizarUsuarioRequest;
 import com.br.pokefichas.domain.core.usuario.dto.CriarUsuarioRequest;
 import com.br.pokefichas.domain.core.usuario.dto.UsuarioResponse;
+import com.br.pokefichas.domain.core.usuario.dto.RedefinirSenhaRequest;
 import com.br.pokefichas.domain.core.usuario.usecase.AtualizarUsuarioUseCase;
 import com.br.pokefichas.domain.core.usuario.usecase.BuscarUsuarioUseCase;
 import com.br.pokefichas.domain.core.usuario.usecase.CriarUsuarioUseCase;
 import com.br.pokefichas.domain.core.usuario.usecase.ListarUsuariosUseCase;
+import com.br.pokefichas.domain.core.usuario.usecase.RedefinirSenhaAdminUseCase;
 import com.br.pokefichas.infra.security.authorization.usuario.PodeConsultarUsuario;
 import com.br.pokefichas.infra.security.authorization.usuario.PodeGerenciarUsuario;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,15 +36,18 @@ public class UsuarioController {
     private final BuscarUsuarioUseCase buscar;
     private final ListarUsuariosUseCase listar;
     private final AtualizarUsuarioUseCase atualizar;
+    private final RedefinirSenhaAdminUseCase redefinirSenha;
 
     public UsuarioController(final CriarUsuarioUseCase criar,
                              final BuscarUsuarioUseCase buscar,
                              final ListarUsuariosUseCase listar,
-                             final AtualizarUsuarioUseCase atualizar) {
+                             final AtualizarUsuarioUseCase atualizar,
+                             final RedefinirSenhaAdminUseCase redefinirSenha) {
         this.criar = criar;
         this.buscar = buscar;
         this.listar = listar;
         this.atualizar = atualizar;
+        this.redefinirSenha = redefinirSenha;
     }
 
     @PostMapping
@@ -72,5 +78,13 @@ public class UsuarioController {
             @PathVariable final Long id,
             @Valid @RequestBody final AtualizarUsuarioRequest request) {
         return ResponseEntity.ok(atualizar.handle(id, request));
+    }
+
+    @PutMapping("/redefinir-senha")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Redefinir senha de uma conta")
+    public ResponseEntity<Void> redefinePassword(@Valid @RequestBody final RedefinirSenhaRequest request) {
+        redefinirSenha.handle(request);
+        return ResponseEntity.noContent().build();
     }
 }

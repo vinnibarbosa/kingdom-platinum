@@ -12,6 +12,8 @@ public record FichaPokemonMovimentoRequest(
         String categoria,
         @Size(max = 40)
         String tipo,
+        @Size(max = 20)
+        String style,
         @PositiveOrZero
         Integer poder,
         @PositiveOrZero

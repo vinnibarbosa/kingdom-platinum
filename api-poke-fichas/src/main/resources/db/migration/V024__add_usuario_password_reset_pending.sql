@@ -1,0 +1,2 @@
+ALTER TABLE usuarios
+    ADD COLUMN IF NOT EXISTS senha_redefinicao_pendente BOOLEAN NOT NULL DEFAULT FALSE;

@@ -44,6 +44,7 @@ export function fichaToPayload(ficha: Ficha): FichaPayload {
           ...movimento,
           categoria: movimento.categoria ?? '',
           tipo: movimento.tipo ?? '',
+          style: movimento.style ?? '',
           accuracy: movimento.accuracy,
         })),
     })),

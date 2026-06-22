@@ -7,6 +7,7 @@ import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete
 import { Ficha, FichaConquista, FichaItem, FichaPokemon, FichaRelacionado } from '../../models/ficha.model';
 import { FichaApiService } from '../../services/ficha-api.service';
 import { display, money } from '../../services/ficha-utils';
+import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
 
 interface BadgeOption {
   id: string;
@@ -25,12 +26,11 @@ interface BadgeOption {
       <div class="state-card" *ngIf="loading()">Abrindo ficha...</div>
       <div class="state-card error" *ngIf="error()">{{ error() }}</div>
 
-      <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="current.corTema || defaultTheme">
+      <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="themeAccent(current.corTema)">
         <div class="public-admin-actions">
           <app-ficha-history [fichaId]="current.id" />
           <app-ficha-delete
             [fichaId]="current.id"
-            [fichaIdOrganizacao]="current.idOrganizacao"
             [fichaNome]="current.nome"
           />
         </div>
@@ -94,7 +94,13 @@ interface BadgeOption {
           </div>
 
           <div class="public-pokemon-grid">
-            <article class="public-pokemon-card" *ngFor="let pokemon of teamPokemons(current)">
+            <button
+              type="button"
+              class="public-pokemon-card"
+              *ngFor="let pokemon of teamPokemons(current)"
+              (click)="selectedPokemon.set(pokemon)"
+              [attr.aria-label]="'Ver detalhes de ' + (pokemon.apelido || pokemon.especie || 'Pokémon')"
+            >
               <div class="public-pokemon-sprite">
                 <img *ngIf="pokemon.sprite" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie" />
                 <span *ngIf="!pokemon.sprite">?</span>
@@ -103,11 +109,8 @@ interface BadgeOption {
               <div class="public-pokemon-info">
                 <strong>{{ pokemon.apelido || (pokemon.especie ? titleCase(pokemon.especie) : 'Pokémon') }}</strong>
                 <small>{{ pokemon.especie ? titleCase(pokemon.especie) : 'Espécie não informada' }}</small>
-                <dl>
-                  <div><dt>Ability</dt><dd>{{ displayValue(pokemon.ability) }}</dd></div>
-                </dl>
               </div>
-            </article>
+            </button>
           </div>
         </section>
 
@@ -204,6 +207,75 @@ interface BadgeOption {
           </div>
         </div>
       </div>
+
+      <div
+        class="modal-backdrop"
+        *ngIf="selectedPokemon() as pokemon"
+        [style.--green]="themeAccent(ficha()?.corTema)"
+        (click)="selectedPokemon.set(null)"
+      >
+        <div class="achievement-editor-modal public-pokemon-modal" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Pokémon da equipe</span>
+              <h3>{{ pokemon.apelido || (pokemon.especie ? titleCase(pokemon.especie) : 'Pokémon') }}</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="selectedPokemon.set(null)">Fechar</button>
+          </div>
+
+          <div class="public-pokemon-modal-hero">
+            <span class="public-pokemon-modal-sprite">
+              <img *ngIf="pokemon.sprite" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie" />
+              <span *ngIf="!pokemon.sprite">?</span>
+            </span>
+            <div>
+              <span class="eyebrow">{{ pokemon.especie ? titleCase(pokemon.especie) : 'Espécie não informada' }}</span>
+              <strong>{{ pokemon.apelido || 'Sem apelido' }}</strong>
+            </div>
+          </div>
+
+          <dl class="public-pokemon-detail-facts">
+            <div><dt>Ability</dt><dd>{{ pokemonText(pokemon.ability) }}</dd></div>
+            <div><dt>Gênero</dt><dd>{{ pokemonText(pokemon.genero) }}</dd></div>
+            <div><dt>Feature</dt><dd>{{ pokemonText(pokemon.feature) }}</dd></div>
+            <div><dt>Nature</dt><dd>{{ pokemonText(pokemon.nature) }}</dd></div>
+            <div><dt>Hold Item</dt><dd>{{ pokemonText(pokemon.holdItem) }}</dd></div>
+            <div><dt>Happiness</dt><dd>{{ displayValue(pokemon.happinessAtual) }}</dd></div>
+          </dl>
+
+          <section class="public-pokemon-moves">
+            <h4>Moveset</h4>
+            <div class="public-move-list" *ngIf="moveset(pokemon).length; else emptyMoveset">
+              <article
+                class="public-move-card"
+                *ngFor="let move of moveset(pokemon)"
+                [style.--public-move-color]="moveTypeColor(move.tipo)"
+              >
+                <div class="public-move-title">
+                  <strong>{{ titleCase(move.nome) }}</strong>
+                  <span *ngIf="move.tipo">{{ titleCase(move.tipo) }}</span>
+                </div>
+                <dl>
+                  <div><dt>Categoria</dt><dd>{{ pokemonText(move.categoria) }}</dd></div>
+                  <div
+                    class="public-move-style"
+                    [class.has-style]="!!move.style"
+                    [style.--contest-style-color]="contestStyleColor(move.style)"
+                  ><dt>Style</dt><dd>{{ pokemonText(move.style) }}</dd></div>
+                  <div><dt>Power</dt><dd>{{ displayValue(move.poder) }}</dd></div>
+                  <div><dt>Accuracy</dt><dd>{{ displayValue(move.accuracy) }}</dd></div>
+                </dl>
+              </article>
+            </div>
+            <ng-template #emptyMoveset><p class="public-empty-copy">Nenhum movimento cadastrado.</p></ng-template>
+          </section>
+
+          <section class="public-pokemon-combo" *ngIf="pokemon.combo">
+            <h4>Combo</h4>
+            <p>{{ pokemon.combo }}</p>
+          </section>
+        </div>
+      </div>
     </section>
   `,
 })
@@ -215,7 +287,13 @@ export class FichaViewPageComponent implements OnInit {
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly selectedRelacionado = signal<FichaRelacionado | null>(null);
-  protected readonly defaultTheme = '#2f6f55';
+  protected readonly selectedPokemon = signal<FichaPokemon | null>(null);
+  protected readonly defaultTheme = '#586a9b';
+
+  protected themeAccent(theme?: string): string {
+    const value = theme?.trim();
+    return !value || value.toLowerCase() === '#2f6f55' ? this.defaultTheme : value;
+  }
   protected readonly badgeOptions: BadgeOption[] = [
     { id: 'insignia-1', label: 'Dyna Badge', icon: '/assets/badges/dyna-badge.png' },
     { id: 'insignia-2', label: 'Clay Wing Badge', icon: '/assets/badges/clay-wing-badge.png' },
@@ -231,7 +309,9 @@ export class FichaViewPageComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getPublic(id).subscribe({
       next: (ficha) => {
-        this.ficha.set(this.normalizeFicha(ficha));
+        const normalized = this.normalizeFicha(ficha);
+        this.ficha.set(normalized);
+        this.hydrateMissingMoveStyles(normalized);
         this.loading.set(false);
       },
       error: () => {
@@ -263,6 +343,22 @@ export class FichaViewPageComponent implements OnInit {
       .split(/([\s-]+)/)
       .map((part) => (/[\s-]+/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()))
       .join('');
+  }
+
+  protected pokemonText(value?: string): string {
+    return value?.trim() ? this.titleCase(value) : '-';
+  }
+
+  protected moveset(pokemon: FichaPokemon) {
+    return (pokemon.movimentos ?? []).filter((move) => Boolean(move.nome?.trim()));
+  }
+
+  protected moveTypeColor(type?: string): string {
+    return pokemonMoveTypeColor(type);
+  }
+
+  protected contestStyleColor(style?: string): string {
+    return pokemonContestStyleColor(style);
   }
 
   protected teamCount(ficha: Ficha): number {
@@ -300,6 +396,30 @@ export class FichaViewPageComponent implements OnInit {
   private pokemonLocation(pokemon: FichaPokemon): 'equipe' | 'box' {
     const location = (pokemon.box ?? '').trim().toLowerCase();
     return location === 'box' || location === 'pc' ? 'box' : 'equipe';
+  }
+
+  private hydrateMissingMoveStyles(ficha: Ficha): void {
+    const movements = this.teamPokemons(ficha)
+      .flatMap((pokemon) => pokemon.movimentos ?? [])
+      .filter((move) => Boolean(move.nome?.trim()) && !move.style?.trim());
+
+    if (!movements.length) {
+      return;
+    }
+
+    Promise.all(movements.map(async (move) => ({ move, style: await loadPokemonMoveStyle(move.nome) })))
+      .then((results) => {
+        const changed = results.some(({ move, style }) => {
+          if (!style || move.style?.trim()) {
+            return false;
+          }
+          move.style = style;
+          return true;
+        });
+        if (changed) {
+          this.ficha.update((current) => current ? { ...current } : current);
+        }
+      });
   }
 
   private normalizeFicha(ficha: Ficha): Ficha {

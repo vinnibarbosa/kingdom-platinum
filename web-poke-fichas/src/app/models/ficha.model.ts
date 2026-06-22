@@ -28,6 +28,7 @@ export interface FichaPokemonMovimento {
   nome: string;
   categoria: string;
   tipo?: string;
+  style?: string;
   poder?: number;
   accuracy?: number;
   ordem?: number;
@@ -187,4 +188,8 @@ export interface AuthResponse {
 export interface RegisterRequest {
   username: string;
   senha: string;
+}
+
+export interface RedefinirSenhaRequest {
+  username: string;
 }

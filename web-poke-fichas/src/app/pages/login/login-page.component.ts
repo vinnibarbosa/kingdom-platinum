@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -113,8 +114,13 @@ export class LoginPageComponent {
         this.mode.set('login');
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('Não foi possível criar a conta. Verifique os dados e tente outro usuário.');
+      error: (error: unknown) => {
+        const message = error instanceof HttpErrorResponse
+          && error.status === 422
+          && typeof error.error?.message === 'string'
+          ? error.error.message
+          : 'Não foi possível criar a conta. Verifique os dados e tente outro usuário.';
+        this.error.set(message);
         this.loading.set(false);
       },
     });

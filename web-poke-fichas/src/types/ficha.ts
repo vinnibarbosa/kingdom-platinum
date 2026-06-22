@@ -25,6 +25,10 @@ export interface FichaPokemonMovimento {
   id?: number
   nome: string
   categoria: string
+  tipo?: string
+  style?: string
+  poder?: number
+  accuracy?: number
   ordem?: number
 }
 
@@ -168,6 +172,6 @@ export const ITEM_CATEGORIES = [
 ] as const
 
 export const DEFAULT_THEME: ThemeColors = {
-  primary: '#2d6a4f',
-  secondary: '#52b788',
+  primary: '#586a9b',
+  secondary: '#c8922f',
 }

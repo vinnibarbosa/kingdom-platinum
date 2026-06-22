@@ -26,16 +26,13 @@ public class ExcluirFichaUseCase {
 
     @Transactional
     public void handle(final Long id) {
+        final boolean admin = userAccess.getRole().map("ADMIN"::equals).orElse(false);
+        if (!admin) {
+            throw new UnauthorizedException("Apenas administradores podem excluir fichas");
+        }
+
         final Ficha ficha = query.findByIdWithoutContext(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + id));
-        final Long currentOrganization = userAccess.getIdOrganizacao()
-                .orElseThrow(() -> new UnauthorizedException("Usuario nao autenticado"));
-        final boolean admin = userAccess.getRole().map("ADMIN"::equals).orElse(false);
-        final boolean owner = currentOrganization.equals(ficha.getIdOrganizacao());
-
-        if (!owner && !admin) {
-            throw new UnauthorizedException("Apenas administradores podem excluir fichas de outras contas");
-        }
 
         command.delete(ficha);
     }

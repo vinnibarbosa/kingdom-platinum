@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './services/auth.service';
+import { PasswordResetComponent } from './components/password-reset/password-reset.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterOutlet],
+  imports: [CommonModule, PasswordResetComponent, RouterLink, RouterOutlet],
   template: `
     <div class="shell">
       <header class="topbar" *ngIf="isLoggedIn()">
@@ -18,9 +19,18 @@ import { AuthService } from './services/auth.service';
         <nav class="topbar-actions">
           <a routerLink="/">Fichas</a>
           <span>{{ username() }}</span>
+          <button type="button" class="button ghost" *ngIf="isAdmin()" (click)="passwordResetOpen.set(true)">
+            Redefinir senha de usuário
+          </button>
           <button type="button" class="button ghost" (click)="logout()">Sair</button>
         </nav>
       </header>
+
+      <app-password-reset
+        *ngIf="isAdmin()"
+        [opened]="passwordResetOpen()"
+        (closed)="passwordResetOpen.set(false)"
+      />
 
       <main>
         <router-outlet />
@@ -33,7 +43,9 @@ export class AppComponent {
   private readonly router = inject(Router);
 
   protected readonly isLoggedIn = computed(() => this.auth.isLoggedIn());
+  protected readonly isAdmin = computed(() => ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? ''));
   protected readonly username = computed(() => this.auth.currentUser()?.nome ?? this.auth.currentUser()?.username ?? '');
+  protected readonly passwordResetOpen = signal(false);
 
   protected logout(): void {
     this.auth.logout().subscribe({

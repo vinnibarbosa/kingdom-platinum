@@ -36,7 +36,6 @@ import { FichaApiService } from '../../services/ficha-api.service';
 })
 export class FichaDeleteComponent {
   @Input({ required: true }) fichaId!: number;
-  @Input({ required: true }) fichaIdOrganizacao!: number;
   @Input({ required: true }) fichaNome!: string;
 
   private readonly api = inject(FichaApiService);
@@ -48,11 +47,7 @@ export class FichaDeleteComponent {
   protected readonly error = signal('');
 
   protected canDelete(): boolean {
-    const user = this.auth.currentUser();
-    return Boolean(
-      user
-      && (['ADMIN', 'A'].includes(user.perfil) || user.idOrganizacao === this.fichaIdOrganizacao)
-    );
+    return ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? '');
   }
 
   protected close(): void {

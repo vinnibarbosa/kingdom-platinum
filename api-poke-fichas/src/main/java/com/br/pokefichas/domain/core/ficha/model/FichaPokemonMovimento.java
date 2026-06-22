@@ -39,6 +39,9 @@ public class FichaPokemonMovimento extends OrgBaseEntity<Long> {
     @Column(name = "tipo", length = 40)
     private String tipo;
 
+    @Column(name = "style", length = 20)
+    private String style;
+
     @Column(name = "poder")
     private Integer poder;
 
@@ -79,6 +82,10 @@ public class FichaPokemonMovimento extends OrgBaseEntity<Long> {
 
     public String getTipo() {
         return tipo;
+    }
+
+    public String getStyle() {
+        return style;
     }
 
     public Integer getPoder() {
@@ -134,6 +141,11 @@ public class FichaPokemonMovimento extends OrgBaseEntity<Long> {
 
         public Builder tipo(final String tipo) {
             entity.tipo = tipo;
+            return this;
+        }
+
+        public Builder style(final String style) {
+            entity.style = style;
             return this;
         }
 
