@@ -3,12 +3,11 @@
   "framework": "angular",
   "buildCommand": "npm run build",
   "outputDirectory": "dist/web-poke-fichas/browser",
-  "functions": {
-    "api/**/*.js": {
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://p01--kingdom-platinum--y7pyslnljzqn.code.run/api/:path*"
+    },
     { "source": "/login", "destination": "/index.html" },
     { "source": "/ficha/:path*", "destination": "/index.html" }
   ],
