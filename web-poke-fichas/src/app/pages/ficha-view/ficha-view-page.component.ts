@@ -63,6 +63,18 @@ interface BadgeOption {
           <div><span>Pokémon</span><strong>{{ current.pokemons.length }}</strong></div>
         </section>
 
+        <section class="public-section public-data-section">
+          <h2>Dados</h2>
+          <dl class="public-data-grid">
+            <div><dt>Avatar</dt><dd>{{ displayValue(current.avatar) }}</dd></div>
+            <div><dt>Índole</dt><dd>{{ displayValue(current.indole) }}</dd></div>
+            <div><dt>Idade</dt><dd>{{ displayValue(current.idade) }}</dd></div>
+            <div><dt>Altura</dt><dd>{{ displayValue(current.alturaCm) }}</dd></div>
+            <div><dt>Peso</dt><dd>{{ displayValue(current.pesoKg) }}</dd></div>
+            <div><dt>Tipo Físico</dt><dd>{{ displayValue(current.tipoFisico) }}</dd></div>
+          </dl>
+        </section>
+
         <section class="public-section" *ngIf="current.biografia || current.anotacoes">
           <h2>História</h2>
           <p *ngIf="current.biografia">{{ current.biografia }}</p>
