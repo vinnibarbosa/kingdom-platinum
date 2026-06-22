@@ -416,7 +416,10 @@ const ITEMDEX_ICONS: Record<string, string> = {
                   <img *ngIf="pessoa.imagem" [src]="pessoa.imagem" [alt]="pessoa.nome" />
                   <span *ngIf="!pessoa.imagem">?</span>
                 </span>
-                <strong>{{ pessoa.nome }}</strong>
+                <span class="relacionado-card-copy">
+                  <strong>{{ pessoa.nome }}</strong>
+                  <small *ngIf="pessoa.relacao">{{ pessoa.relacao }}</small>
+                </span>
               </button>
               <p class="empty-collection" *ngIf="!current.relacionados.length">Nenhuma relação salva.</p>
             </div>

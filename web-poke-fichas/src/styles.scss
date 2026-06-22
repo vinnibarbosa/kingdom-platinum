@@ -924,15 +924,15 @@ dd {
 
 .relacionado-card {
   display: grid;
-  min-height: 142px;
-  place-items: center;
-  gap: 0.55rem;
+  min-height: 154px;
+  align-content: start;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fffdf7;
   color: var(--ink);
   cursor: pointer;
-  padding: 0.65rem;
+  padding: 0;
   text-align: center;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -945,11 +945,10 @@ dd {
 
 .relacionado-card-image {
   display: grid;
-  width: 84px;
-  height: 84px;
+  width: 100%;
+  height: 106px;
   place-items: center;
   overflow: hidden;
-  border-radius: 6px;
   background: color-mix(in srgb, var(--green) 7%, #fffdf7);
   color: var(--green-dark);
   font-size: 1.35rem;
@@ -962,9 +961,27 @@ dd {
   object-fit: cover;
 }
 
-.relacionado-card strong {
+.relacionado-card-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  padding: 0.62rem 0.65rem 0.68rem;
+}
+
+.relacionado-card-copy strong {
   width: 100%;
   overflow: hidden;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relacionado-card-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
