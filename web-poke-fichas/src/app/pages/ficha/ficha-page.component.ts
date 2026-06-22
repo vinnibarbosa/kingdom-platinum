@@ -301,7 +301,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
           </div>
 
           <div class="rail-stats">
-            <div><span>HP</span><strong>{{ displayValue(current.pontosVida) }}</strong></div>
+            <div><span>PV</span><strong>{{ displayValue(current.pontosVida) }}</strong></div>
             <div><span>Ranking</span><strong>{{ rankingLabel(current.ranking) }}</strong></div>
             <div><span>Reputação</span><strong>{{ reputationLabel(current.reputacao) }}</strong></div>
             <div><span>Dinheiro</span><strong>{{ moneyValue(current.dinheiro) }}</strong></div>

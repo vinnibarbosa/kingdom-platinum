@@ -55,7 +55,7 @@ interface BadgeOption {
         </header>
 
         <section class="public-stats" aria-label="Resumo da ficha">
-          <div><span>HP</span><strong>{{ displayValue(current.pontosVida) }}</strong></div>
+          <div><span>PV</span><strong>{{ displayValue(current.pontosVida) }}</strong></div>
           <div><span>Ranking</span><strong>{{ displayValue(current.ranking) }}</strong></div>
           <div><span>Reputação</span><strong>{{ displayValue(current.reputacao) }}</strong></div>
           <div><span>Dinheiro</span><strong>{{ moneyValue(current.dinheiro) }}</strong></div>
