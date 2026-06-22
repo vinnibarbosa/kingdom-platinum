@@ -30,6 +30,9 @@ import java.time.Instant;
 @Component
 public class FichaMapper {
 
+    private static final String DEFAULT_THEME_COLOR = "#586a9b";
+    private static final String LEGACY_DEFAULT_THEME_COLOR = "#2f6f55";
+
     public Ficha toEntity(final CriarFichaRequest request, final Long idOrganizacao) {
         return apply(Ficha.Builder.create().idOrganizacao(idOrganizacao), request).build();
     }
@@ -58,7 +61,7 @@ public class FichaMapper {
                 .pontos(request.pontos())
                 .miniUpgrade(request.miniUpgrade())
                 .slotUpgrade(request.slotUpgrade())
-                .corTema(request.corTema())
+                .corTema(normalizeThemeColor(request.corTema()))
                 .photoplayer(request.photoplayer())
                 .avatar(request.avatar())
                 .player(request.player())
@@ -86,12 +89,19 @@ public class FichaMapper {
                 .pontos(request.pontos())
                 .miniUpgrade(request.miniUpgrade())
                 .slotUpgrade(request.slotUpgrade())
-                .corTema(request.corTema())
+                .corTema(normalizeThemeColor(request.corTema()))
                 .photoplayer(request.photoplayer())
                 .avatar(request.avatar())
                 .player(request.player())
                 .biografia(request.biografia())
                 .anotacoes(request.anotacoes());
+    }
+
+    private String normalizeThemeColor(final String color) {
+        if (color == null || color.isBlank() || LEGACY_DEFAULT_THEME_COLOR.equalsIgnoreCase(color.trim())) {
+            return DEFAULT_THEME_COLOR;
+        }
+        return color.trim();
     }
 
     public List<FichaRelacionado> toRelacionados(final List<FichaRelacionadoRequest> requests,
