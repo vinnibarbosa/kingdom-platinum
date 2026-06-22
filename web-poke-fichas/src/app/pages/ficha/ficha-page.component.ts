@@ -634,12 +634,18 @@ const ITEMDEX_ICONS: Record<string, string> = {
                     <option *ngFor="let genero of generos" [value]="genero">{{ genero }}</option>
                   </select>
                 </label>
+                <label *ngIf="hasCustomSprite(pokemon); else officialAbilityField">
+                  Ability
+                  <input [(ngModel)]="pokemon.ability" placeholder="Nome da ability" />
+                </label>
+                <ng-template #officialAbilityField>
                 <label>
                   Ability
                   <select [(ngModel)]="pokemon.ability" (focus)="loadPokemonDexData(pokemon)">
                     <option *ngFor="let ability of pokemonAbilities(pokemon)" [value]="ability">{{ displayPokemonText(ability) }}</option>
                   </select>
                 </label>
+                </ng-template>
                 <label>
                   Feature
                   <select [ngModel]="pokemon.feature" (ngModelChange)="selectPokemonFeature(pokemon, $event)">
