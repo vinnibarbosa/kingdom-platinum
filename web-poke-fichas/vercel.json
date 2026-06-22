@@ -4,7 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/web-poke-fichas/browser",
   "functions": {
-    "api/**/*.mjs": {
+    "api/**/*.js": {
       "maxDuration": 60
     }
   },
