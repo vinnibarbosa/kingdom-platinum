@@ -58,7 +58,12 @@ import { FichaApiService } from '../../services/ficha-api.service';
                 *ngFor="let pokemon of ficha.pokemonsEquipe"
                 [title]="pokemon.apelido || pokemon.especie"
               >
-                <img *ngIf="pokemon.sprite" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie" />
+                <img
+                  *ngIf="pokemon.sprite"
+                  [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
+                  [src]="pokemon.sprite"
+                  [alt]="pokemon.apelido || pokemon.especie"
+                />
                 <span *ngIf="!pokemon.sprite">?</span>
               </span>
             </div>

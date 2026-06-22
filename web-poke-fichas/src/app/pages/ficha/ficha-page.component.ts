@@ -511,7 +511,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                   </span>
                   <div class="pokemon-box-main">
                     <span class="pokemon-box-sprite">
-                      <img *ngIf="entry.pokemon.sprite" [src]="entry.pokemon.sprite" [alt]="entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon'" draggable="false" />
+                      <img *ngIf="entry.pokemon.sprite" [class.custom-pokemon-art]="entry.pokemon.sprite.startsWith('data:image/')" [src]="entry.pokemon.sprite" [alt]="entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon'" draggable="false" />
                       <span *ngIf="!entry.pokemon.sprite">{{ initials(entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon') }}</span>
                     </span>
                     <strong>{{ entry.pokemon.apelido || 'Pokémon ' + (entry.index + 1) }}</strong>
@@ -556,7 +556,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                   </span>
                   <div class="pokemon-box-main">
                     <span class="pokemon-box-sprite">
-                      <img *ngIf="entry.pokemon.sprite" [src]="entry.pokemon.sprite" [alt]="entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon'" draggable="false" />
+                      <img *ngIf="entry.pokemon.sprite" [class.custom-pokemon-art]="entry.pokemon.sprite.startsWith('data:image/')" [src]="entry.pokemon.sprite" [alt]="entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon'" draggable="false" />
                       <span *ngIf="!entry.pokemon.sprite">{{ initials(entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon') }}</span>
                     </span>
                     <strong>{{ entry.pokemon.apelido || 'Pokémon ' + (entry.index + 1) }}</strong>
@@ -578,7 +578,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
               </div>
               <div class="pokemon-sprite-row">
                 <button type="button" class="pokemon-sprite-button" (click)="openSpritePicker(pokemon)">
-                  <img *ngIf="pokemon.sprite" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie || 'Pokémon'" />
+                  <img *ngIf="pokemon.sprite" [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie || 'Pokémon'" />
                   <span *ngIf="!pokemon.sprite">?</span>
                   <span
                     *ngIf="selectedMechanic(pokemon) as mechanic"
@@ -872,7 +872,9 @@ const ITEMDEX_ICONS: Record<string, string> = {
                     class="badge-slot"
                     *ngFor="let badge of badgeOptions; let slot = index"
                     [class.filled]="badgeConquista(current, slot)"
-                    (click)="openBadgePicker(slot)"
+                    [attr.aria-pressed]="!!badgeConquista(current, slot)"
+                    [title]="badgeConquista(current, slot) ? 'Remover ' + badge.label : 'Adicionar ' + badge.label"
+                    (click)="toggleBadge(current, slot, badge)"
                   >
                     <span class="badge-icon" [class.empty]="!badgeConquista(current, slot)">
                       <img
@@ -913,7 +915,9 @@ const ITEMDEX_ICONS: Record<string, string> = {
                     class="ribbon-slot"
                     *ngFor="let ribbon of ribbonOptions; let slot = index"
                     [class.filled]="ribbonConquista(current, slot)"
-                    (click)="openRibbonPicker(slot)"
+                    [attr.aria-pressed]="!!ribbonConquista(current, slot)"
+                    [title]="ribbonConquista(current, slot) ? 'Remover ' + ribbon.label : 'Adicionar ' + ribbon.label"
+                    (click)="toggleRibbon(current, slot, ribbon)"
                   >
                     <span class="ribbon-icon" [class.empty]="!ribbonConquista(current, slot)">
                       <img
@@ -1129,54 +1133,6 @@ const ITEMDEX_ICONS: Record<string, string> = {
         </div>
       </div>
 
-      <div class="modal-backdrop" *ngIf="badgePickerSlot() !== null && ficha() as current" (click)="closeBadgePicker()">
-        <div class="badge-modal" (click)="$event.stopPropagation()">
-          <div class="modal-head">
-            <div>
-              <span class="eyebrow">Insígnias</span>
-              <h3>Escolher insígnia</h3>
-            </div>
-            <button type="button" class="button ghost" (click)="closeBadgePicker()">Fechar</button>
-          </div>
-
-          <div class="badge-picker-grid single-option" *ngIf="badgeOptionForOpenSlot() as badge">
-            <button
-              type="button"
-              class="badge-picker-option"
-              (click)="selectBadge(current, badge)"
-            >
-              <span class="badge-icon">
-                <img *ngIf="badge.icon" [src]="badge.icon" [alt]="badge.label" />
-              </span>
-            </button>
-          </div>
-
-          <button type="button" class="button ghost" (click)="clearBadge(current)">Remover</button>
-        </div>
-      </div>
-
-      <div class="modal-backdrop" *ngIf="ribbonPickerSlot() !== null && ficha() as current" (click)="closeRibbonPicker()">
-        <div class="badge-modal ribbon-modal" (click)="$event.stopPropagation()">
-          <div class="modal-head">
-            <div>
-              <span class="eyebrow">Ribbons</span>
-              <h3>Escolher ribbon</h3>
-            </div>
-            <button type="button" class="button ghost" (click)="closeRibbonPicker()">Fechar</button>
-          </div>
-
-          <div class="ribbon-picker-grid" *ngIf="ribbonOptionForOpenSlot() as ribbon">
-            <button type="button" class="ribbon-picker-option" (click)="selectRibbon(current, ribbon)">
-              <span class="ribbon-icon large">
-                <img [src]="ribbon.icon" [alt]="ribbon.label" />
-              </span>
-            </button>
-          </div>
-
-          <button type="button" class="button ghost" (click)="clearRibbon(current)">Remover</button>
-        </div>
-      </div>
-
       <div class="modal-backdrop" *ngIf="newConquista() as conquista" (click)="closeNewConquista()">
         <div class="achievement-editor-modal" (click)="$event.stopPropagation()">
           <div class="modal-head">
@@ -1381,8 +1337,6 @@ export class FichaPageComponent implements OnInit {
   protected readonly registroDraft = signal<{ registro: FichaRegistro; index: number | null } | null>(null);
   protected readonly registroHistoryOpen = signal(false);
   protected readonly relacionadoDraft = signal<{ pessoa: FichaRelacionado; index: number | null } | null>(null);
-  protected readonly badgePickerSlot = signal<number | null>(null);
-  protected readonly ribbonPickerSlot = signal<number | null>(null);
   protected readonly badgeCaseOpen = signal(false);
   protected readonly ribbonCaseOpen = signal(false);
   protected readonly draggingPokemon = signal<FichaPokemon | null>(null);
@@ -2156,51 +2110,16 @@ export class FichaPageComponent implements OnInit {
     return this.selectedBadgeOption(ficha, slot)?.icon ?? fallback.icon;
   }
 
-  protected badgeOptionForOpenSlot(): BadgeOption | undefined {
-    const slot = this.badgePickerSlot();
-    return slot === null ? undefined : this.badgeOptions[slot];
-  }
-
-  protected openBadgePicker(slot: number): void {
-    this.badgePickerSlot.set(slot);
-  }
-
-  protected closeBadgePicker(): void {
-    this.badgePickerSlot.set(null);
-  }
-
-  protected selectBadge(ficha: Ficha, badge: BadgeOption): void {
-    const slot = this.badgePickerSlot();
-    if (slot === null) {
-      return;
-    }
-
+  protected toggleBadge(ficha: Ficha, slot: number, badge: BadgeOption): void {
     const tipo = this.badgeType(slot);
-    const existing = ficha.conquistas.find((conquista) => conquista.tipo === tipo);
-    if (existing) {
-      existing.nome = badge.label;
+    const existingIndex = ficha.conquistas.findIndex((conquista) => conquista.tipo === tipo);
+    if (existingIndex >= 0) {
+      ficha.conquistas.splice(existingIndex, 1);
     } else {
       ficha.conquistas.push({ tipo, nome: badge.label, ordem: slot });
     }
 
-    this.closeBadgePicker();
     this.scheduleAutoSave();
-  }
-
-  protected clearBadge(ficha: Ficha): void {
-    const slot = this.badgePickerSlot();
-    if (slot === null) {
-      return;
-    }
-
-    const tipo = this.badgeType(slot);
-    const index = ficha.conquistas.findIndex((conquista) => conquista.tipo === tipo);
-    if (index >= 0) {
-      ficha.conquistas.splice(index, 1);
-      this.scheduleAutoSave();
-    }
-
-    this.closeBadgePicker();
   }
 
   private badgeType(slot: number): string {
@@ -2222,29 +2141,10 @@ export class FichaPageComponent implements OnInit {
     return this.ribbonConquista(ficha, slot)?.imagem || fallback.icon || '';
   }
 
-  protected ribbonOptionForOpenSlot(): BadgeOption | undefined {
-    const slot = this.ribbonPickerSlot();
-    return slot === null ? undefined : this.ribbonOptions[slot];
-  }
-
-  protected openRibbonPicker(slot: number): void {
-    this.ribbonPickerSlot.set(slot);
-  }
-
-  protected closeRibbonPicker(): void {
-    this.ribbonPickerSlot.set(null);
-  }
-
-  protected selectRibbon(ficha: Ficha, ribbon: BadgeOption): void {
-    const slot = this.ribbonPickerSlot();
-    if (slot === null) {
-      return;
-    }
-
+  protected toggleRibbon(ficha: Ficha, slot: number, ribbon: BadgeOption): void {
     const existing = this.ribbonConquista(ficha, slot);
     if (existing) {
-      existing.nome = ribbon.label;
-      existing.imagem = ribbon.icon;
+      ficha.conquistas.splice(ficha.conquistas.indexOf(existing), 1);
     } else {
       ficha.conquistas.push({
         tipo: 'ribbon',
@@ -2254,24 +2154,7 @@ export class FichaPageComponent implements OnInit {
       });
     }
 
-    this.closeRibbonPicker();
     this.scheduleAutoSave();
-  }
-
-  protected clearRibbon(ficha: Ficha): void {
-    const slot = this.ribbonPickerSlot();
-    if (slot === null) {
-      return;
-    }
-
-    const conquista = this.ribbonConquista(ficha, slot);
-    const index = conquista ? ficha.conquistas.indexOf(conquista) : -1;
-    if (index >= 0) {
-      ficha.conquistas.splice(index, 1);
-      this.scheduleAutoSave();
-    }
-
-    this.closeRibbonPicker();
   }
 
   protected remove<T>(items: T[], index: number): void {

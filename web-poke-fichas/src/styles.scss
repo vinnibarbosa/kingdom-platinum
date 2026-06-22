@@ -329,6 +329,10 @@ label {
   image-rendering: auto;
 }
 
+img.custom-pokemon-art {
+  mix-blend-mode: multiply;
+}
+
 .ficha-card-team small {
   overflow: hidden;
   color: var(--muted);
@@ -1659,6 +1663,7 @@ dd {
   cursor: pointer;
   padding: 0.65rem;
   text-align: center;
+  transition: border-color 180ms ease, background-color 260ms ease, box-shadow 180ms ease;
 }
 
 .badge-slot:hover,
@@ -1696,6 +1701,12 @@ dd {
   object-fit: contain;
 }
 
+.badge-slot.filled .badge-icon img,
+.ribbon-slot.filled .ribbon-icon img {
+  animation: achievement-fill-up 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: bottom center;
+}
+
 .badge-icon img.badge-placeholder {
   filter: grayscale(1) brightness(0.18) opacity(0.42);
 }
@@ -1711,7 +1722,7 @@ dd {
 
 .ribbon-case {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.7rem;
   border: 1px solid color-mix(in srgb, var(--green) 14%, var(--line));
   border-radius: 8px;
@@ -1722,7 +1733,7 @@ dd {
 .ribbon-slot,
 .ribbon-picker-option {
   display: grid;
-  min-height: 138px;
+  min-height: 112px;
   place-items: center;
   gap: 0.45rem;
   border: 1px solid var(--line);
@@ -1732,6 +1743,7 @@ dd {
   cursor: pointer;
   padding: 0.65rem;
   text-align: center;
+  transition: border-color 180ms ease, background-color 260ms ease, box-shadow 180ms ease;
 }
 
 .ribbon-slot:hover,
@@ -1749,8 +1761,8 @@ dd {
 
 .ribbon-icon {
   display: grid;
-  width: 88px;
-  height: 88px;
+  width: 54px;
+  height: 54px;
   place-items: center;
 }
 
@@ -1774,6 +1786,33 @@ dd {
   font-size: 0.8rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@keyframes achievement-fill-up {
+  0% {
+    clip-path: inset(100% 0 0 0);
+    opacity: 0.25;
+    transform: translateY(7px) scale(0.92);
+  }
+
+  68% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-slot.filled .badge-icon img,
+  .ribbon-slot.filled .ribbon-icon img {
+    animation: none;
+  }
 }
 
 .ribbon-modal {
@@ -1882,27 +1921,30 @@ dd {
 
 .public-hero {
   display: grid;
-  grid-template-columns: 172px minmax(0, 1fr);
-  gap: 1.35rem 1.5rem;
-  align-items: end;
+  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-rows: minmax(150px, 1fr) auto;
+  gap: 0 1.5rem;
+  align-items: stretch;
   overflow: hidden;
   border-left: 7px solid var(--green);
-  padding: 1.35rem;
+  padding: 0;
   background: color-mix(in srgb, var(--green) 5%, #fffdf7);
 }
 
 .public-portrait {
   display: grid;
-  aspect-ratio: 1;
+  grid-row: 1 / span 2;
+  min-height: 276px;
   place-items: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--green) 24%, var(--line));
-  border-radius: 8px;
+  border: 0;
+  border-right: 1px solid color-mix(in srgb, var(--green) 20%, var(--line));
+  border-radius: 0;
   background: color-mix(in srgb, var(--green) 10%, #fffdf7);
   color: var(--green);
   font-size: 3.2rem;
   font-weight: 900;
-  box-shadow: inset 0 0 0 4px rgb(255 253 247 / 60%);
+  box-shadow: none;
 }
 
 .public-portrait img,
@@ -1915,6 +1957,7 @@ dd {
 .public-hero-main {
   align-self: center;
   min-width: 0;
+  padding: 1.35rem 1.35rem 0 0;
 }
 
 .public-hero h1,
@@ -1951,7 +1994,7 @@ dd {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.65rem;
   align-self: stretch;
-  padding-top: 0.15rem;
+  padding: 0.15rem 1.35rem 1.35rem 0;
 }
 
 .public-facts dt,
@@ -3226,6 +3269,7 @@ button.public-pokemon-card:focus-visible {
   .move-slot-row,
   .upgrade-chips,
   .badge-case,
+  .ribbon-case,
   .public-hero,
   .public-facts,
   .public-stats,
@@ -3237,6 +3281,27 @@ button.public-pokemon-card:focus-visible {
   .two-cols,
   .custom-sprite-row {
     grid-template-columns: 1fr;
+  }
+
+  .public-hero {
+    gap: 0;
+  }
+
+  .public-portrait {
+    grid-row: auto;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    border-right: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--green) 20%, var(--line));
+  }
+
+  .public-hero-main {
+    padding: 1.1rem 1rem 0;
+  }
+
+  .public-facts {
+    grid-column: 1;
+    padding: 0.9rem 1rem 1rem;
   }
 
   .public-badge-case {

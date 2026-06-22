@@ -117,7 +117,12 @@ interface BadgeOption {
               [attr.aria-label]="'Ver detalhes de ' + (pokemon.apelido || pokemon.especie || 'Pokémon')"
             >
               <div class="public-pokemon-sprite">
-                <img *ngIf="pokemon.sprite" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie" />
+                <img
+                  *ngIf="pokemon.sprite"
+                  [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
+                  [src]="pokemon.sprite"
+                  [alt]="pokemon.apelido || pokemon.especie"
+                />
                 <span *ngIf="!pokemon.sprite">?</span>
               </div>
 
@@ -240,7 +245,12 @@ interface BadgeOption {
 
           <div class="public-pokemon-modal-hero">
             <span class="public-pokemon-modal-sprite">
-              <img *ngIf="pokemon.sprite" [src]="pokemon.sprite" [alt]="pokemon.apelido || pokemon.especie" />
+              <img
+                *ngIf="pokemon.sprite"
+                [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
+                [src]="pokemon.sprite"
+                [alt]="pokemon.apelido || pokemon.especie"
+              />
               <span *ngIf="!pokemon.sprite">?</span>
             </span>
             <div>
