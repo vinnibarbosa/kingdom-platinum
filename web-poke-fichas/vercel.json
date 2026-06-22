@@ -9,7 +9,8 @@
     }
   },
   "rewrites": [
-    { "source": "/:path*", "destination": "/index.html" }
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/ficha/:path*", "destination": "/index.html" }
   ],
   "headers": [
     {
