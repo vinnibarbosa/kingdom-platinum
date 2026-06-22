@@ -1496,7 +1496,7 @@ export class FichaPageComponent implements OnInit {
     'timid', 'hasty', 'serious', 'jolly', 'naive',
     'modest', 'mild', 'quiet', 'bashful', 'rash',
     'calm', 'gentle', 'sassy', 'careful', 'quirky',
-  ];
+  ].sort((first, second) => first.localeCompare(second));
   protected readonly spriteSearch = signal('');
   protected readonly pokemonNames = signal<Record<number, string>>({});
   protected readonly pokemonDexCount = signal(1025);
