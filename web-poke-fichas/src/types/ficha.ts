@@ -100,6 +100,7 @@ export interface Ficha {
   equipe?: string
   pontos?: number
   photoplayer?: string
+  banner?: string
   player?: string
   biografia?: string
   anotacoes?: string

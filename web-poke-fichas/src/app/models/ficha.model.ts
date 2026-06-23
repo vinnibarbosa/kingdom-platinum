@@ -131,6 +131,7 @@ export interface Ficha {
   slotUpgrade?: number;
   corTema?: string;
   photoplayer?: string;
+  banner?: string;
   avatar?: string;
   player?: string;
   biografia?: string;

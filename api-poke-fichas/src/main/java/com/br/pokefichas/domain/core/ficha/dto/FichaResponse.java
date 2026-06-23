@@ -27,6 +27,7 @@ public record FichaResponse(
         Integer slotUpgrade,
         String corTema,
         String photoplayer,
+        String banner,
         String avatar,
         String player,
         String biografia,

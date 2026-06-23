@@ -527,7 +527,7 @@ dd {
   justify-content: space-between;
   gap: 1rem;
   min-height: 3rem;
-  padding-right: 20rem;
+  padding-right: 23rem;
 }
 
 .sheet-actions {
@@ -593,6 +593,68 @@ dd {
   cursor: pointer;
   opacity: 0;
   padding: 0;
+}
+
+.banner-picker-button,
+.banner-remove-button {
+  position: relative;
+  display: grid;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--green-dark);
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+.banner-picker-button:hover,
+.banner-picker-button:focus-within,
+.banner-remove-button:hover,
+.banner-remove-button:focus-visible {
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  opacity: 1;
+  outline: none;
+}
+
+.banner-picker-button svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.banner-picker-button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.banner-picker-button.has-banner::after {
+  position: absolute;
+  right: 0.2rem;
+  bottom: 0.2rem;
+  width: 0.42rem;
+  aspect-ratio: 1;
+  border: 1px solid #fffdf7;
+  border-radius: 50%;
+  background: var(--green);
+  content: "";
+}
+
+.banner-remove-button {
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .edit-panel,
@@ -1920,7 +1982,10 @@ dd {
 }
 
 .public-hero {
+  position: relative;
+  isolation: isolate;
   display: grid;
+  height: 276px;
   grid-template-columns: 210px minmax(0, 1fr);
   grid-template-rows: minmax(150px, 1fr) auto;
   gap: 0 1.5rem;
@@ -1931,10 +1996,37 @@ dd {
   background: color-mix(in srgb, var(--green) 5%, #fffdf7);
 }
 
+.public-hero-banner {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 52%;
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  pointer-events: none;
+}
+
+.public-hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  filter: none;
+  mix-blend-mode: normal;
+}
+
+.public-hero > :not(.public-hero-banner) {
+  position: relative;
+  z-index: 1;
+}
+
 .public-portrait {
   display: grid;
   grid-row: 1 / span 2;
-  min-height: 276px;
+  min-height: 0;
+  height: 100%;
   place-items: center;
   overflow: hidden;
   border: 0;
@@ -3285,6 +3377,12 @@ button.public-pokemon-card:focus-visible {
 
   .public-hero {
     gap: 0;
+    height: auto;
+  }
+
+  .public-hero-banner {
+    left: 0;
+    clip-path: none;
   }
 
   .public-portrait {

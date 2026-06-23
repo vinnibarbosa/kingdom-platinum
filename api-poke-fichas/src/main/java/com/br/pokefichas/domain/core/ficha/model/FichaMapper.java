@@ -63,6 +63,7 @@ public class FichaMapper {
                 .slotUpgrade(request.slotUpgrade())
                 .corTema(normalizeThemeColor(request.corTema()))
                 .photoplayer(request.photoplayer())
+                .banner(request.banner())
                 .avatar(request.avatar())
                 .player(request.player())
                 .biografia(request.biografia())
@@ -91,6 +92,7 @@ public class FichaMapper {
                 .slotUpgrade(request.slotUpgrade())
                 .corTema(normalizeThemeColor(request.corTema()))
                 .photoplayer(request.photoplayer())
+                .banner(request.banner())
                 .avatar(request.avatar())
                 .player(request.player())
                 .biografia(request.biografia())
@@ -282,6 +284,7 @@ public class FichaMapper {
                 ficha.getSlotUpgrade(),
                 ficha.getCorTema(),
                 ficha.getPhotoplayer(),
+                ficha.getBanner(),
                 ficha.getAvatar(),
                 ficha.getPlayer(),
                 ficha.getBiografia(),

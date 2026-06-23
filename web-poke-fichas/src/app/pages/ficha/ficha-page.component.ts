@@ -325,6 +325,30 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 [fichaNome]="current.nome"
               />
               <label
+                class="banner-picker-button"
+                [class.has-banner]="!!current.banner"
+                title="Selecionar imagem do banner"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <circle cx="8.5" cy="10" r="1.5"></circle>
+                  <path d="m4 17 5-4 3 2 3-3 5 5"></path>
+                </svg>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  (change)="selectBannerImage($event, current)"
+                />
+              </label>
+              <button
+                type="button"
+                class="banner-remove-button"
+                *ngIf="current.banner"
+                title="Remover banner"
+                aria-label="Remover banner"
+                (click)="clearBanner(current)"
+              >×</button>
+              <label
                 class="theme-picker-button"
                 title="Alterar cor da ficha"
                 [style.--picked-color]="themeAccent(current.corTema)"
@@ -3223,6 +3247,49 @@ export class FichaPageComponent implements OnInit {
     };
 
     image.src = objectUrl;
+  }
+
+  protected selectBannerImage(event: Event, ficha: Ficha): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      const maxWidth = 1400;
+      const maxHeight = 700;
+      const ratio = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+      const width = Math.max(1, Math.round(image.width * ratio));
+      const height = Math.max(1, Math.round(image.height * ratio));
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+
+      canvas.width = width;
+      canvas.height = height;
+      context?.drawImage(image, 0, 0, width, height);
+
+      ficha.banner = canvas.toDataURL('image/webp', 0.76);
+      input.value = '';
+      URL.revokeObjectURL(objectUrl);
+      this.scheduleAutoSave();
+    };
+
+    image.onerror = () => {
+      this.error.set('Não foi possível carregar a imagem do banner.');
+      input.value = '';
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.src = objectUrl;
+  }
+
+  protected clearBanner(ficha: Ficha): void {
+    ficha.banner = '';
+    this.scheduleAutoSave();
   }
 
   protected displayValue(value?: string | number | null): string {

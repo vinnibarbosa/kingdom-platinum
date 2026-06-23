@@ -1,0 +1,2 @@
+ALTER TABLE fichas
+    ADD COLUMN IF NOT EXISTS banner TEXT;

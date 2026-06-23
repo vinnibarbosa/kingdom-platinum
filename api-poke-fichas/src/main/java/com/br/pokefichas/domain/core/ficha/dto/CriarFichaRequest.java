@@ -48,6 +48,7 @@ public record CriarFichaRequest(
         @Size(max = 24)
         String corTema,
         String photoplayer,
+        String banner,
         @Size(max = 120)
         String avatar,
         @Size(max = 120)

@@ -22,6 +22,7 @@ export function fichaToPayload(ficha: Ficha): FichaPayload {
     slotUpgrade: Number(ficha.slotUpgrade ?? 0),
     corTema: ficha.corTema ?? '',
     photoplayer: ficha.photoplayer ?? '',
+    banner: ficha.banner ?? '',
     avatar: ficha.avatar ?? '',
     player: ficha.player ?? '',
     biografia: ficha.biografia ?? '',

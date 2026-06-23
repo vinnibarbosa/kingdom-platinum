@@ -93,6 +93,9 @@ public class Ficha extends OrgBaseEntity<Long> {
     @Column(name = "photoplayer", columnDefinition = "TEXT")
     private String photoplayer;
 
+    @Column(name = "banner", columnDefinition = "TEXT")
+    private String banner;
+
     @Column(name = "avatar", length = 120)
     private String avatar;
 
@@ -196,6 +199,10 @@ public class Ficha extends OrgBaseEntity<Long> {
 
     public String getPhotoplayer() {
         return photoplayer;
+    }
+
+    public String getBanner() {
+        return banner;
     }
 
     public String getAvatar() {
@@ -365,6 +372,11 @@ public class Ficha extends OrgBaseEntity<Long> {
 
         public Builder photoplayer(final String photoplayer) {
             entity.photoplayer = photoplayer;
+            return this;
+        }
+
+        public Builder banner(final String banner) {
+            entity.banner = banner;
             return this;
         }
 

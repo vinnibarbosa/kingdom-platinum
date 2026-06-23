@@ -35,6 +35,9 @@ interface BadgeOption {
           />
         </div>
         <header class="public-hero">
+          <span class="public-hero-banner" *ngIf="current.banner" aria-hidden="true">
+            <img [src]="current.banner" alt="" />
+          </span>
           <div class="public-portrait">
             <img *ngIf="current.photoplayer" [src]="current.photoplayer" [alt]="current.nome" />
             <span *ngIf="!current.photoplayer">{{ initials(current.nome) }}</span>

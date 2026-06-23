@@ -112,6 +112,7 @@ export class FichaListPageComponent implements OnInit {
       slotUpgrade: 0,
       corTema: '#586a9b',
       photoplayer: '',
+      banner: '',
       avatar: '',
       player: '',
       biografia: '',
