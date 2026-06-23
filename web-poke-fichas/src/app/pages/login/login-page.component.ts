@@ -16,9 +16,15 @@ type AuthMode = 'login' | 'register';
     <section class="login-page">
       <div class="login-panel">
         <div>
-          <div class="login-brand-logo">
+          <a
+            class="login-brand-logo"
+            href="https://kingdomplatinum.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Abrir o site Kingdom Platinum"
+          >
             <img src="/assets/kingdom-platinum-logo.png" alt="Kingdom Platinum KP" />
-          </div>
+          </a>
           <h1>{{ mode() === 'login' ? 'Acesse suas fichas' : 'Crie sua conta' }}</h1>
           <p>{{ mode() === 'login' ? 'Entre para consultar e editar seus personagens.' : 'Escolha um usuário e uma senha para começar.' }}</p>
         </div>

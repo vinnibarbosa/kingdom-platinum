@@ -1364,7 +1364,7 @@ export class FichaPageComponent implements OnInit {
   protected readonly badgeCaseOpen = signal(false);
   protected readonly ribbonCaseOpen = signal(false);
   protected readonly draggingPokemon = signal<FichaPokemon | null>(null);
-  protected readonly defaultTheme = '#586a9b';
+  protected readonly defaultTheme = '#aeb5bf';
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
   protected readonly generos = ['Masculino', 'Feminino', 'Intersexo'];
@@ -3483,7 +3483,7 @@ export class FichaPageComponent implements OnInit {
       cinza: '#64706c',
     };
     const value = themeName?.trim() || this.defaultTheme;
-    if (value.toLowerCase() === '#2f6f55') {
+    if (['#2f6f55', '#586a9b'].includes(value.toLowerCase())) {
       return this.defaultTheme;
     }
     return /^#[0-9a-fA-F]{6}$/.test(value) ? value : legacyThemes[value] ?? this.defaultTheme;

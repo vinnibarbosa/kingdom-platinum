@@ -173,6 +173,6 @@ export const ITEM_CATEGORIES = [
 ] as const
 
 export const DEFAULT_THEME: ThemeColors = {
-  primary: '#586a9b',
+  primary: '#aeb5bf',
   secondary: '#c8922f',
 }

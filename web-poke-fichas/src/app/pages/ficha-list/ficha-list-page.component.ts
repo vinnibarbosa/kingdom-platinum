@@ -110,7 +110,7 @@ export class FichaListPageComponent implements OnInit {
       equipe: '',
       miniUpgrade: 0,
       slotUpgrade: 0,
-      corTema: '#586a9b',
+      corTema: '#aeb5bf',
       photoplayer: '',
       banner: '',
       avatar: '',

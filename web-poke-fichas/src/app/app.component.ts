@@ -12,7 +12,13 @@ import { PasswordResetComponent } from './components/password-reset/password-res
   template: `
     <div class="shell">
       <header class="topbar" *ngIf="isLoggedIn()">
-        <a class="brand" routerLink="/" aria-label="Kingdom Platinum KP">
+        <a
+          class="brand"
+          href="https://kingdomplatinum.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Abrir o site Kingdom Platinum"
+        >
           <img class="brand-logo" src="/assets/kingdom-platinum-logo.png" alt="Kingdom Platinum KP" />
         </a>
 

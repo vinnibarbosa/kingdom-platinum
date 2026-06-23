@@ -316,11 +316,11 @@ export class FichaViewPageComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly selectedRelacionado = signal<FichaRelacionado | null>(null);
   protected readonly selectedPokemon = signal<FichaPokemon | null>(null);
-  protected readonly defaultTheme = '#586a9b';
+  protected readonly defaultTheme = '#aeb5bf';
 
   protected themeAccent(theme?: string): string {
     const value = theme?.trim();
-    return !value || value.toLowerCase() === '#2f6f55' ? this.defaultTheme : value;
+    return !value || ['#2f6f55', '#586a9b'].includes(value.toLowerCase()) ? this.defaultTheme : value;
   }
   protected readonly badgeOptions: BadgeOption[] = [
     { id: 'insignia-1', label: 'Dyna Badge', icon: '/assets/badges/dyna-badge.png' },

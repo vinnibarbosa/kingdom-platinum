@@ -30,8 +30,9 @@ import java.time.Instant;
 @Component
 public class FichaMapper {
 
-    private static final String DEFAULT_THEME_COLOR = "#586a9b";
-    private static final String LEGACY_DEFAULT_THEME_COLOR = "#2f6f55";
+    private static final String DEFAULT_THEME_COLOR = "#aeb5bf";
+    private static final String LEGACY_GREEN_THEME_COLOR = "#2f6f55";
+    private static final String LEGACY_BLUE_THEME_COLOR = "#586a9b";
 
     public Ficha toEntity(final CriarFichaRequest request, final Long idOrganizacao) {
         return apply(Ficha.Builder.create().idOrganizacao(idOrganizacao), request).build();
@@ -100,7 +101,10 @@ public class FichaMapper {
     }
 
     private String normalizeThemeColor(final String color) {
-        if (color == null || color.isBlank() || LEGACY_DEFAULT_THEME_COLOR.equalsIgnoreCase(color.trim())) {
+        if (color == null
+                || color.isBlank()
+                || LEGACY_GREEN_THEME_COLOR.equalsIgnoreCase(color.trim())
+                || LEGACY_BLUE_THEME_COLOR.equalsIgnoreCase(color.trim())) {
             return DEFAULT_THEME_COLOR;
         }
         return color.trim();

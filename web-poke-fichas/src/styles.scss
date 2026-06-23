@@ -4,12 +4,12 @@
   background: #f4f1e8;
   color: #202532;
   --ink: #202532;
-  --muted: #6c7180;
-  --line: #d9d2c2;
+  --muted: #737982;
+  --line: #d5d8dc;
   --paper: #fffaf0;
   --paper-strong: #f7ead2;
-  --green: #586a9b;
-  --green-dark: #303a59;
+  --green: #aeb5bf;
+  --green-dark: #555e69;
   --gold: #c8922f;
   --red: #b34a3e;
   --success: #236343;
@@ -94,7 +94,7 @@ label {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid rgb(48 58 89 / 12%);
+  border-bottom: 1px solid rgb(85 94 105 / 14%);
   background: rgb(255 250 240 / 86%);
   padding: 0.8rem clamp(1rem, 3vw, 2rem);
   backdrop-filter: blur(16px);
@@ -169,7 +169,7 @@ label {
   display: grid;
   width: min(100%, 430px);
   gap: 1.5rem;
-  border: 1px solid rgb(48 58 89 / 13%);
+  border: 1px solid rgb(85 94 105 / 14%);
   border-radius: 8px;
   background: var(--paper);
   padding: clamp(1.4rem, 4vw, 2.4rem);
@@ -314,9 +314,9 @@ label {
   flex: 0 0 30px;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgb(48 58 89 / 14%);
+  border: 1px solid rgb(85 94 105 / 15%);
   border-radius: 6px;
-  background: rgb(88 106 155 / 7%);
+  background: rgb(174 181 191 / 14%);
   color: var(--green-dark);
   font-size: 0.72rem;
   font-weight: 900;
@@ -363,9 +363,9 @@ img.custom-pokemon-art {
   aspect-ratio: 1;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgb(48 58 89 / 18%);
+  border: 1px solid rgb(85 94 105 / 18%);
   border-radius: 8px;
-  background: rgb(88 106 155 / 10%);
+  background: rgb(174 181 191 / 18%);
   color: var(--green-dark);
   font-size: 1.45rem;
   font-weight: 900;
@@ -423,7 +423,7 @@ dd {
   display: grid;
   grid-template-columns: minmax(240px, 300px) 1fr;
   overflow: hidden;
-  border: 1px solid rgb(48 58 89 / 16%);
+  border: 1px solid rgb(85 94 105 / 16%);
   border-radius: 8px;
   background: var(--paper);
   box-shadow: var(--shadow);
@@ -433,7 +433,7 @@ dd {
   display: grid;
   align-content: start;
   gap: 1.25rem;
-  background: var(--green);
+  background: var(--green-dark);
   color: #fffaf0;
   padding: 1.25rem;
 }
@@ -3099,9 +3099,9 @@ button.public-pokemon-card:focus-visible {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  border: 1px solid rgb(88 106 155 / 14%);
+  border: 1px solid rgb(174 181 191 / 20%);
   border-radius: 8px;
-  background: rgb(88 106 155 / 6%);
+  background: rgb(174 181 191 / 12%);
   padding: 0.65rem;
   color: var(--muted);
   font-weight: 800;
@@ -3149,7 +3149,7 @@ button.public-pokemon-card:focus-visible {
 .sprite-option:hover,
 .sprite-option.active {
   border-color: var(--green);
-  background: rgb(88 106 155 / 9%);
+  background: rgb(174 181 191 / 16%);
   color: var(--green-dark);
 }
 
