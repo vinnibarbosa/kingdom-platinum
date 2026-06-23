@@ -3338,6 +3338,30 @@ button.public-pokemon-card:focus-visible {
     flex-wrap: wrap;
   }
 
+  .topbar {
+    gap: 0.65rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .brand {
+    align-self: auto;
+  }
+
+  .brand-logo {
+    width: 8rem;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.55rem 0.8rem;
+  }
+
+  .topbar-actions .button {
+    min-height: 2.25rem;
+    padding: 0.55rem 0.75rem;
+  }
+
   .sheet-header {
     padding-top: 3.2rem;
     padding-right: 0;
@@ -3376,17 +3400,23 @@ button.public-pokemon-card:focus-visible {
   }
 
   .public-hero {
+    grid-template-rows: auto 118px auto auto;
     gap: 0;
     height: auto;
   }
 
   .public-hero-banner {
+    position: relative;
+    grid-row: 2;
+    width: 100%;
+    height: 118px;
+    inset: auto;
     left: 0;
     clip-path: none;
   }
 
   .public-portrait {
-    grid-row: auto;
+    grid-row: 1;
     min-height: 0;
     aspect-ratio: 16 / 9;
     border-right: 0;
@@ -3394,12 +3424,23 @@ button.public-pokemon-card:focus-visible {
   }
 
   .public-hero-main {
+    grid-row: 3;
     padding: 1.1rem 1rem 0;
   }
 
   .public-facts {
+    grid-row: 4;
     grid-column: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 0.9rem 1rem 1rem;
+  }
+
+  .public-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .public-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .public-badge-case {
@@ -3419,6 +3460,18 @@ button.public-pokemon-card:focus-visible {
 
   .profile-rail {
     grid-template-columns: 1fr;
+  }
+
+  .public-hero-banner {
+    height: 96px;
+  }
+
+  .public-hero {
+    grid-template-rows: auto 96px auto auto;
+  }
+
+  .public-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .portrait {
