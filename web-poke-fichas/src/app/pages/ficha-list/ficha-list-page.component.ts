@@ -133,7 +133,7 @@ export class FichaListPageComponent implements OnInit {
   }
 
   protected fichaLink(ficha: FichaResumo): (string | number)[] {
-    return this.isOwner(ficha) ? ['/ficha', ficha.id] : ['/ficha', ficha.id, 'visualizar'];
+    return this.isOwner(ficha) || this.isAdmin() ? ['/ficha', ficha.id] : ['/ficha', ficha.id, 'visualizar'];
   }
 
   protected initials(name: string): string {
@@ -163,5 +163,9 @@ export class FichaListPageComponent implements OnInit {
   private isOwner(ficha: FichaResumo): boolean {
     const currentUser = this.auth.currentUser();
     return Boolean(currentUser?.idOrganizacao && currentUser.idOrganizacao === ficha.idOrganizacao);
+  }
+
+  private isAdmin(): boolean {
+    return ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? '');
   }
 }

@@ -44,4 +44,17 @@ public class AtualizarFichaUseCase {
         historicoWriter.recordUpdate(before, after);
         return after;
     }
+
+    @Transactional
+    public FichaResponse handleAdmin(final Long id, final AtualizarFichaRequest request) {
+        final Ficha ficha = query.findByIdWithoutContext(id)
+                .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + id));
+        final FichaResponse before = mapper.toResponse(ficha, query.findDetalhesWithoutContext(id));
+        final Ficha saved = command.saveWithoutContext(mapper.toEntity(ficha, request));
+        detalhesWriter.replaceWithoutContext(request, saved.getId(), saved.getIdOrganizacao());
+        final FichaDetalhes detalhes = query.findDetalhesWithoutContext(saved.getId());
+        final FichaResponse after = mapper.toResponse(saved, detalhes);
+        historicoWriter.recordUpdateWithoutContext(before, after);
+        return after;
+    }
 }

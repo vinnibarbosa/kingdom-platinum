@@ -6,6 +6,7 @@ import { FichaHistoryComponent } from '../../components/ficha-history/ficha-hist
 import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete.component';
 import { Ficha, FichaConquista, FichaItem, FichaPokemon, FichaRelacionado } from '../../models/ficha.model';
 import { FichaApiService } from '../../services/ficha-api.service';
+import { AuthService } from '../../services/auth.service';
 import { display, money } from '../../services/ficha-utils';
 import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
 
@@ -28,6 +29,7 @@ interface BadgeOption {
 
       <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="themeAccent(current.corTema)">
         <div class="public-admin-actions">
+          <a class="button ghost" *ngIf="isAdmin()" [routerLink]="['/ficha', current.id]">Editar ficha</a>
           <app-ficha-history [fichaId]="current.id" />
           <app-ficha-delete
             [fichaId]="current.id"
@@ -80,8 +82,8 @@ interface BadgeOption {
 
         <section class="public-section" *ngIf="current.biografia || current.anotacoes">
           <h2>História</h2>
-          <p *ngIf="current.biografia">{{ current.biografia }}</p>
-          <p *ngIf="current.anotacoes">{{ current.anotacoes }}</p>
+          <p class="justified-text" *ngIf="current.biografia">{{ current.biografia }}</p>
+          <p class="justified-text" *ngIf="current.anotacoes">{{ current.anotacoes }}</p>
         </section>
 
         <section class="public-section" *ngIf="current.relacionados.length">
@@ -309,6 +311,7 @@ interface BadgeOption {
 })
 export class FichaViewPageComponent implements OnInit {
   private readonly api = inject(FichaApiService);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly ficha = signal<Ficha | null>(null);
@@ -460,5 +463,9 @@ export class FichaViewPageComponent implements OnInit {
       itens: ficha.itens ?? [],
       registros: ficha.registros ?? [],
     };
+  }
+
+  protected isAdmin(): boolean {
+    return ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? '');
   }
 }

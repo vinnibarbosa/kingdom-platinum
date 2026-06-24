@@ -43,6 +43,16 @@ public class FichaHistoricoWriter {
     }
 
     public void recordUpdate(final FichaResponse before, final FichaResponse after) {
+        recordUpdate(before, after, false);
+    }
+
+    public void recordUpdateWithoutContext(final FichaResponse before, final FichaResponse after) {
+        recordUpdate(before, after, true);
+    }
+
+    private void recordUpdate(final FichaResponse before,
+                              final FichaResponse after,
+                              final boolean withoutContext) {
         final List<Change> changes = new ArrayList<>();
         compare("", objectMapper.valueToTree(before), objectMapper.valueToTree(after), changes);
         if (changes.isEmpty()) {
@@ -50,7 +60,7 @@ public class FichaHistoricoWriter {
         }
 
         final String lote = UUID.randomUUID().toString();
-        command.saveHistoricos(changes.stream()
+        final List<FichaHistorico> historicos = changes.stream()
                 .map(change -> build(
                         after.id(),
                         after.idOrganizacao(),
@@ -60,7 +70,12 @@ public class FichaHistoricoWriter {
                         change.before(),
                         change.after()
                 ))
-                .toList());
+                .toList();
+        if (withoutContext) {
+            command.saveHistoricosWithoutContext(historicos);
+            return;
+        }
+        command.saveHistoricos(historicos);
     }
 
     private void compare(final String path,

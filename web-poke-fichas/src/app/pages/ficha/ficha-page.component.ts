@@ -423,7 +423,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
           </section>
 
           <section class="tab-panel" *ngIf="tab() === 'historia'">
-            <label class="full-field">Biografia<textarea rows="10" [(ngModel)]="current.biografia"></textarea></label>
+            <label class="full-field">Biografia<textarea class="justified-text" rows="10" [(ngModel)]="current.biografia"></textarea></label>
 
             <div class="collection-head">
               <h3>Relacionados</h3>
@@ -851,7 +851,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
           </section>
 
           <section class="tab-panel" *ngIf="tab() === 'extras'">
-            <label class="full-field">Anotações<textarea rows="8" [(ngModel)]="current.anotacoes"></textarea></label>
+            <label class="full-field">Anotações<textarea class="justified-text" rows="8" [(ngModel)]="current.anotacoes"></textarea></label>
 
             <div class="collection-head">
               <h3>Habilidades</h3>
@@ -1543,7 +1543,8 @@ export class FichaPageComponent implements OnInit {
     this.loadInventoryItems();
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.api.get(id).subscribe({
+    const request = this.isAdmin() ? this.api.getForAdmin(id) : this.api.get(id);
+    request.subscribe({
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
@@ -1585,7 +1586,7 @@ export class FichaPageComponent implements OnInit {
     this.success.set('');
     this.error.set('');
 
-    this.api.update(current.id, fichaToPayload(current)).subscribe({
+    this.updateFicha(current).subscribe({
       next: (updated) => {
         const selectedIndex = this.selectedPokemonIndex();
         const normalized = this.normalizeFicha(updated);
@@ -3455,7 +3456,7 @@ export class FichaPageComponent implements OnInit {
     this.success.set('');
     this.error.set('');
     this.autoSaveInFlight = true;
-    this.api.update(current.id, fichaToPayload(current)).subscribe({
+    this.updateFicha(current).subscribe({
       next: () => this.finishAutoSave(),
       error: () => {
         this.error.set('Não foi possível salvar automaticamente.');
@@ -3472,6 +3473,17 @@ export class FichaPageComponent implements OnInit {
 
     this.autoSavePending = false;
     this.autoSaveFicha();
+  }
+
+  private isAdmin(): boolean {
+    return ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? '');
+  }
+
+  private updateFicha(ficha: Ficha) {
+    const payload = fichaToPayload(ficha);
+    return this.isAdmin()
+      ? this.api.updateForAdmin(ficha.id, payload)
+      : this.api.update(ficha.id, payload);
   }
 
   private normalizeThemeColor(themeName?: string): string {

@@ -156,6 +156,12 @@ public class JpaRepository {
         return save(entity, SaveOptions.defaults());
     }
 
+    public <T extends IEntity<?>> T saveWithoutContext(final T entity) {
+        Objects.requireNonNull(entity, "Entity cannot be null");
+        setAuditInfo(entity);
+        return entity.isNew() ? persistAndFlush(entity) : mergeAndFlush(entity);
+    }
+
     public record SaveOptions(boolean fireEvents, boolean detach) {
         public static SaveOptions defaults() { return new SaveOptions(true, false); }
         public static SaveOptions withDetach() { return new SaveOptions(true, true); }
@@ -190,6 +196,14 @@ public class JpaRepository {
                 .map(Collection::stream)
                 .orElse(java.util.stream.Stream.empty())
                 .map(this::save)
+                .toList();
+    }
+
+    public <T extends IEntity<?>> List<T> saveAllWithoutContext(final Collection<T> entities) {
+        return Optional.ofNullable(entities)
+                .map(Collection::stream)
+                .orElse(java.util.stream.Stream.empty())
+                .map(this::saveWithoutContext)
                 .toList();
     }
 
@@ -421,6 +435,18 @@ public class JpaRepository {
 
     public <T> long delete(final Class<T> entityClass, final Predicate... predicates) {
         return delete(entityClass, query -> query.where(predicates));
+    }
+
+    public <T> long deleteWithoutContext(final Class<T> entityClass, final Predicate... predicates) {
+        final PathBuilder<T> entityPath = pathBuilderFactory.create(entityClass);
+        final JPADeleteClause clause = new JPADeleteClause(em, entityPath, jpqlTemplate);
+        clause.where(predicates);
+        try {
+            return clause.execute();
+        } catch (final PersistenceException e) {
+            handleRemoveException(e);
+            return -1;
+        }
     }
 
     public <T> long delete(final Class<T> entityClass, final Consumer<JPADeleteClause> consumer) {

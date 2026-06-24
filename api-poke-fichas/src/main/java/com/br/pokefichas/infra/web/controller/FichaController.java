@@ -70,6 +70,13 @@ public class FichaController {
         return ResponseEntity.ok(buscar.handle(id));
     }
 
+    @GetMapping("/{id}/administracao")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Buscar qualquer ficha para administracao")
+    public ResponseEntity<FichaResponse> findByIdForAdmin(@PathVariable final Long id) {
+        return ResponseEntity.ok(buscar.handleAdmin(id));
+    }
+
     @GetMapping("/publicas/{id}")
     @Operation(summary = "Visualizar ficha publica por ID")
     public ResponseEntity<FichaResponse> findPublicById(@PathVariable final Long id) {
@@ -105,5 +112,14 @@ public class FichaController {
             @PathVariable final Long id,
             @Valid @RequestBody final AtualizarFichaRequest request) {
         return ResponseEntity.ok(atualizar.handle(id, request));
+    }
+
+    @PutMapping("/{id}/administracao")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Atualizar qualquer ficha como administrador")
+    public ResponseEntity<FichaResponse> updateForAdmin(
+            @PathVariable final Long id,
+            @Valid @RequestBody final AtualizarFichaRequest request) {
+        return ResponseEntity.ok(atualizar.handleAdmin(id, request));
     }
 }

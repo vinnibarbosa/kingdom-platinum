@@ -23,7 +23,7 @@ import { PasswordResetComponent } from './components/password-reset/password-res
         </a>
 
         <nav class="topbar-actions">
-          <a routerLink="/">Fichas</a>
+          <a class="topbar-library-link" routerLink="/">Fichas</a>
           <span>{{ username() }}</span>
           <button type="button" class="button ghost" *ngIf="isAdmin()" (click)="passwordResetOpen.set(true)">
             Redefinir senha de usuário

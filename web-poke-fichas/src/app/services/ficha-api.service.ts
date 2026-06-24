@@ -22,6 +22,12 @@ export class FichaApiService {
     });
   }
 
+  getForAdmin(id: number): Observable<Ficha> {
+    return this.http.get<Ficha>(`${API_BASE}/fichas/${id}/administracao`, {
+      withCredentials: true,
+    });
+  }
+
   getPublic(id: number): Observable<Ficha> {
     return this.http.get<Ficha>(`${API_BASE}/fichas/publicas/${id}`);
   }
@@ -34,6 +40,12 @@ export class FichaApiService {
 
   update(id: number, payload: FichaPayload): Observable<Ficha> {
     return this.http.put<Ficha>(`${API_BASE}/fichas/${id}`, payload, {
+      withCredentials: true,
+    });
+  }
+
+  updateForAdmin(id: number, payload: FichaPayload): Observable<Ficha> {
+    return this.http.put<Ficha>(`${API_BASE}/fichas/${id}/administracao`, payload, {
       withCredentials: true,
     });
   }

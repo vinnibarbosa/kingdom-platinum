@@ -35,6 +35,10 @@ public class FichaCommand {
         return repository.save(ficha);
     }
 
+    public Ficha saveWithoutContext(final Ficha ficha) {
+        return repository.saveWithoutContext(ficha);
+    }
+
     public void delete(final Ficha ficha) {
         repository.remove(ficha);
     }
@@ -71,6 +75,38 @@ public class FichaCommand {
         return repository.saveAll(historicos);
     }
 
+    public List<FichaRelacionado> saveRelacionadosWithoutContext(final List<FichaRelacionado> relacionados) {
+        return repository.saveAllWithoutContext(relacionados);
+    }
+
+    public List<FichaHabilidade> saveHabilidadesWithoutContext(final List<FichaHabilidade> habilidades) {
+        return repository.saveAllWithoutContext(habilidades);
+    }
+
+    public List<FichaConquista> saveConquistasWithoutContext(final List<FichaConquista> conquistas) {
+        return repository.saveAllWithoutContext(conquistas);
+    }
+
+    public List<FichaPokemon> savePokemonsWithoutContext(final List<FichaPokemon> pokemons) {
+        return repository.saveAllWithoutContext(pokemons);
+    }
+
+    public List<FichaPokemonMovimento> saveMovimentosWithoutContext(final List<FichaPokemonMovimento> movimentos) {
+        return repository.saveAllWithoutContext(movimentos);
+    }
+
+    public List<FichaItem> saveItensWithoutContext(final List<FichaItem> itens) {
+        return repository.saveAllWithoutContext(itens);
+    }
+
+    public List<FichaRegistro> saveRegistrosWithoutContext(final List<FichaRegistro> registros) {
+        return repository.saveAllWithoutContext(registros);
+    }
+
+    public List<FichaHistorico> saveHistoricosWithoutContext(final List<FichaHistorico> historicos) {
+        return repository.saveAllWithoutContext(historicos);
+    }
+
     public void deleteDetalhesByFicha(final Long idFicha) {
         repository.delete(FichaPokemonMovimento.class, fichaPokemonMovimento.idFicha.eq(idFicha));
         repository.delete(FichaPokemon.class, fichaPokemon.idFicha.eq(idFicha));
@@ -79,5 +115,15 @@ public class FichaCommand {
         repository.delete(FichaConquista.class, fichaConquista.idFicha.eq(idFicha));
         repository.delete(FichaItem.class, fichaItem.idFicha.eq(idFicha));
         repository.delete(FichaRegistro.class, fichaRegistro.idFicha.eq(idFicha));
+    }
+
+    public void deleteDetalhesByFichaWithoutContext(final Long idFicha) {
+        repository.deleteWithoutContext(FichaPokemonMovimento.class, fichaPokemonMovimento.idFicha.eq(idFicha));
+        repository.deleteWithoutContext(FichaPokemon.class, fichaPokemon.idFicha.eq(idFicha));
+        repository.deleteWithoutContext(FichaRelacionado.class, fichaRelacionado.idFicha.eq(idFicha));
+        repository.deleteWithoutContext(FichaHabilidade.class, fichaHabilidade.idFicha.eq(idFicha));
+        repository.deleteWithoutContext(FichaConquista.class, fichaConquista.idFicha.eq(idFicha));
+        repository.deleteWithoutContext(FichaItem.class, fichaItem.idFicha.eq(idFicha));
+        repository.deleteWithoutContext(FichaRegistro.class, fichaRegistro.idFicha.eq(idFicha));
     }
 }

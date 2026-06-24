@@ -43,6 +43,18 @@ public class FichaDetalhesWriter {
         command.saveRegistros(mapper.toRegistros(request.registros(), idFicha, idOrganizacao));
     }
 
+    public void replaceWithoutContext(final AtualizarFichaRequest request,
+                                      final Long idFicha,
+                                      final Long idOrganizacao) {
+        command.deleteDetalhesByFichaWithoutContext(idFicha);
+        command.saveRelacionadosWithoutContext(mapper.toRelacionados(request.relacionados(), idFicha, idOrganizacao));
+        command.saveHabilidadesWithoutContext(mapper.toHabilidades(request.habilidades(), idFicha, idOrganizacao));
+        command.saveConquistasWithoutContext(mapper.toConquistas(request.conquistas(), idFicha, idOrganizacao));
+        savePokemonsWithoutContext(request.pokemons(), idFicha, idOrganizacao);
+        command.saveItensWithoutContext(mapper.toItens(request.itens(), idFicha, idOrganizacao));
+        command.saveRegistrosWithoutContext(mapper.toRegistros(request.registros(), idFicha, idOrganizacao));
+    }
+
     private void savePokemons(final List<FichaPokemonRequest> requests,
                               final Long idFicha,
                               final Long idOrganizacao) {
@@ -60,5 +72,24 @@ public class FichaDetalhesWriter {
                 .flatMap(List::stream)
                 .toList();
         command.saveMovimentos(movimentos);
+    }
+
+    private void savePokemonsWithoutContext(final List<FichaPokemonRequest> requests,
+                                            final Long idFicha,
+                                            final Long idOrganizacao) {
+        final List<FichaPokemonRequest> pokemonRequests = Optional.ofNullable(requests).orElse(List.of());
+        final List<FichaPokemon> savedPokemons = command.savePokemonsWithoutContext(
+                mapper.toPokemons(pokemonRequests, idFicha, idOrganizacao)
+        );
+        final List<FichaPokemonMovimento> movimentos = IntStream.range(0, savedPokemons.size())
+                .mapToObj(index -> mapper.toMovimentos(
+                        pokemonRequests.get(index),
+                        idFicha,
+                        idOrganizacao,
+                        savedPokemons.get(index).getId()
+                ))
+                .flatMap(List::stream)
+                .toList();
+        command.saveMovimentosWithoutContext(movimentos);
     }
 }

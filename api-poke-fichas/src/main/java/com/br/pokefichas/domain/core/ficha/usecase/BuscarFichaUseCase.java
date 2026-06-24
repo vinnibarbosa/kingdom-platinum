@@ -35,4 +35,12 @@ public class BuscarFichaUseCase {
         final FichaDetalhes detalhes = query.findDetalhesWithoutContext(id);
         return mapper.toResponse(ficha, detalhes);
     }
+
+    @Transactional(readOnly = true)
+    public FichaResponse handleAdmin(final Long id) {
+        final Ficha ficha = query.findByIdWithoutContext(id)
+                .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + id));
+        final FichaDetalhes detalhes = query.findDetalhesWithoutContext(id);
+        return mapper.toResponse(ficha, detalhes);
+    }
 }
