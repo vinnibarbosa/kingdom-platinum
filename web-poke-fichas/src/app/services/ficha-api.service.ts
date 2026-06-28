@@ -32,6 +32,10 @@ export class FichaApiService {
     return this.http.get<Ficha>(`${API_BASE}/fichas/publicas/${id}`);
   }
 
+  getPublicBySlug(slug: string): Observable<Ficha> {
+    return this.http.get<Ficha>(`${API_BASE}/fichas/publicas/slug/${encodeURIComponent(slug)}`);
+  }
+
   getHistory(id: number): Observable<FichaHistorico[]> {
     return this.http.get<FichaHistorico[]>(`${API_BASE}/fichas/${id}/historico`, {
       withCredentials: true,

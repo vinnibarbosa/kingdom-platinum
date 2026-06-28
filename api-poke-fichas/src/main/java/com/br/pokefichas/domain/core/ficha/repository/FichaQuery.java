@@ -49,6 +49,10 @@ public class FichaQuery {
         return repository.findUniqueOptionalWithoutTenantFilter(Ficha.class, ficha.id.eq(id));
     }
 
+    public List<Ficha> findAllWithoutContext() {
+        return repository.findAllWithoutTenantFilter(Ficha.class);
+    }
+
     public Page<Ficha> findAll(final PageRequest pageRequest) {
         final Pageable pageable = pageRequest.toPageable(Sort.of(ficha.nome.asc(), ficha.id.asc()));
         return repository.findAll(Ficha.class, pageable);

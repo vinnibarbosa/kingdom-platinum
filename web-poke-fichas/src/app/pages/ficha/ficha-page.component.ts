@@ -3,6 +3,7 @@ import { CdkDrag, CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs';
 
 import {
   Ficha,
@@ -107,6 +108,21 @@ interface PokemonEntry {
 interface PokemonListView {
   equipe: PokemonEntry[];
   box: PokemonEntry[];
+}
+
+interface ImageCropDraft {
+  target: 'profile' | 'banner';
+  ficha: Ficha;
+  source: string;
+  objectUrl: string;
+  fileInput: HTMLInputElement;
+  imageWidth: number;
+  imageHeight: number;
+  outputWidth: number;
+  outputHeight: number;
+  zoom: number;
+  x: number;
+  y: number;
 }
 
 const ITEMDEX_DETAILS: Record<string, { category: string; description: string }> = {
@@ -318,7 +334,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
               <p>{{ current.ocupacao || current.equipe || 'Ficha de aventura' }}</p>
             </div>
             <div class="sheet-actions">
-              <a class="button ghost" [routerLink]="['/ficha', current.id, 'visualizar']">Visualizar</a>
+              <a class="button ghost" [routerLink]="['/ficha', fichaSlug(current)]">Visualizar</a>
               <app-ficha-history [fichaId]="current.id" />
               <app-ficha-delete
                 [fichaId]="current.id"
@@ -411,11 +427,11 @@ const ITEMDEX_ICONS: Record<string, string> = {
               <div class="edit-panel">
                 <label>Idade<input type="number" [(ngModel)]="current.idade" /></label>
                 <label>Altura<input type="number" [(ngModel)]="current.alturaCm" /></label>
-                <label>Peso<input type="number" [(ngModel)]="current.pesoKg" /></label>
+                <label>Peso<input inputmode="decimal" [ngModel]="current.pesoKg" (ngModelChange)="updateNumericField(current, 'pesoKg', $event)" /></label>
                 <label>Tipo Físico<input [(ngModel)]="current.tipoFisico" /></label>
                 <label>Pontos de Ranking<input type="number" [(ngModel)]="current.ranking" /></label>
                 <label>Pontos de Reputação<input type="number" [(ngModel)]="current.reputacao" /></label>
-                <label>Dinheiro<input type="number" [(ngModel)]="current.dinheiro" /></label>
+                <label>Dinheiro<input inputmode="decimal" [ngModel]="current.dinheiro" (ngModelChange)="updateNumericField(current, 'dinheiro', $event)" /></label>
                 <label>Pontos de Vida<input type="number" [(ngModel)]="current.pontosVida" /></label>
                 <label>Pontos<input type="number" [(ngModel)]="current.pontos" /></label>
               </div>
@@ -761,7 +777,6 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 <label>STM<input type="number" [(ngModel)]="pokemon.stm" /></label>
                 <label>SKL<input type="number" [(ngModel)]="pokemon.skl" /></label>
                 <label>JMP<input type="number" [(ngModel)]="pokemon.jmp" /></label>
-                <label>Contest speed<input type="number" [(ngModel)]="pokemon.contestSpeed" /></label>
               </div>
               <label class="full-field">Combo<textarea rows="3" [(ngModel)]="pokemon.combo"></textarea></label>
               <label class="full-field">Sobre<textarea rows="4" [(ngModel)]="pokemon.sobre"></textarea></label>
@@ -791,7 +806,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       [class.has-type]="!!movimento.tipo"
                       placeholder="Nome personalizado"
                       [(ngModel)]="movimento.nome"
-                      (blur)="closeEmptyCustomMove(movimento)"
+                      (blur)="detectCustomMoveName(pokemon, movimento)"
                     />
                   </ng-template>
                 </div>
@@ -1107,6 +1122,42 @@ const ITEMDEX_ICONS: Record<string, string> = {
         </div>
       </div>
 
+      <div class="modal-backdrop" *ngIf="imageCropDraft() as crop" (click)="closeImageCropper()">
+        <div class="image-crop-modal" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Imagem</span>
+              <h3>{{ crop.target === 'profile' ? 'Recortar foto de perfil' : 'Recortar banner' }}</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="closeImageCropper()">Cancelar</button>
+          </div>
+
+          <div
+            class="image-crop-preview"
+            [class.banner-crop]="crop.target === 'banner'"
+            [style.--crop-image]="'url(' + crop.source + ')'"
+            [style.--crop-zoom]="crop.zoom * 100 + '%'"
+            [style.--crop-x]="crop.x + '%'"
+            [style.--crop-y]="crop.y + '%'"
+            (pointerdown)="startImageCropDrag($event, crop)"
+            (pointermove)="moveImageCropDrag($event)"
+            (pointerup)="endImageCropDrag($event)"
+            (pointercancel)="endImageCropDrag($event)"
+          ></div>
+
+          <p class="image-crop-hint">Arraste a imagem para enquadrar o recorte.</p>
+
+          <div class="image-crop-controls">
+            <label>Zoom<input type="range" min="1" max="3" step="0.01" [(ngModel)]="crop.zoom" /></label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="button ghost" (click)="closeImageCropper()">Cancelar</button>
+            <button type="button" class="button primary" (click)="applyImageCrop()">Aplicar recorte</button>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-backdrop" *ngIf="spritePickerFor() as selectedPokemon" (click)="closeSpritePicker()">
         <div class="sprite-modal" (click)="$event.stopPropagation()">
           <div class="modal-head">
@@ -1342,6 +1393,15 @@ export class FichaPageComponent implements OnInit {
   private readonly customMoveEditors = new WeakSet<FichaPokemonMovimento>();
   private nextPokemonIdentity = 1;
   private suppressPokemonClick = false;
+  private imageCropDrag?: {
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startCropX: number;
+    startCropY: number;
+    width: number;
+    height: number;
+  };
 
   protected readonly ficha = signal<Ficha | null>(null);
   protected readonly loading = signal(true);
@@ -1364,6 +1424,7 @@ export class FichaPageComponent implements OnInit {
   protected readonly badgeCaseOpen = signal(false);
   protected readonly ribbonCaseOpen = signal(false);
   protected readonly draggingPokemon = signal<FichaPokemon | null>(null);
+  protected readonly imageCropDraft = signal<ImageCropDraft | null>(null);
   protected readonly defaultTheme = '#aeb5bf';
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
@@ -1542,8 +1603,13 @@ export class FichaPageComponent implements OnInit {
     this.loadHeldItems();
     this.loadInventoryItems();
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    const request = this.isAdmin() ? this.api.getForAdmin(id) : this.api.get(id);
+    const identifier = this.route.snapshot.paramMap.get('slug') ?? this.route.snapshot.paramMap.get('id') ?? '';
+    const numericId = Number(identifier);
+    const request = Number.isFinite(numericId) && numericId > 0
+      ? (this.isAdmin() ? this.api.getForAdmin(numericId) : this.api.get(numericId))
+      : this.api.getPublicBySlug(identifier).pipe(
+          switchMap((ficha) => this.isAdmin() ? this.api.getForAdmin(ficha.id) : this.api.get(ficha.id))
+        );
     request.subscribe({
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
@@ -1554,7 +1620,7 @@ export class FichaPageComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.router.navigate(['/ficha', id, 'visualizar']);
+        this.router.navigate(['/ficha', identifier]);
         this.loading.set(false);
       },
     });
@@ -2322,6 +2388,25 @@ export class FichaPageComponent implements OnInit {
     });
   }
 
+  protected detectCustomMoveName(pokemon: FichaPokemon, movimento: FichaPokemonMovimento): void {
+    const moveName = movimento.nome?.trim() ?? '';
+    if (!moveName) {
+      this.closeEmptyCustomMove(movimento);
+      return;
+    }
+
+    const knownMove = this.pokemonMoves(pokemon).find(
+      (option) => this.pokemonKey(option.name) === this.pokemonKey(moveName)
+    );
+    if (knownMove) {
+      this.customMoveEditors.delete(movimento);
+      this.selectMove(pokemon, movimento, knownMove.name);
+      return;
+    }
+
+    this.loadMoveDetails(pokemon, movimento, this.pokemonKey(moveName));
+  }
+
   protected selectMove(pokemon: FichaPokemon, movimento: FichaPokemonMovimento, moveName: string): void {
     if (!moveName.trim()) {
       movimento.categoria = '';
@@ -3061,6 +3146,7 @@ export class FichaPageComponent implements OnInit {
         accuracy?: number | null;
         damage_class?: { name: string };
         contest_type?: { name: string } | null;
+        name?: string;
         power?: number | null;
         type?: { name: string };
       }) => {
@@ -3069,6 +3155,7 @@ export class FichaPageComponent implements OnInit {
         const style = data.contest_type?.name ? this.displayPokemonText(data.contest_type.name) : '';
         const power = data.power ?? undefined;
         const accuracy = data.accuracy ?? undefined;
+        movimento.nome = data.name ?? movimento.nome;
         movimento.categoria = category;
         movimento.tipo = type;
         movimento.style = style || movimento.style;
@@ -3220,34 +3307,7 @@ export class FichaPageComponent implements OnInit {
       return;
     }
 
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      const maxSize = 900;
-      const ratio = Math.min(1, maxSize / Math.max(image.width, image.height));
-      const width = Math.max(1, Math.round(image.width * ratio));
-      const height = Math.max(1, Math.round(image.height * ratio));
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-
-      canvas.width = width;
-      canvas.height = height;
-      context?.drawImage(image, 0, 0, width, height);
-
-      ficha.photoplayer = canvas.toDataURL('image/jpeg', 0.82);
-      input.value = '';
-      URL.revokeObjectURL(objectUrl);
-      this.scheduleAutoSave();
-    };
-
-    image.onerror = () => {
-      this.error.set('Não foi possível carregar esta imagem.');
-      input.value = '';
-      URL.revokeObjectURL(objectUrl);
-    };
-
-    image.src = objectUrl;
+    this.openImageCropper(file, input, ficha, 'profile');
   }
 
   protected selectBannerImage(event: Event, ficha: Ficha): void {
@@ -3257,35 +3317,7 @@ export class FichaPageComponent implements OnInit {
       return;
     }
 
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      const maxWidth = 1400;
-      const maxHeight = 700;
-      const ratio = Math.min(1, maxWidth / image.width, maxHeight / image.height);
-      const width = Math.max(1, Math.round(image.width * ratio));
-      const height = Math.max(1, Math.round(image.height * ratio));
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-
-      canvas.width = width;
-      canvas.height = height;
-      context?.drawImage(image, 0, 0, width, height);
-
-      ficha.banner = canvas.toDataURL('image/webp', 0.76);
-      input.value = '';
-      URL.revokeObjectURL(objectUrl);
-      this.scheduleAutoSave();
-    };
-
-    image.onerror = () => {
-      this.error.set('Não foi possível carregar a imagem do banner.');
-      input.value = '';
-      URL.revokeObjectURL(objectUrl);
-    };
-
-    image.src = objectUrl;
+    this.openImageCropper(file, input, ficha, 'banner');
   }
 
   protected clearBanner(ficha: Ficha): void {
@@ -3293,12 +3325,162 @@ export class FichaPageComponent implements OnInit {
     this.scheduleAutoSave();
   }
 
+  private openImageCropper(file: File, input: HTMLInputElement, ficha: Ficha, target: ImageCropDraft['target']): void {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      this.imageCropDraft.set({
+        target,
+        ficha,
+        source: objectUrl,
+        objectUrl,
+        fileInput: input,
+        imageWidth: image.naturalWidth || image.width,
+        imageHeight: image.naturalHeight || image.height,
+        outputWidth: target === 'profile' ? 900 : 1400,
+        outputHeight: target === 'profile' ? 900 : 540,
+        zoom: 1,
+        x: 50,
+        y: 50,
+      });
+    };
+
+    image.onerror = () => {
+      this.error.set(target === 'profile' ? 'Nao foi possivel carregar esta imagem.' : 'Nao foi possivel carregar a imagem do banner.');
+      input.value = '';
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.src = objectUrl;
+  }
+
+  protected closeImageCropper(): void {
+    const draft = this.imageCropDraft();
+    if (draft) {
+      draft.fileInput.value = '';
+      URL.revokeObjectURL(draft.objectUrl);
+    }
+    this.imageCropDrag = undefined;
+    this.imageCropDraft.set(null);
+  }
+
+  protected startImageCropDrag(event: PointerEvent, draft: ImageCropDraft): void {
+    const target = event.currentTarget as HTMLElement;
+    const bounds = target.getBoundingClientRect();
+    target.setPointerCapture?.(event.pointerId);
+    this.imageCropDrag = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startCropX: draft.x,
+      startCropY: draft.y,
+      width: bounds.width,
+      height: bounds.height,
+    };
+    event.preventDefault();
+  }
+
+  protected moveImageCropDrag(event: PointerEvent): void {
+    const draft = this.imageCropDraft();
+    const drag = this.imageCropDrag;
+    if (!draft || !drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const zoomFactor = Math.max(1, draft.zoom);
+    const deltaX = ((event.clientX - drag.startClientX) / Math.max(1, drag.width)) * 100 / zoomFactor;
+    const deltaY = ((event.clientY - drag.startClientY) / Math.max(1, drag.height)) * 100 / zoomFactor;
+    draft.x = this.clampCropPosition(drag.startCropX - deltaX);
+    draft.y = this.clampCropPosition(drag.startCropY - deltaY);
+    event.preventDefault();
+  }
+
+  protected endImageCropDrag(event: PointerEvent): void {
+    if (this.imageCropDrag?.pointerId === event.pointerId) {
+      (event.currentTarget as HTMLElement | null)?.releasePointerCapture?.(event.pointerId);
+      this.imageCropDrag = undefined;
+    }
+  }
+
+  private clampCropPosition(value: number): number {
+    return Math.max(0, Math.min(100, value));
+  }
+
+  protected applyImageCrop(): void {
+    const draft = this.imageCropDraft();
+    if (!draft) {
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const aspect = draft.outputWidth / draft.outputHeight;
+      const baseWidth = Math.min(draft.imageWidth, draft.imageHeight * aspect);
+      const baseHeight = baseWidth / aspect;
+      const cropWidth = baseWidth / draft.zoom;
+      const cropHeight = baseHeight / draft.zoom;
+      const sourceX = Math.max(0, (draft.imageWidth - cropWidth) * (draft.x / 100));
+      const sourceY = Math.max(0, (draft.imageHeight - cropHeight) * (draft.y / 100));
+
+      canvas.width = draft.outputWidth;
+      canvas.height = draft.outputHeight;
+      context?.drawImage(image, sourceX, sourceY, cropWidth, cropHeight, 0, 0, draft.outputWidth, draft.outputHeight);
+
+      if (draft.target === 'profile') {
+        draft.ficha.photoplayer = canvas.toDataURL('image/jpeg', 0.86);
+      } else {
+        draft.ficha.banner = canvas.toDataURL('image/webp', 0.82);
+      }
+      this.closeImageCropper();
+      this.scheduleAutoSave();
+    };
+    image.onerror = () => {
+      this.error.set('Nao foi possivel aplicar o recorte.');
+      this.closeImageCropper();
+    };
+    image.src = draft.source;
+  }
+
   protected displayValue(value?: string | number | null): string {
     return display(value);
   }
 
+  protected fichaSlug(ficha: Ficha): string {
+    const slug = ficha.nome
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return slug || String(ficha.id);
+  }
+
   protected moneyValue(value?: number): string {
     return money(value);
+  }
+
+  protected updateNumericField(ficha: Ficha, field: 'pesoKg' | 'dinheiro', value: string | number | null): void {
+    ficha[field] = this.parsePtBrNumber(value);
+  }
+
+  private parsePtBrNumber(value: string | number | null): number | undefined {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : undefined;
+    }
+    const raw = value?.trim();
+    if (!raw) {
+      return undefined;
+    }
+
+    const normalized = raw.includes(',')
+      ? raw.replace(/\./g, '').replace(',', '.')
+      : raw.replace(/\.(?=\d{3}(\D|$))/g, '');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
   }
 
   protected initials(name: string): string {

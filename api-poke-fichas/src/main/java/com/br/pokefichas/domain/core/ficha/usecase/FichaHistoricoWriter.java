@@ -8,6 +8,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,7 +115,20 @@ public class FichaHistoricoWriter {
     }
 
     private boolean same(final JsonNode before, final JsonNode after) {
-        return empty(before) && empty(after) || before != null && before.equals(after);
+        if (empty(before) && empty(after)) {
+            return true;
+        }
+        if (before == null || after == null) {
+            return false;
+        }
+        if (before.isNumber() && after.isNumber()) {
+            return numericValue(before).compareTo(numericValue(after)) == 0;
+        }
+        return before.equals(after);
+    }
+
+    private BigDecimal numericValue(final JsonNode node) {
+        return new BigDecimal(node.asText()).stripTrailingZeros();
     }
 
     private boolean empty(final JsonNode node) {

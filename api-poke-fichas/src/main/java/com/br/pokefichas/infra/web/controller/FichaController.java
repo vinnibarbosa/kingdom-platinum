@@ -83,6 +83,12 @@ public class FichaController {
         return ResponseEntity.ok(buscar.handlePublico(id));
     }
 
+    @GetMapping("/publicas/slug/{slug}")
+    @Operation(summary = "Visualizar ficha publica por nome")
+    public ResponseEntity<FichaResponse> findPublicBySlug(@PathVariable final String slug) {
+        return ResponseEntity.ok(buscar.handlePublico(slug));
+    }
+
     @GetMapping
     @Secured({"ROLE_ADMIN", "ROLE_DONO", "ROLE_GERENTE", "ROLE_OPERADOR"})
     @Operation(summary = "Listar fichas")

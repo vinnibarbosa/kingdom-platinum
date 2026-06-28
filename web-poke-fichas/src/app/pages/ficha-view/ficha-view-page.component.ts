@@ -29,7 +29,7 @@ interface BadgeOption {
 
       <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="themeAccent(current.corTema)">
         <div class="public-admin-actions">
-          <a class="button ghost" *ngIf="isAdmin()" [routerLink]="['/ficha', current.id]">Editar ficha</a>
+          <a class="button ghost" *ngIf="isAdmin()" [routerLink]="['/ficha', fichaSlug(current), 'editar']">Editar ficha</a>
           <app-ficha-history [fichaId]="current.id" />
           <app-ficha-delete
             [fichaId]="current.id"
@@ -61,8 +61,8 @@ interface BadgeOption {
 
         <section class="public-stats" aria-label="Resumo da ficha">
           <div><span>PV</span><strong>{{ displayValue(current.pontosVida) }}</strong></div>
-          <div><span>Ranking</span><strong>{{ displayValue(current.ranking) }}</strong></div>
-          <div><span>Reputação</span><strong>{{ displayValue(current.reputacao) }}</strong></div>
+          <div><span>Ranking</span><strong>{{ rankingLabel(current.ranking) }}</strong></div>
+          <div><span>Reputação</span><strong>{{ reputationLabel(current.reputacao) }}</strong></div>
           <div><span>Dinheiro</span><strong>{{ moneyValue(current.dinheiro) }}</strong></div>
           <div><span>Pontos</span><strong>{{ displayValue(current.pontos) }}</strong></div>
           <div><span>Pokémon</span><strong>{{ current.pokemons.length }}</strong></div>
@@ -337,8 +337,10 @@ export class FichaViewPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.api.getPublic(id).subscribe({
+    const idParam = this.route.snapshot.paramMap.get('id');
+    const slug = this.route.snapshot.paramMap.get('slug');
+    const request = idParam ? this.api.getPublic(Number(idParam)) : this.api.getPublicBySlug(slug ?? '');
+    request.subscribe({
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
@@ -358,6 +360,68 @@ export class FichaViewPageComponent implements OnInit {
 
   protected moneyValue(value?: number): string {
     return money(value);
+  }
+
+  protected fichaSlug(ficha: Ficha): string {
+    const slug = ficha.nome
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return slug || String(ficha.id);
+  }
+
+  protected rankingLabel(points?: number | null): string {
+    if (points === undefined || points === null) {
+      return '-';
+    }
+
+    const rankingTable = [
+      { threshold: 3000, label: '5' },
+      { threshold: 2000, label: '4' },
+      { threshold: 1000, label: '3' },
+      { threshold: 500, label: '2' },
+      { threshold: 0, label: '1' },
+    ];
+
+    return rankingTable.find((item) => points >= item.threshold)?.label ?? '1';
+  }
+
+  protected reputationLabel(points?: number | null): string {
+    if (points === undefined || points === null) {
+      return '-';
+    }
+
+    if (points === 0) {
+      return 'Anônimo';
+    }
+
+    const positiveTable = [
+      { threshold: 30000, label: 'Astro' },
+      { threshold: 20000, label: 'Notório' },
+      { threshold: 15000, label: 'Celebridade' },
+      { threshold: 10000, label: 'Renomado' },
+      { threshold: 5000, label: 'Estrela' },
+      { threshold: 3000, label: 'Influencer' },
+      { threshold: 1000, label: 'Notado' },
+      { threshold: 500, label: 'Conhecido' },
+      { threshold: 100, label: 'Familiar' },
+    ];
+    const negativeTable = [
+      { threshold: 30000, label: 'Abominável' },
+      { threshold: 20000, label: 'Malquisto' },
+      { threshold: 15000, label: 'Indesejado' },
+      { threshold: 10000, label: 'Procurado' },
+      { threshold: 5000, label: 'Bandido' },
+      { threshold: 3000, label: 'Mal visto' },
+      { threshold: 1000, label: 'Intolerado' },
+    ];
+
+    const table = points > 0 ? positiveTable : negativeTable;
+    const absolutePoints = Math.abs(points);
+    return table.find((item) => absolutePoints >= item.threshold)?.label ?? 'Anônimo';
   }
 
   protected initials(name: string): string {

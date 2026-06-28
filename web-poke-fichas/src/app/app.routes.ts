@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginPageComponent },
   { path: '', component: FichaListPageComponent, canActivate: [authGuard] },
   { path: 'ficha/:id/visualizar', component: FichaViewPageComponent },
-  { path: 'ficha/:id', component: FichaPageComponent, canActivate: [authGuard] },
+  { path: 'ficha/:slug/editar', component: FichaPageComponent, canActivate: [authGuard] },
+  { path: 'ficha/:slug', component: FichaViewPageComponent },
   { path: '**', redirectTo: '' },
 ];

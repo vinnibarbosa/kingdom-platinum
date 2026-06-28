@@ -34,7 +34,6 @@ import { FichaApiService } from '../../services/ficha-api.service';
       <div class="ficha-grid" *ngIf="!loading()">
         <a class="ficha-card" *ngFor="let ficha of fichas()" [routerLink]="fichaLink(ficha)">
           <div class="ficha-card-content">
-            <span class="card-kicker">#{{ ficha.id }}</span>
             <h2>{{ ficha.nome }}</h2>
             <p>{{ ficha.classePersonagem || ficha.ocupacao || 'Personagem' }}</p>
             <dl>
@@ -124,7 +123,7 @@ export class FichaListPageComponent implements OnInit {
       itens: [],
       registros: [],
     }).subscribe({
-      next: (ficha) => this.router.navigate(['/ficha', ficha.id]),
+      next: (ficha) => this.router.navigate(['/ficha', this.fichaSlug(ficha), 'editar']),
       error: () => {
         this.error.set('Não foi possível criar uma ficha agora.');
         this.creating.set(false);
@@ -133,7 +132,18 @@ export class FichaListPageComponent implements OnInit {
   }
 
   protected fichaLink(ficha: FichaResumo): (string | number)[] {
-    return this.isOwner(ficha) || this.isAdmin() ? ['/ficha', ficha.id] : ['/ficha', ficha.id, 'visualizar'];
+    return this.isOwner(ficha) || this.isAdmin() ? ['/ficha', this.fichaSlug(ficha), 'editar'] : ['/ficha', this.fichaSlug(ficha)];
+  }
+
+  private fichaSlug(ficha: Pick<FichaResumo, 'id' | 'nome'>): string {
+    const slug = ficha.nome
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return slug || String(ficha.id);
   }
 
   protected initials(name: string): string {

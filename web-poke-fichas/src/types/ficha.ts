@@ -57,7 +57,6 @@ export interface FichaPokemon {
   stm?: number
   skl?: number
   jmp?: number
-  contestSpeed?: number
   ordem?: number
   movimentos?: FichaPokemonMovimento[]
 }

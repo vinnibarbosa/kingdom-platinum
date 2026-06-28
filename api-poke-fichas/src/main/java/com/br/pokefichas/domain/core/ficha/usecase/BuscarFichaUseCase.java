@@ -9,6 +9,9 @@ import com.br.pokefichas.domain.core.ficha.repository.FichaQuery;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
+import java.util.Locale;
+
 @Component
 public class BuscarFichaUseCase {
 
@@ -37,10 +40,30 @@ public class BuscarFichaUseCase {
     }
 
     @Transactional(readOnly = true)
+    public FichaResponse handlePublico(final String slug) {
+        final Ficha ficha = query.findAllWithoutContext().stream()
+                .filter(candidate -> slug(candidate.getNome()).equals(slug(slug)))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + slug));
+        final FichaDetalhes detalhes = query.findDetalhesWithoutContext(ficha.getId());
+        return mapper.toResponse(ficha, detalhes);
+    }
+
+    @Transactional(readOnly = true)
     public FichaResponse handleAdmin(final Long id) {
         final Ficha ficha = query.findByIdWithoutContext(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + id));
         final FichaDetalhes detalhes = query.findDetalhesWithoutContext(id);
         return mapper.toResponse(ficha, detalhes);
+    }
+
+    private String slug(final String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+|-+$", "");
     }
 }
