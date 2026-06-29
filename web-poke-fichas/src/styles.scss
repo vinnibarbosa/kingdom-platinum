@@ -307,9 +307,10 @@ label {
 .ficha-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 82px;
-  align-items: start;
+  grid-template-rows: minmax(126px, 1fr) auto;
+  align-items: stretch;
   gap: 1rem;
-  min-height: 220px;
+  min-height: 264px;
   padding: 1rem;
 }
 
@@ -379,11 +380,13 @@ img.custom-pokemon-art {
 .ficha-card h2 {
   margin: 0;
   line-height: 1.1;
+  min-height: 2.45em;
 }
 
 .ficha-card-content {
   display: grid;
-  gap: 1rem;
+  align-content: start;
+  gap: 0.7rem;
   min-width: 0;
 }
 
