@@ -2426,7 +2426,7 @@ export class FichaPageComponent implements OnInit {
       return;
     }
 
-    movimento.nome = move.name;
+    movimento.nome = this.displayPokemonText(move.name);
     movimento.categoria = move.category ?? movimento.categoria ?? '';
     movimento.tipo = move.type ?? movimento.tipo ?? '';
     movimento.style = move.style ?? movimento.style ?? '';
@@ -3155,7 +3155,7 @@ export class FichaPageComponent implements OnInit {
         const style = data.contest_type?.name ? this.displayPokemonText(data.contest_type.name) : '';
         const power = data.power ?? undefined;
         const accuracy = data.accuracy ?? undefined;
-        movimento.nome = data.name ?? movimento.nome;
+        movimento.nome = data.name ? this.displayPokemonText(data.name) : movimento.nome;
         movimento.categoria = category;
         movimento.tipo = type;
         movimento.style = style || movimento.style;
