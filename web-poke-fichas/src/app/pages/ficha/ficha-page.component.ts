@@ -746,11 +746,11 @@ const ITEMDEX_ICONS: Record<string, string> = {
                         <span>Escolher item</span>
                       </ng-template>
                     </button>
-                    <div class="held-item-options" *ngIf="heldItemPickerIndex() === i">
+                    <div class="held-item-options" *ngIf="heldItemPickerIndex() === i" (scroll)="onHeldItemScroll($event)">
                       <input
                         placeholder="Buscar item"
                         [ngModel]="heldItemSearch()"
-                        (ngModelChange)="heldItemSearch.set($event)"
+                        (ngModelChange)="updateHeldItemSearch($event)"
                         (click)="$event.stopPropagation()"
                       />
                       <button type="button" [class.active]="!pokemon.holdItem" (click)="selectHeldItem(pokemon, undefined)">
@@ -763,7 +763,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       </button>
                       <button
                         type="button"
-                        *ngFor="let item of filteredHeldItems()"
+                        *ngFor="let item of filteredHeldItems(); trackBy: trackByHeldItem"
                         [class.active]="pokemon.holdItem === item.name"
                         (click)="selectHeldItem(pokemon, item)"
                       >
@@ -1589,6 +1589,8 @@ export class FichaPageComponent implements OnInit {
   protected readonly spritePickerFor = signal<FichaPokemon | null>(null);
   protected readonly heldItems = signal<HeldItemOption[]>([]);
   protected readonly heldItemSearch = signal('');
+  private readonly heldItemPageSize = 120;
+  protected readonly heldItemVisibleLimit = signal(this.heldItemPageSize);
   protected readonly inventoryItems = signal<InventoryItemOption[]>([]);
   protected readonly inventoryItemSearch = signal('');
   private readonly inventoryPageSize = 120;
@@ -1615,13 +1617,20 @@ export class FichaPageComponent implements OnInit {
     return filtered;
   });
 
-  protected readonly filteredHeldItems = computed(() => {
+  protected readonly filteredHeldItemMatches = computed(() => {
     const term = this.normalizeSearch(this.heldItemSearch());
     const items = this.heldItems();
-    const filtered = term
+    return term
       ? items.filter((item) => this.normalizeSearch(item.label).includes(term) || this.normalizeSearch(item.name).includes(term))
       : items;
-    return filtered.slice(0, 180);
+  });
+
+  protected readonly filteredHeldItems = computed(() => {
+    return this.filteredHeldItemMatches().slice(0, this.heldItemVisibleLimit());
+  });
+
+  protected readonly heldItemHasMore = computed(() => {
+    return this.filteredHeldItemMatches().length > this.filteredHeldItems().length;
   });
 
   protected readonly filteredInventoryMatches = computed(() => {
@@ -2902,7 +2911,29 @@ export class FichaPageComponent implements OnInit {
     this.pokeballPickerIndex.set(null);
     this.mechanicPickerIndex.set(null);
     this.heldItemSearch.set('');
+    this.heldItemVisibleLimit.set(this.heldItemPageSize);
     this.heldItemPickerIndex.update((current) => current === index ? null : index);
+  }
+
+  protected updateHeldItemSearch(value: string): void {
+    this.heldItemSearch.set(value);
+    this.heldItemVisibleLimit.set(this.heldItemPageSize);
+  }
+
+  protected onHeldItemScroll(event: Event): void {
+    if (!this.heldItemHasMore()) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    const remaining = target.scrollHeight - target.scrollTop - target.clientHeight;
+    if (remaining <= 180) {
+      this.heldItemVisibleLimit.update((limit) => limit + this.heldItemPageSize);
+    }
+  }
+
+  protected trackByHeldItem(_: number, item: HeldItemOption): string {
+    return item.name;
   }
 
   protected selectHeldItem(pokemon: FichaPokemon, item?: HeldItemOption): void {
