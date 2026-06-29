@@ -175,6 +175,7 @@ public class FichaMapper {
                         .mecanica(request.mecanica())
                         .nature(request.nature())
                         .holdItem(request.holdItem())
+                        .holdItemIcon(request.holdItemIcon())
                         .happinessAtual(request.happinessAtual())
                         .happinessMax(request.happinessMax())
                         .combo(request.combo())
@@ -379,6 +380,7 @@ public class FichaMapper {
                 pokemon.getMecanica(),
                 pokemon.getNature(),
                 pokemon.getHoldItem(),
+                pokemon.getHoldItemIcon(),
                 pokemon.getHappinessAtual(),
                 pokemon.getHappinessMax(),
                 pokemon.getCombo(),

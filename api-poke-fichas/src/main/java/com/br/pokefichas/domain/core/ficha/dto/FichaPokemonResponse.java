@@ -16,6 +16,7 @@ public record FichaPokemonResponse(
         String mecanica,
         String nature,
         String holdItem,
+        String holdItemIcon,
         Integer happinessAtual,
         Integer happinessMax,
         String combo,

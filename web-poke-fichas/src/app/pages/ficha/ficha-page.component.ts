@@ -110,6 +110,12 @@ interface PokemonListView {
   box: PokemonEntry[];
 }
 
+interface CustomHeldItemDraft {
+  pokemon: FichaPokemon;
+  nome: string;
+  icone: string;
+}
+
 interface ImageCropDraft {
   target: 'profile' | 'banner';
   ficha: Ficha;
@@ -751,6 +757,10 @@ const ITEMDEX_ICONS: Record<string, string> = {
                         <span class="item-empty-dot"></span>
                         <span>Nenhum</span>
                       </button>
+                      <button type="button" (click)="openCustomHeldItem(pokemon)">
+                        <span class="item-empty-dot"></span>
+                        <span>Item personalizado</span>
+                      </button>
                       <button
                         type="button"
                         *ngFor="let item of filteredHeldItems()"
@@ -1122,6 +1132,40 @@ const ITEMDEX_ICONS: Record<string, string> = {
         </div>
       </div>
 
+      <div class="modal-backdrop" *ngIf="customHeldItemDraft() as draft" (click)="closeCustomHeldItem()">
+        <div class="achievement-editor-modal" (click)="$event.stopPropagation()" (input)="scheduleAutoSave()" (change)="scheduleAutoSave()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Item segurado</span>
+              <h3>Item personalizado</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="closeCustomHeldItem()">Cancelar</button>
+          </div>
+
+          <div class="inventory-image-row">
+            <button type="button" class="inventory-image-button" (click)="customHeldItemInput.click()">
+              <img *ngIf="draft.icone" [src]="draft.icone" alt="" />
+              <span *ngIf="!draft.icone">?</span>
+            </button>
+            <input
+              #customHeldItemInput
+              class="visually-hidden"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              (change)="selectCustomHeldItemImage($event, draft)"
+            />
+            <button type="button" class="button ghost" *ngIf="draft.icone" (click)="draft.icone = ''">Remover imagem</button>
+          </div>
+
+          <label>Nome<input maxlength="120" [(ngModel)]="draft.nome" /></label>
+
+          <div class="modal-actions">
+            <button type="button" class="button ghost" (click)="closeCustomHeldItem()">Cancelar</button>
+            <button type="button" class="button primary" [disabled]="!draft.nome.trim()" (click)="saveCustomHeldItem()">Salvar item</button>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-backdrop" *ngIf="imageCropDraft() as crop" (click)="closeImageCropper()">
         <div class="image-crop-modal" (click)="$event.stopPropagation()">
           <div class="modal-head">
@@ -1425,6 +1469,7 @@ export class FichaPageComponent implements OnInit {
   protected readonly ribbonCaseOpen = signal(false);
   protected readonly draggingPokemon = signal<FichaPokemon | null>(null);
   protected readonly imageCropDraft = signal<ImageCropDraft | null>(null);
+  protected readonly customHeldItemDraft = signal<CustomHeldItemDraft | null>(null);
   protected readonly defaultTheme = '#aeb5bf';
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
@@ -1573,9 +1618,10 @@ export class FichaPageComponent implements OnInit {
   protected readonly filteredHeldItems = computed(() => {
     const term = this.normalizeSearch(this.heldItemSearch());
     const items = this.heldItems();
-    return term
+    const filtered = term
       ? items.filter((item) => this.normalizeSearch(item.label).includes(term) || this.normalizeSearch(item.name).includes(term))
       : items;
+    return filtered.slice(0, 180);
   });
 
   protected readonly filteredInventoryMatches = computed(() => {
@@ -2818,7 +2864,10 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected selectedHeldItem(pokemon: FichaPokemon): HeldItemOption | undefined {
-    return this.heldItems().find((item) => item.name === pokemon.holdItem);
+    return this.heldItems().find((item) => item.name === pokemon.holdItem)
+      ?? (pokemon.holdItem?.trim()
+        ? { name: pokemon.holdItem, label: pokemon.holdItem, icon: pokemon.holdItemIcon }
+        : undefined);
   }
 
   protected mechanicIcon(mechanic: PokemonMechanicOption): string {
@@ -2858,7 +2907,32 @@ export class FichaPageComponent implements OnInit {
 
   protected selectHeldItem(pokemon: FichaPokemon, item?: HeldItemOption): void {
     pokemon.holdItem = item?.name ?? '';
+    pokemon.holdItemIcon = item?.icon?.startsWith('data:image/') ? item.icon : '';
     this.heldItemPickerIndex.set(null);
+    this.scheduleAutoSave();
+  }
+
+  protected openCustomHeldItem(pokemon: FichaPokemon): void {
+    this.heldItemPickerIndex.set(null);
+    this.customHeldItemDraft.set({
+      pokemon,
+      nome: pokemon.holdItem ?? '',
+      icone: pokemon.holdItemIcon ?? '',
+    });
+  }
+
+  protected closeCustomHeldItem(): void {
+    this.customHeldItemDraft.set(null);
+  }
+
+  protected saveCustomHeldItem(): void {
+    const draft = this.customHeldItemDraft();
+    if (!draft?.nome.trim()) {
+      return;
+    }
+    draft.pokemon.holdItem = draft.nome.trim();
+    draft.pokemon.holdItemIcon = draft.icone;
+    this.customHeldItemDraft.set(null);
     this.scheduleAutoSave();
   }
 
@@ -2889,6 +2963,40 @@ export class FichaPageComponent implements OnInit {
   protected clearInventoryItemImage(item: FichaItem): void {
     item.icone = '';
     this.scheduleAutoSave();
+  }
+
+  protected selectCustomHeldItemImage(event: Event, draft: CustomHeldItemDraft): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      const maxSize = 160;
+      const ratio = Math.min(1, maxSize / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * ratio));
+      const height = Math.max(1, Math.round(image.height * ratio));
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = width;
+      canvas.height = height;
+      context?.clearRect(0, 0, width, height);
+      context?.drawImage(image, 0, 0, width, height);
+      draft.icone = canvas.toDataURL('image/webp', 0.86);
+      input.value = '';
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.onerror = () => {
+      this.error.set('Nao foi possivel carregar esta imagem.');
+      input.value = '';
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.src = objectUrl;
   }
 
   protected selectInventoryItemImage(event: Event, item: FichaItem): void {
@@ -3001,19 +3109,59 @@ export class FichaPageComponent implements OnInit {
   }
 
   private loadHeldItems(): void {
-    fetch('https://pokeapi.co/api/v2/item-category/held-items')
+    const heldItemCategories = [
+      'held-items',
+      'choice',
+      'effort-training',
+      'bad-held-items',
+      'training',
+      'plates',
+      'species-specific',
+      'type-enhancement',
+      'mega-stones',
+      'memories',
+      'z-crystals',
+      'jewels',
+      'scarves',
+      'evolution',
+    ];
+
+    Promise.all([
+      this.fetchPokeApiItems('item-attribute/holdable'),
+      this.fetchPokeApiItems('item-attribute/holdable-active'),
+      this.fetchPokeApiItems('item-attribute/holdable-passive'),
+      this.fetchPokeApiBerryItems(),
+      ...heldItemCategories.map((category) => this.fetchPokeApiItems(`item-category/${category}`)),
+    ])
+      .then((groups) => this.hydrateHeldItems(groups.flat()))
+      .catch(() => this.heldItems.set([]));
+  }
+
+  private fetchPokeApiItems(endpoint: string): Promise<{ name: string; url: string }[]> {
+    return fetch(`https://pokeapi.co/api/v2/${endpoint}`)
       .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data: { items?: { name: string; url: string }[] }) => this.hydrateHeldItems(data.items ?? []))
-      .catch(() => {
-        fetch('https://pokeapi.co/api/v2/item?limit=2500')
-          .then((response) => response.ok ? response.json() : Promise.reject())
-          .then((data: { results?: { name: string; url: string }[] }) => this.hydrateHeldItems(data.results ?? []))
-          .catch(() => this.heldItems.set([]));
-      });
+      .then((data: { items?: { name: string; url: string }[] }) => data.items ?? [])
+      .catch(() => []);
+  }
+
+  private fetchPokeApiBerryItems(): Promise<{ name: string; url: string }[]> {
+    return fetch('https://pokeapi.co/api/v2/berry?limit=200')
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data: { results?: { name: string; url: string }[] }) =>
+        (data.results ?? []).map((berry) => ({
+          name: `${berry.name}-berry`,
+          url: berry.url,
+        }))
+      )
+      .catch(() => []);
   }
 
   private hydrateHeldItems(items: { name: string; url: string }[]): void {
-    const sorted = items
+    const byName = new Map<string, { name: string; url: string }>();
+    items
+      .filter((item) => !this.isHiddenHeldItem(item.name))
+      .forEach((item) => byName.set(item.name, item));
+    const sorted = [...byName.values()]
       .map((item) => ({
         name: item.name,
         label: this.displayPokemonText(item.name),
@@ -3022,6 +3170,12 @@ export class FichaPageComponent implements OnInit {
       .sort((first, second) => first.label.localeCompare(second.label));
 
     this.heldItems.set(sorted);
+  }
+
+  private isHiddenHeldItem(name: string): boolean {
+    return /^data-card(?:-\d+)?$/i.test(name)
+      || /^dynamax-crystal(?:-|$)/i.test(name)
+      || /^(?:tm|tr)(?:\d|-)/i.test(name);
   }
 
   private loadInventoryItems(): void {

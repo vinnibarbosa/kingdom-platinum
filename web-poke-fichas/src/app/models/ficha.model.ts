@@ -48,6 +48,7 @@ export interface FichaPokemon {
   mecanica?: string;
   nature?: string;
   holdItem?: string;
+  holdItemIcon?: string;
   happinessAtual?: number;
   happinessMax?: number;
   combo?: string;

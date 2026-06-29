@@ -64,6 +64,9 @@ public class FichaPokemon extends OrgBaseEntity<Long> {
     @Column(name = "hold_item", length = 120)
     private String holdItem;
 
+    @Column(name = "hold_item_icon", columnDefinition = "TEXT")
+    private String holdItemIcon;
+
     @Column(name = "happiness_atual")
     private Integer happinessAtual;
 
@@ -178,6 +181,10 @@ public class FichaPokemon extends OrgBaseEntity<Long> {
 
     public String getHoldItem() {
         return holdItem;
+    }
+
+    public String getHoldItemIcon() {
+        return holdItemIcon;
     }
 
     public Integer getHappinessAtual() {
@@ -329,6 +336,11 @@ public class FichaPokemon extends OrgBaseEntity<Long> {
 
         public Builder holdItem(final String holdItem) {
             entity.holdItem = holdItem;
+            return this;
+        }
+
+        public Builder holdItemIcon(final String holdItemIcon) {
+            entity.holdItemIcon = holdItemIcon;
             return this;
         }
 

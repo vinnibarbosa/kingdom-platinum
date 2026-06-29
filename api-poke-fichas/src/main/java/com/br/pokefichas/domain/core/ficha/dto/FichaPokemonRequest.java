@@ -32,6 +32,7 @@ public record FichaPokemonRequest(
         String nature,
         @Size(max = 120)
         String holdItem,
+        String holdItemIcon,
         @PositiveOrZero
         Integer happinessAtual,
         @PositiveOrZero
