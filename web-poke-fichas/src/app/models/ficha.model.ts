@@ -159,6 +159,7 @@ export interface FichaResumo {
   player?: string;
   photoplayer?: string;
   avatar?: string;
+  corTema?: string;
   pokemonsEquipe: FichaPokemonResumo[];
   createdAt?: string;
   updatedAt?: string;

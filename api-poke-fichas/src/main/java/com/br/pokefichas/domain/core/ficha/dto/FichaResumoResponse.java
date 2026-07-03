@@ -12,6 +12,7 @@ public record FichaResumoResponse(
         String player,
         String photoplayer,
         String avatar,
+        String corTema,
         List<FichaPokemonResumoResponse> pokemonsEquipe,
         Instant createdAt,
         Instant updatedAt

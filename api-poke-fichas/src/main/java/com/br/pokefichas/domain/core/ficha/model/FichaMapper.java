@@ -251,6 +251,7 @@ public class FichaMapper {
                 ficha.getPlayer(),
                 ficha.getPhotoplayer(),
                 ficha.getAvatar(),
+                ficha.getCorTema(),
                 Optional.ofNullable(pokemonsEquipe).orElse(List.of()).stream()
                         .map(pokemon -> new FichaPokemonResumoResponse(
                                 pokemon.getApelido(),
