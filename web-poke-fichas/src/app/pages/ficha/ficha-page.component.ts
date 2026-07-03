@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { CdkDrag, CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
 import { switchMap } from 'rxjs';
 
 import {
@@ -119,16 +120,11 @@ interface CustomHeldItemDraft {
 interface ImageCropDraft {
   target: 'profile' | 'banner';
   ficha: Ficha;
-  source: string;
-  objectUrl: string;
+  file: File;
   fileInput: HTMLInputElement;
-  imageWidth: number;
-  imageHeight: number;
   outputWidth: number;
   outputHeight: number;
-  zoom: number;
-  x: number;
-  y: number;
+  croppedBase64?: string | null;
 }
 
 const ITEMDEX_DETAILS: Record<string, { category: string; description: string }> = {
@@ -286,7 +282,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
 @Component({
   selector: 'app-ficha-page',
   standalone: true,
-  imports: [CommonModule, DragDropModule, FichaDeleteComponent, FichaHistoryComponent, FormsModule, RouterLink],
+  imports: [CommonModule, DragDropModule, FichaDeleteComponent, FichaHistoryComponent, FormsModule, ImageCropperComponent, RouterLink],
   template: `
     <section class="page-wrap sheet-wrap">
       <a class="back-link" routerLink="/">Voltar para fichas</a>
@@ -1176,24 +1172,28 @@ const ITEMDEX_ICONS: Record<string, string> = {
             <button type="button" class="button ghost" (click)="closeImageCropper()">Cancelar</button>
           </div>
 
-          <div
-            class="image-crop-preview"
-            [class.banner-crop]="crop.target === 'banner'"
-            [style.--crop-image]="'url(' + crop.source + ')'"
-            [style.--crop-zoom]="crop.zoom * 100 + '%'"
-            [style.--crop-x]="crop.x + '%'"
-            [style.--crop-y]="crop.y + '%'"
-            (pointerdown)="startImageCropDrag($event, crop)"
-            (pointermove)="moveImageCropDrag($event)"
-            (pointerup)="endImageCropDrag($event)"
-            (pointercancel)="endImageCropDrag($event)"
-          ></div>
-
-          <p class="image-crop-hint">Arraste a imagem para enquadrar o recorte.</p>
-
-          <div class="image-crop-controls">
-            <label>Zoom<input type="range" min="1" max="3" step="0.01" [(ngModel)]="crop.zoom" /></label>
+          <div class="image-cropper-frame" [class.banner-cropper]="crop.target === 'banner'">
+            <image-cropper
+              [imageFile]="crop.file"
+              [maintainAspectRatio]="true"
+              [aspectRatio]="crop.target === 'profile' ? 1 : 70 / 27"
+              [resizeToWidth]="crop.outputWidth"
+              [resizeToHeight]="crop.outputHeight"
+              [onlyScaleDown]="false"
+              [format]="crop.target === 'profile' ? 'jpeg' : 'webp'"
+              [output]="'base64'"
+              [imageQuality]="crop.target === 'profile' ? 86 : 82"
+              [autoCrop]="false"
+              [allowMoveImage]="true"
+              [containWithinAspectRatio]="true"
+              [hideResizeSquares]="false"
+              backgroundColor="#fffdf7"
+              (imageCropped)="onImageCropped($event)"
+              (loadImageFailed)="onImageCropFailed()"
+            ></image-cropper>
           </div>
+
+          <p class="image-crop-hint">Arraste a imagem e ajuste o recorte pelas bordas.</p>
 
           <div class="modal-actions">
             <button type="button" class="button ghost" (click)="closeImageCropper()">Cancelar</button>
@@ -1437,15 +1437,7 @@ export class FichaPageComponent implements OnInit {
   private readonly customMoveEditors = new WeakSet<FichaPokemonMovimento>();
   private nextPokemonIdentity = 1;
   private suppressPokemonClick = false;
-  private imageCropDrag?: {
-    pointerId: number;
-    startClientX: number;
-    startClientY: number;
-    startCropX: number;
-    startCropY: number;
-    width: number;
-    height: number;
-  };
+  @ViewChild(ImageCropperComponent) private imageCropper?: ImageCropperComponent;
 
   protected readonly ficha = signal<Ficha | null>(null);
   protected readonly loading = signal(true);
@@ -3511,85 +3503,35 @@ export class FichaPageComponent implements OnInit {
   }
 
   private openImageCropper(file: File, input: HTMLInputElement, ficha: Ficha, target: ImageCropDraft['target']): void {
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      this.imageCropDraft.set({
-        target,
-        ficha,
-        source: objectUrl,
-        objectUrl,
-        fileInput: input,
-        imageWidth: image.naturalWidth || image.width,
-        imageHeight: image.naturalHeight || image.height,
-        outputWidth: target === 'profile' ? 900 : 1400,
-        outputHeight: target === 'profile' ? 900 : 540,
-        zoom: 1,
-        x: 50,
-        y: 50,
-      });
-    };
-
-    image.onerror = () => {
-      this.error.set(target === 'profile' ? 'Nao foi possivel carregar esta imagem.' : 'Nao foi possivel carregar a imagem do banner.');
-      input.value = '';
-      URL.revokeObjectURL(objectUrl);
-    };
-
-    image.src = objectUrl;
+    this.imageCropDraft.set({
+      target,
+      ficha,
+      file,
+      fileInput: input,
+      outputWidth: target === 'profile' ? 900 : 1400,
+      outputHeight: target === 'profile' ? 900 : 540,
+    });
   }
 
   protected closeImageCropper(): void {
     const draft = this.imageCropDraft();
     if (draft) {
       draft.fileInput.value = '';
-      URL.revokeObjectURL(draft.objectUrl);
     }
-    this.imageCropDrag = undefined;
     this.imageCropDraft.set(null);
   }
 
-  protected startImageCropDrag(event: PointerEvent, draft: ImageCropDraft): void {
-    const target = event.currentTarget as HTMLElement;
-    const bounds = target.getBoundingClientRect();
-    target.setPointerCapture?.(event.pointerId);
-    this.imageCropDrag = {
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startCropX: draft.x,
-      startCropY: draft.y,
-      width: bounds.width,
-      height: bounds.height,
-    };
-    event.preventDefault();
-  }
-
-  protected moveImageCropDrag(event: PointerEvent): void {
+  protected onImageCropped(event: ImageCroppedEvent): void {
     const draft = this.imageCropDraft();
-    const drag = this.imageCropDrag;
-    if (!draft || !drag || drag.pointerId !== event.pointerId) {
+    if (!draft) {
       return;
     }
-
-    const zoomFactor = Math.max(1, draft.zoom);
-    const deltaX = ((event.clientX - drag.startClientX) / Math.max(1, drag.width)) * 100 / zoomFactor;
-    const deltaY = ((event.clientY - drag.startClientY) / Math.max(1, drag.height)) * 100 / zoomFactor;
-    draft.x = this.clampCropPosition(drag.startCropX - deltaX);
-    draft.y = this.clampCropPosition(drag.startCropY - deltaY);
-    event.preventDefault();
+    draft.croppedBase64 = event.base64;
   }
 
-  protected endImageCropDrag(event: PointerEvent): void {
-    if (this.imageCropDrag?.pointerId === event.pointerId) {
-      (event.currentTarget as HTMLElement | null)?.releasePointerCapture?.(event.pointerId);
-      this.imageCropDrag = undefined;
-    }
-  }
-
-  private clampCropPosition(value: number): number {
-    return Math.max(0, Math.min(100, value));
+  protected onImageCropFailed(): void {
+    this.error.set('Nao foi possivel carregar esta imagem.');
+    this.closeImageCropper();
   }
 
   protected applyImageCrop(): void {
@@ -3598,35 +3540,19 @@ export class FichaPageComponent implements OnInit {
       return;
     }
 
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      const aspect = draft.outputWidth / draft.outputHeight;
-      const baseWidth = Math.min(draft.imageWidth, draft.imageHeight * aspect);
-      const baseHeight = baseWidth / aspect;
-      const cropWidth = baseWidth / draft.zoom;
-      const cropHeight = baseHeight / draft.zoom;
-      const sourceX = Math.max(0, (draft.imageWidth - cropWidth) * (draft.x / 100));
-      const sourceY = Math.max(0, (draft.imageHeight - cropHeight) * (draft.y / 100));
-
-      canvas.width = draft.outputWidth;
-      canvas.height = draft.outputHeight;
-      context?.drawImage(image, sourceX, sourceY, cropWidth, cropHeight, 0, 0, draft.outputWidth, draft.outputHeight);
-
-      if (draft.target === 'profile') {
-        draft.ficha.photoplayer = canvas.toDataURL('image/jpeg', 0.86);
-      } else {
-        draft.ficha.banner = canvas.toDataURL('image/webp', 0.82);
-      }
-      this.closeImageCropper();
-      this.scheduleAutoSave();
-    };
-    image.onerror = () => {
+    const cropped = this.imageCropper?.crop('base64')?.base64 ?? draft.croppedBase64;
+    if (!cropped) {
       this.error.set('Nao foi possivel aplicar o recorte.');
-      this.closeImageCropper();
-    };
-    image.src = draft.source;
+      return;
+    }
+
+    if (draft.target === 'profile') {
+      draft.ficha.photoplayer = cropped;
+    } else {
+      draft.ficha.banner = cropped;
+    }
+    this.closeImageCropper();
+    this.scheduleAutoSave();
   }
 
   protected displayValue(value?: string | number | null): string {

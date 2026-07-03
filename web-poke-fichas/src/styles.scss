@@ -3154,74 +3154,33 @@ button.public-pokemon-card:focus-visible {
   padding: 1rem;
 }
 
-.image-crop-preview {
-  position: relative;
-  width: min(420px, 100%);
-  aspect-ratio: 1;
+.image-cropper-frame {
+  width: min(470px, 100%);
   justify-self: center;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background-color: #f3eee3;
-  background-image: var(--crop-image);
-  background-position: var(--crop-x) var(--crop-y);
-  background-repeat: no-repeat;
-  background-size: auto var(--crop-zoom);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 60%);
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
+  background: #f3eee3;
 }
 
-.image-crop-preview:active {
-  cursor: grabbing;
-}
-
-.image-crop-preview::before {
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgb(255 250 240 / 72%);
-  background:
-    linear-gradient(90deg, transparent 33.333%, rgb(255 250 240 / 42%) 33.333% 33.7%, transparent 33.7% 66.333%, rgb(255 250 240 / 42%) 66.333% 66.7%, transparent 66.7%),
-    linear-gradient(0deg, transparent 33.333%, rgb(255 250 240 / 42%) 33.333% 33.7%, transparent 33.7% 66.333%, rgb(255 250 240 / 42%) 66.333% 66.7%, transparent 66.7%);
-  content: "";
-  pointer-events: none;
-}
-
-.image-crop-preview::after {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, transparent 58%, rgb(32 37 50 / 18%));
-  content: "";
-  pointer-events: none;
-}
-
-.image-crop-preview.banner-crop {
+.image-cropper-frame.banner-cropper {
   width: 100%;
-  aspect-ratio: 70 / 27;
 }
 
-.image-crop-preview.banner-crop::after {
-  background: color-mix(in srgb, #fffdf7 82%, transparent);
-  clip-path: polygon(0 0, 0 100%, 100% 100%);
+.image-cropper-frame image-cropper {
+  display: block;
+  height: min(470px, calc(100vh - 15rem));
+  --cropper-outline-color: rgb(32 37 50 / 38%);
+  --cropper-overlay-color: #fffdf7;
+  --cropper-color: var(--green-dark);
+  --cropper-border: 1px solid rgb(255 250 240 / 92%);
+  --cropper-hover-border: 1px solid var(--green);
+  --cropper-focus-border: 2px solid var(--green);
+  --cropper-resize-square-bg: var(--green-dark);
 }
 
-.image-crop-preview.banner-crop::before {
-  border: 1px solid rgb(255 250 240 / 82%);
-  background:
-    linear-gradient(135deg, transparent calc(50% - 1px), rgb(255 250 240 / 78%) 50%, transparent calc(50% + 1px)),
-    linear-gradient(90deg, transparent 33.333%, rgb(255 250 240 / 42%) 33.333% 33.7%, transparent 33.7% 66.333%, rgb(255 250 240 / 42%) 66.333% 66.7%, transparent 66.7%),
-    linear-gradient(0deg, transparent 33.333%, rgb(255 250 240 / 42%) 33.333% 33.7%, transparent 33.7% 66.333%, rgb(255 250 240 / 42%) 66.333% 66.7%, transparent 66.7%);
-}
-
-.image-crop-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.75rem;
-}
-
-.image-crop-controls input {
-  padding-inline: 0;
+.image-cropper-frame.banner-cropper image-cropper {
+  height: min(360px, calc(100vh - 15rem));
 }
 
 .image-crop-hint {
