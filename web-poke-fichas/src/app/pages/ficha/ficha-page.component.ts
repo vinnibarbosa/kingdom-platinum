@@ -342,22 +342,19 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 [fichaId]="current.id"
                 [fichaNome]="current.nome"
               />
-              <label
+              <button
+                type="button"
                 class="banner-picker-button"
                 [class.has-banner]="!!current.banner"
                 title="Selecionar imagem do banner"
+                (click)="openBannerManager(current)"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                   <circle cx="8.5" cy="10" r="1.5"></circle>
                   <path d="m4 17 5-4 3 2 3-3 5 5"></path>
                 </svg>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  (change)="selectBannerImage($event, current)"
-                />
-              </label>
+              </button>
               <button
                 type="button"
                 class="banner-remove-button"
@@ -1162,6 +1159,35 @@ const ITEMDEX_ICONS: Record<string, string> = {
         </div>
       </div>
 
+      <div class="modal-backdrop" *ngIf="bannerManagerFor() as bannerFicha" (click)="closeBannerManager()">
+        <div class="image-crop-modal banner-manager-modal" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Imagem</span>
+              <h3>Banner da ficha</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="closeBannerManager()">Fechar</button>
+          </div>
+
+          <div class="banner-manager-actions">
+            <button type="button" class="button primary" (click)="bannerManagerInput.click()">Escolher banner</button>
+            <button
+              type="button"
+              class="button ghost"
+              *ngIf="bannerFicha.banner"
+              (click)="clearBannerFromManager(bannerFicha)"
+            >Remover banner</button>
+            <input
+              #bannerManagerInput
+              class="visually-hidden"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="selectBannerImageFromManager($event, bannerFicha)"
+            />
+          </div>
+        </div>
+      </div>
+
       <div class="modal-backdrop" *ngIf="imageCropDraft() as crop" (click)="closeImageCropper()">
         <div class="image-crop-modal" (click)="$event.stopPropagation()">
           <div class="modal-head">
@@ -1196,6 +1222,12 @@ const ITEMDEX_ICONS: Record<string, string> = {
           <p class="image-crop-hint">Arraste a imagem e ajuste o recorte pelas bordas.</p>
 
           <div class="modal-actions">
+            <button
+              type="button"
+              class="button ghost"
+              *ngIf="crop.target === 'banner' && crop.ficha.banner"
+              (click)="clearBannerFromCrop(crop.ficha)"
+            >Remover banner</button>
             <button type="button" class="button ghost" (click)="closeImageCropper()">Cancelar</button>
             <button type="button" class="button primary" (click)="applyImageCrop()">Aplicar recorte</button>
           </div>
@@ -1460,6 +1492,7 @@ export class FichaPageComponent implements OnInit {
   protected readonly badgeCaseOpen = signal(false);
   protected readonly ribbonCaseOpen = signal(false);
   protected readonly draggingPokemon = signal<FichaPokemon | null>(null);
+  protected readonly bannerManagerFor = signal<Ficha | null>(null);
   protected readonly imageCropDraft = signal<ImageCropDraft | null>(null);
   protected readonly customHeldItemDraft = signal<CustomHeldItemDraft | null>(null);
   protected readonly defaultTheme = '#aeb5bf';
@@ -3561,9 +3594,32 @@ export class FichaPageComponent implements OnInit {
     this.openImageCropper(file, input, ficha, 'banner');
   }
 
+  protected openBannerManager(ficha: Ficha): void {
+    this.bannerManagerFor.set(ficha);
+  }
+
+  protected closeBannerManager(): void {
+    this.bannerManagerFor.set(null);
+  }
+
+  protected selectBannerImageFromManager(event: Event, ficha: Ficha): void {
+    this.closeBannerManager();
+    this.selectBannerImage(event, ficha);
+  }
+
   protected clearBanner(ficha: Ficha): void {
     ficha.banner = '';
     this.scheduleAutoSave();
+  }
+
+  protected clearBannerFromManager(ficha: Ficha): void {
+    this.clearBanner(ficha);
+    this.closeBannerManager();
+  }
+
+  protected clearBannerFromCrop(ficha: Ficha): void {
+    this.clearBanner(ficha);
+    this.closeImageCropper();
   }
 
   private openImageCropper(file: File, input: HTMLInputElement, ficha: Ficha, target: ImageCropDraft['target']): void {

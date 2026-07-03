@@ -739,8 +739,7 @@ dd {
 }
 
 .banner-remove-button {
-  font-size: 1.15rem;
-  line-height: 1;
+  display: none;
 }
 
 .edit-panel,
@@ -2495,7 +2494,7 @@ button.public-pokemon-card:focus-visible {
 
 .public-move-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
@@ -2532,21 +2531,20 @@ button.public-pokemon-card:focus-visible {
 
 .public-move-card dl {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.38rem 0.55rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem 0.6rem;
   margin: 0;
 }
 
 .public-move-style.has-style {
-  border: 1px solid color-mix(in srgb, var(--contest-style-color) 32%, var(--line));
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--contest-style-color) 11%, #fffdf7);
-  padding: 0.28rem 0.38rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .public-move-style.has-style dd {
   color: color-mix(in srgb, var(--contest-style-color) 72%, var(--ink));
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .public-pokemon-combo {
@@ -3154,6 +3152,16 @@ button.public-pokemon-card:focus-visible {
   padding: 1rem;
 }
 
+.banner-manager-modal {
+  width: min(420px, calc(100vw - 1rem));
+}
+
+.banner-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .image-cropper-frame {
   width: min(470px, 100%);
   justify-self: center;
@@ -3514,8 +3522,22 @@ button.public-pokemon-card:focus-visible {
   }
 
   .sheet-header {
-    padding-top: 3.2rem;
+    padding-top: 4.9rem;
     padding-right: 0;
+  }
+
+  .sheet-actions {
+    right: auto;
+    left: 0;
+    flex-wrap: wrap;
+    max-width: 100%;
+    gap: 0.45rem;
+  }
+
+  .sheet-actions .button {
+    min-height: 2.35rem;
+    padding: 0.55rem 0.78rem;
+    white-space: nowrap;
   }
 
   .sheet {
@@ -3586,6 +3608,10 @@ button.public-pokemon-card:focus-visible {
 
   .public-data-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-move-list {
+    grid-template-columns: 1fr;
   }
 
   .public-badge-case {

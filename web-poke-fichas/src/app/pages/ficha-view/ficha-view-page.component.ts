@@ -286,14 +286,14 @@ interface BadgeOption {
                   <span *ngIf="move.tipo">{{ titleCase(move.tipo) }}</span>
                 </div>
                 <dl>
+                  <div><dt>Power</dt><dd>{{ displayValue(move.poder) }}</dd></div>
+                  <div><dt>Accuracy</dt><dd>{{ displayValue(move.accuracy) }}</dd></div>
                   <div><dt>Categoria</dt><dd>{{ pokemonText(move.categoria) }}</dd></div>
                   <div
                     class="public-move-style"
                     [class.has-style]="!!move.style"
                     [style.--contest-style-color]="contestStyleColor(move.style)"
                   ><dt>Style</dt><dd>{{ pokemonText(move.style) }}</dd></div>
-                  <div><dt>Power</dt><dd>{{ displayValue(move.poder) }}</dd></div>
-                  <div><dt>Accuracy</dt><dd>{{ displayValue(move.accuracy) }}</dd></div>
                 </dl>
               </article>
             </div>
