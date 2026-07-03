@@ -1463,6 +1463,7 @@ export class FichaPageComponent implements OnInit {
   protected readonly imageCropDraft = signal<ImageCropDraft | null>(null);
   protected readonly customHeldItemDraft = signal<CustomHeldItemDraft | null>(null);
   protected readonly defaultTheme = '#aeb5bf';
+  private readonly localCacheVersion = '2026-07-03-a';
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
   protected readonly generos = ['Masculino', 'Feminino', 'Intersexo'];
@@ -1575,6 +1576,7 @@ export class FichaPageComponent implements OnInit {
   ].sort((first, second) => first.localeCompare(second));
   protected readonly spriteSearch = signal('');
   protected readonly pokemonNames = signal<Record<number, string>>({});
+  private readonly officialPokemonKeys = signal<Set<string>>(new Set());
   protected readonly pokemonDexCount = signal(1025);
   protected readonly pokemonDexData = signal<Record<string, PokemonDexDetails>>({});
   protected readonly pokemonLoading = signal<Record<string, boolean>>({});
@@ -1661,7 +1663,7 @@ export class FichaPageComponent implements OnInit {
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
-        normalized.pokemons.forEach((pokemon) => this.loadPokemonDexData(pokemon));
+        this.loadFichaPokemonDexData(normalized);
         this.replaceAnimatedPokemonSprites(normalized);
         this.hydrateMissingMoveStyles(normalized);
         this.loading.set(false);
@@ -1710,7 +1712,7 @@ export class FichaPageComponent implements OnInit {
         this.selectedPokemonIndex.set(
           selectedIndex === null || selectedIndex >= normalized.pokemons.length ? null : selectedIndex
         );
-        normalized.pokemons.forEach((pokemon) => this.loadPokemonDexData(pokemon));
+        this.loadFichaPokemonDexData(normalized);
         this.hydrateMissingMoveStyles(normalized);
         this.success.set('');
         this.saving.set(false);
@@ -3111,6 +3113,24 @@ export class FichaPageComponent implements OnInit {
     return found ? Number(found[0]) : undefined;
   }
 
+  private pokemonApiLookupKey(pokemon: FichaPokemon): string {
+    const dex = this.dexFromSpriteUrl(pokemon.sprite);
+    if (dex) {
+      return String(dex);
+    }
+
+    const key = this.pokemonKey(pokemon.especie);
+    if (!key) {
+      return '';
+    }
+
+    return this.officialPokemonKeys().has(key) ? key : '';
+  }
+
+  private loadFichaPokemonDexData(ficha = this.ficha()): void {
+    ficha?.pokemons.forEach((pokemon) => this.loadPokemonDexData(pokemon));
+  }
+
   private itemIcon(file: string): string {
     return `/assets/itemdex/${file}`;
   }
@@ -3120,18 +3140,37 @@ export class FichaPageComponent implements OnInit {
   }
 
   private loadPokemonNames(): void {
+    const cached = this.readLocalCache<Record<number, string>>('pokemon-names');
+    if (cached) {
+      this.applyPokemonNames(cached);
+      return;
+    }
+
     fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025')
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((data: { results?: { name: string }[] }) => {
         const results = data.results ?? [];
         const names = Object.fromEntries(results.map((pokemon, index) => [index + 1, pokemon.name]));
-        this.pokemonDexCount.set(Math.max(1025, results.length));
-        this.pokemonNames.set(names);
+        this.writeLocalCache('pokemon-names', names);
+        this.applyPokemonNames(names);
       })
       .catch(() => this.pokemonNames.set({}));
   }
 
+  private applyPokemonNames(names: Record<number, string>): void {
+    this.pokemonDexCount.set(Math.max(1025, Object.keys(names).length));
+    this.pokemonNames.set(names);
+    this.officialPokemonKeys.set(new Set(Object.values(names).map((name) => this.pokemonKey(name))));
+    this.loadFichaPokemonDexData();
+  }
+
   private loadHeldItems(): void {
+    const cached = this.readLocalCache<HeldItemOption[]>('held-items');
+    if (cached?.length) {
+      this.heldItems.set(cached);
+      return;
+    }
+
     const heldItemCategories = [
       'held-items',
       'choice',
@@ -3193,6 +3232,7 @@ export class FichaPageComponent implements OnInit {
       .sort((first, second) => first.label.localeCompare(second.label));
 
     this.heldItems.set(sorted);
+    this.writeLocalCache('held-items', sorted);
   }
 
   private isHiddenHeldItem(name: string): boolean {
@@ -3202,6 +3242,12 @@ export class FichaPageComponent implements OnInit {
   }
 
   private loadInventoryItems(): void {
+    const cached = this.readLocalCache<InventoryItemOption[]>('inventory-items');
+    if (cached?.length) {
+      this.inventoryItems.set(cached);
+      return;
+    }
+
     fetch('https://pokeapi.co/api/v2/item?limit=10000')
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((data: { results?: { name: string }[] }) => {
@@ -3214,14 +3260,15 @@ export class FichaPageComponent implements OnInit {
           const current = byName.get(item.name);
           byName.set(item.name, { ...current, ...item, icon: item.icon ?? current?.icon });
         });
-        this.inventoryItems.set([...byName.values()].sort((first, second) => first.label.localeCompare(second.label)));
+        const sorted = [...byName.values()].sort((first, second) => first.label.localeCompare(second.label));
+        this.inventoryItems.set(sorted);
+        this.writeLocalCache('inventory-items', sorted);
       })
       .catch(() => {
-        this.inventoryItems.set(
-          Object.keys(ITEMDEX_DETAILS)
-            .map((name) => this.toInventoryOption(name))
-            .sort((first, second) => first.label.localeCompare(second.label))
-        );
+        const fallback = Object.keys(ITEMDEX_DETAILS)
+          .map((name) => this.toInventoryOption(name))
+          .sort((first, second) => first.label.localeCompare(second.label));
+        this.inventoryItems.set(fallback);
       });
   }
 
@@ -3360,14 +3407,15 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected loadPokemonDexData(pokemon: FichaPokemon): void {
-    const key = this.pokemonKey(pokemon.especie);
-    if (!key || this.pokemonDexData()[key] || this.pokemonLoading()[key]) {
+    const lookupKey = this.pokemonApiLookupKey(pokemon);
+    const key = this.pokemonKey(pokemon.especie) || lookupKey;
+    if (!lookupKey || !key || this.pokemonDexData()[key] || this.pokemonLoading()[key]) {
       return;
     }
 
     this.pokemonLoading.update((loading) => ({ ...loading, [key]: true }));
 
-    fetch(`https://pokeapi.co/api/v2/pokemon/${key}`)
+    fetch(`https://pokeapi.co/api/v2/pokemon/${lookupKey}`)
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((data: {
         abilities?: { ability: { name: string } }[];
@@ -3400,8 +3448,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   private applyPokemonFeatureSprite(pokemon: FichaPokemon): void {
-    const dex = this.dexFromSpriteUrl(pokemon.sprite) ?? this.dexFromSpecies(pokemon.especie);
-    const pokemonKey = this.pokemonKey(pokemon.especie) || (dex ? String(dex) : '');
+    const pokemonKey = this.pokemonApiLookupKey(pokemon);
     if (!pokemonKey) {
       this.scheduleAutoSave();
       return;
@@ -3475,6 +3522,23 @@ export class FichaPageComponent implements OnInit {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private readLocalCache<T>(name: string): T | null {
+    try {
+      const raw = localStorage.getItem(`kp-fichas:${this.localCacheVersion}:${name}`);
+      return raw ? JSON.parse(raw) as T : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeLocalCache<T>(name: string, value: T): void {
+    try {
+      localStorage.setItem(`kp-fichas:${this.localCacheVersion}:${name}`, JSON.stringify(value));
+    } catch {
+      // Cache local e opcional; se o navegador bloquear, o app continua funcionando.
+    }
   }
 
   protected selectCharacterImage(event: Event, ficha: Ficha): void {

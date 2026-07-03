@@ -76,7 +76,7 @@ export function money(value?: number): string {
     return '-';
   }
 
-  return `C$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`;
+  return `${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}C$`;
 }
 
 export function isTeam(box?: string): boolean {
