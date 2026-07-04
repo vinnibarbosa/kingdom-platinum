@@ -2083,7 +2083,7 @@ dd {
 
 .public-hero-banner {
   position: absolute;
-  z-index: 0;
+  z-index: 2;
   top: 0;
   right: 0;
   bottom: 0;
@@ -2190,16 +2190,8 @@ dd {
 
 .public-facts div {
   min-width: 0;
+  border-top: 1px solid color-mix(in srgb, var(--green) 22%, var(--line));
   padding-top: 0.65rem;
-}
-
-.public-facts div::before {
-  display: block;
-  width: min(100%, 10.5rem);
-  height: 1px;
-  margin-bottom: 0.65rem;
-  background: color-mix(in srgb, var(--green) 22%, var(--line));
-  content: "";
 }
 
 .public-facts dd {
