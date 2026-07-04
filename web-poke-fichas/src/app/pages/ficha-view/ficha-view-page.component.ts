@@ -52,10 +52,10 @@ interface BadgeOption {
           </div>
 
           <dl class="public-facts">
-            <div><dt>Player</dt><dd>{{ displayValue(current.player) }}</dd></div>
+            <div><dt>Naturalidade</dt><dd>{{ displayValue(current.naturalidade) }}</dd></div>
             <div><dt>Ocupação</dt><dd>{{ displayValue(current.ocupacao) }}</dd></div>
             <div><dt>Equipe</dt><dd>{{ displayValue(current.equipe) }}</dd></div>
-            <div><dt>Naturalidade</dt><dd>{{ displayValue(current.naturalidade) }}</dd></div>
+            <div><dt>Player</dt><dd>{{ displayValue(current.player) }}</dd></div>
           </dl>
         </header>
 
