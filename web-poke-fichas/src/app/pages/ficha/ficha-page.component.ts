@@ -417,7 +417,13 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 <label>Player<input [(ngModel)]="current.player" /></label>
                 <label>Avatar<input placeholder="Nome usado no avatar" [(ngModel)]="current.avatar" /></label>
                 <label>Naturalidade<input [(ngModel)]="current.naturalidade" /></label>
-                <label>Índole<input [(ngModel)]="current.indole" /></label>
+                <label>
+                  Índole
+                  <select [(ngModel)]="current.indole">
+                    <option value="" disabled>Índole</option>
+                    <option *ngFor="let alinhamento of alinhamentos" [value]="alinhamento">{{ alinhamento }}</option>
+                  </select>
+                </label>
               </div>
             </div>
 
@@ -1499,6 +1505,17 @@ export class FichaPageComponent implements OnInit {
   private readonly localCacheVersion = '2026-07-03-a';
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
+  protected readonly alinhamentos = [
+    'Leal Bom',
+    'Neutro Bom',
+    'Caótico Bom',
+    'Leal Neutro',
+    'Neutro Verdadeiro',
+    'Caótico Neutro',
+    'Leal Mau',
+    'Neutro Mau',
+    'Caótico Mau',
+  ];
   protected readonly generos = ['Masculino', 'Feminino', 'Intersexo'];
   protected readonly contestStyles = ['Cool', 'Beauty', 'Cute', 'Smart', 'Tough'];
   protected readonly features = ['Normal', 'Shiny', 'Modified'];
@@ -2416,7 +2433,15 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected moveSelectionValue(pokemon: FichaPokemon, movimento: FichaPokemonMovimento): string {
-    return this.isCustomMove(pokemon, movimento) ? '__custom__' : (movimento.nome ?? '');
+    if (this.isCustomMove(pokemon, movimento)) {
+      return '__custom__';
+    }
+
+    const moveName = movimento.nome ?? '';
+    const selectedMove = this.pokemonMoves(pokemon).find(
+      (option) => this.pokemonKey(option.name) === this.pokemonKey(moveName)
+    );
+    return selectedMove?.name ?? moveName;
   }
 
   protected isCustomMove(pokemon: FichaPokemon, movimento: FichaPokemonMovimento): boolean {
@@ -3397,6 +3422,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   private loadMoveDetails(pokemon: FichaPokemon, movimento: FichaPokemonMovimento, moveName: string): void {
+    const requestedMoveKey = this.pokemonKey(moveName);
     fetch(`https://pokeapi.co/api/v2/move/${moveName}`)
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((data: {
@@ -3407,6 +3433,10 @@ export class FichaPageComponent implements OnInit {
         power?: number | null;
         type?: { name: string };
       }) => {
+        if (this.pokemonKey(movimento.nome) !== requestedMoveKey) {
+          return;
+        }
+
         const category = data.damage_class?.name ?? '';
         const type = data.type?.name ?? '';
         const style = data.contest_type?.name ? this.displayPokemonText(data.contest_type.name) : '';

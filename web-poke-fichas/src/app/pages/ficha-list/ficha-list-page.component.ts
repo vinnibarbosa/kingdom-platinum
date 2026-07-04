@@ -134,7 +134,7 @@ export class FichaListPageComponent implements OnInit {
   }
 
   protected fichaLink(ficha: FichaResumo): (string | number)[] {
-    return this.isOwner(ficha) || this.isAdmin() ? ['/ficha', this.fichaSlug(ficha), 'editar'] : ['/ficha', this.fichaSlug(ficha)];
+    return ['/ficha', this.fichaSlug(ficha)];
   }
 
   protected cardAccent(ficha: FichaResumo): string {

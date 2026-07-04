@@ -29,7 +29,7 @@ interface BadgeOption {
 
       <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="themeAccent(current.corTema)">
         <div class="public-admin-actions">
-          <a class="button ghost" *ngIf="isAdmin()" [routerLink]="['/ficha', fichaSlug(current), 'editar']">Editar ficha</a>
+          <a class="button ghost" *ngIf="canEdit(current)" [routerLink]="['/ficha', fichaSlug(current), 'editar']">Editar ficha</a>
           <app-ficha-history [fichaId]="current.id" />
           <app-ficha-delete
             [fichaId]="current.id"
@@ -531,5 +531,10 @@ export class FichaViewPageComponent implements OnInit {
 
   protected isAdmin(): boolean {
     return ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? '');
+  }
+
+  protected canEdit(ficha: Ficha): boolean {
+    const currentUser = this.auth.currentUser();
+    return this.isAdmin() || Boolean(currentUser?.idOrganizacao && currentUser.idOrganizacao === ficha.idOrganizacao);
   }
 }
