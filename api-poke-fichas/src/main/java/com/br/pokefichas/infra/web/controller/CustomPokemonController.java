@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/pokemon/custom")
@@ -28,6 +29,12 @@ public class CustomPokemonController {
     @Operation(summary = "Pesquisar Pokemon customizados")
     public ResponseEntity<List<CustomPokemonResponse>> search(@RequestParam(required = false, defaultValue = "") final String termo) {
         return ResponseEntity.ok(catalog.search(termo));
+    }
+
+    @GetMapping("/status")
+    @Operation(summary = "Verificar integracao com Supabase")
+    public ResponseEntity<Map<String, Object>> status() {
+        return ResponseEntity.ok(catalog.status());
     }
 
     @GetMapping("/{name}")

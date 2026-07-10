@@ -2535,8 +2535,8 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected openSpritePicker(pokemon: FichaPokemon): void {
-    this.spriteSearch.set('');
     this.customSpriteChoices.set([]);
+    this.updateSpriteSearch(pokemon.especie ?? '');
     this.spritePickerFor.set(pokemon);
   }
 

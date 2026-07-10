@@ -78,6 +78,19 @@ public class SupabasePokemonCatalogUseCase {
                 .findFirst();
     }
 
+    public Map<String, Object> status() {
+        final List<CustomPokemonResponse> catalog = loadCatalog();
+        final Map<String, Object> response = new LinkedHashMap<>();
+        response.put("configured", isConfigured());
+        response.put("urlConfigured", !supabaseUrl.isBlank());
+        response.put("anonKeyConfigured", !anonKey.isBlank());
+        response.put("pokemonTable", pokemonTable);
+        response.put("moveTable", moveTable);
+        response.put("count", catalog.size());
+        response.put("sample", catalog.stream().limit(5).map(CustomPokemonResponse::name).toList());
+        return response;
+    }
+
     private List<CustomPokemonResponse> loadCatalog() {
         if (!isConfigured()) {
             return List.of();
