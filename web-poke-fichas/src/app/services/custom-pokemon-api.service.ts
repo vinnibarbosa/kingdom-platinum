@@ -4,8 +4,6 @@ import { Observable, catchError, forkJoin, map, of, shareReplay } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
-const API_BASE = '/api/public';
-
 export interface CustomPokemonMove {
   name: string;
   category?: string;
@@ -64,17 +62,11 @@ export class CustomPokemonApiService {
   private supabaseCatalog$?: Observable<CustomPokemonDetails[]>;
 
   search(term: string): Observable<CustomPokemonDetails[]> {
-    return this.http.get<CustomPokemonDetails[]>(`${API_BASE}/pokemon/custom`, {
-      params: { termo: term },
-    }).pipe(
-      catchError(() => this.searchSupabase(term)),
-    );
+    return this.searchSupabase(term);
   }
 
   findByName(name: string): Observable<CustomPokemonDetails> {
-    return this.http.get<CustomPokemonDetails>(`${API_BASE}/pokemon/custom/${encodeURIComponent(name)}`).pipe(
-      catchError(() => this.findSupabaseByName(name)),
-    );
+    return this.findSupabaseByName(name);
   }
 
   private searchSupabase(term: string): Observable<CustomPokemonDetails[]> {
