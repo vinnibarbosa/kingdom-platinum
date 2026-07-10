@@ -107,10 +107,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull final HttpServletRequest request) {
-        final String path = request.getRequestURI();
-        return path.startsWith("/actuator/health")
-                || path.startsWith("/actuator/info")
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        final String path = normalizedPath(request);
+        return path.startsWith("/auth/")
+                || path.equals("/bootstrap")
+                || path.startsWith("/fichas/publicas")
+                || path.startsWith("/pokemon/custom")
+                || path.startsWith("/actuator/")
+                || path.startsWith("/swagger-ui")
+                || path.equals("/swagger-ui.html")
+                || path.startsWith("/api-docs")
+                || path.startsWith("/v3/api-docs")
                 || path.startsWith("/favicon.ico")
                 || path.startsWith("/error");
+    }
+
+    private String normalizedPath(final HttpServletRequest request) {
+        String path = request.getServletPath();
+        if (path == null || path.isBlank()) {
+            path = request.getRequestURI();
+            final String contextPath = request.getContextPath();
+            if (contextPath != null && !contextPath.isBlank() && path.startsWith(contextPath)) {
+                path = path.substring(contextPath.length());
+            }
+        }
+
+        if (path.startsWith("/api/")) {
+            return path.substring("/api".length());
+        }
+
+        return path;
     }
 }
