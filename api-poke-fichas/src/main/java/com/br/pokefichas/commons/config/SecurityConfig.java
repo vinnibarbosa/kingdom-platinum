@@ -44,6 +44,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/auth/login", "/auth/registrar", "/auth/refresh", "/auth/csrf", "/bootstrap").permitAll()
                         .requestMatchers(HttpMethod.GET, "/fichas/publicas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/pokemon/custom", "/pokemon/custom/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",

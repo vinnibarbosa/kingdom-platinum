@@ -84,3 +84,9 @@ app:
       - http://localhost:5173
       - http://localhost:5175
       - http://localhost:8080
+  supabase:
+    url: ${SUPABASE_POKEMON_URL:}
+    anon-key: ${SUPABASE_POKEMON_ANON_KEY:}
+    pokemon-table: ${SUPABASE_POKEMON_TABLE:pokemons}
+    move-table: ${SUPABASE_POKEMON_MOVE_TABLE:moves}
+    limit: ${SUPABASE_POKEMON_LIMIT:2000}

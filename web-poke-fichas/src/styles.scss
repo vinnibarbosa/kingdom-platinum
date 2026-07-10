@@ -1703,6 +1703,52 @@ dd {
   gap: 0.7rem;
 }
 
+.inventory-pocket-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.inventory-pocket {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--green) 12%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--green) 4%, #fffdf7);
+  padding: 0.75rem;
+}
+
+.inventory-pocket-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.45rem;
+}
+
+.inventory-pocket-head h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.inventory-pocket-head small {
+  min-width: 1.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green) 14%, #fffdf7);
+  color: var(--green-dark);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  text-align: center;
+}
+
+.inventory-pocket-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .inventory-card {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);

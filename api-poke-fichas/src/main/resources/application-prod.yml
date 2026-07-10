@@ -90,3 +90,9 @@ logging:
 app:
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
+  supabase:
+    url: ${SUPABASE_POKEMON_URL:}
+    anon-key: ${SUPABASE_POKEMON_ANON_KEY:}
+    pokemon-table: ${SUPABASE_POKEMON_TABLE:pokemons}
+    move-table: ${SUPABASE_POKEMON_MOVE_TABLE:moves}
+    limit: ${SUPABASE_POKEMON_LIMIT:2000}

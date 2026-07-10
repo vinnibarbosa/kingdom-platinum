@@ -23,6 +23,18 @@ O host deve encaminhar a porta fornecida em `PORT`. A API expõe o healthcheck e
 
 O valor de `DATABASE_URL` precisa usar o formato JDBC. Se o provedor entregar `postgresql://...`, prefixe com `jdbc:`.
 
+Para integrar a Dex customizada do Supabase, adicione tambem:
+
+```text
+SUPABASE_POKEMON_URL=https://SEU-PROJETO.supabase.co
+SUPABASE_POKEMON_ANON_KEY=SUA_ANON_KEY
+SUPABASE_POKEMON_TABLE=pokemons
+SUPABASE_POKEMON_MOVE_TABLE=moves
+SUPABASE_POKEMON_LIMIT=2000
+```
+
+Se as tabelas no Supabase tiverem outros nomes, altere `SUPABASE_POKEMON_TABLE` e `SUPABASE_POKEMON_MOVE_TABLE`.
+
 ## 2. Frontend na Vercel
 
 Crie o projeto com:

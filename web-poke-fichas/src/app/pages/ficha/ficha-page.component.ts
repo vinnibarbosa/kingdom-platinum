@@ -20,15 +20,17 @@ import { FichaHistoryComponent } from '../../components/ficha-history/ficha-hist
 import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete.component';
 import { FichaApiService } from '../../services/ficha-api.service';
 import { AuthService } from '../../services/auth.service';
+import { CustomPokemonApiService, CustomPokemonDetails } from '../../services/custom-pokemon-api.service';
 import { display, fichaToPayload, money } from '../../services/ficha-utils';
 import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
 
 type FichaTab = 'dados' | 'historia' | 'pokemon' | 'inventario' | 'conquistas' | 'extras';
 
 interface PokemonSpriteChoice {
-  dex: number;
+  dex?: number;
   url: string;
   name?: string;
+  custom?: boolean;
 }
 
 interface PokemonDexMove {
@@ -93,6 +95,16 @@ interface InventoryItemOption {
   icon?: string;
   category: string;
   description?: string;
+}
+
+interface InventoryPocketOption {
+  id: string;
+  label: string;
+}
+
+interface InventoryPocketGroup {
+  pocket: InventoryPocketOption;
+  items: { item: FichaItem; index: number }[];
 }
 
 interface BadgeOption {
@@ -516,8 +528,8 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 [title]="canAddBoxPokemon(current) ? 'Adicionar Pokémon na box' : 'Aumente os slots antes de adicionar mais Pokémon na box'"
               >
                 Adicionar Pokémon
-              </button>
-            </div>
+                  </button>
+                </div>
 
             <ng-container *ngIf="pokemonLists(current) as pokemonList">
             <div class="pokemon-section">
@@ -543,6 +555,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                   [class.active]="selectedPokemonIndex() === entry.index"
                   [class.dragging]="draggingPokemon() === entry.pokemon"
                   (click)="openPokemonCard(entry.pokemon, entry.index)"
+                  (dblclick)="openPokemonPreview(entry.pokemon, entry.index, $event)"
                   (cdkDragStarted)="startPokemonCdkDrag(entry.pokemon)"
                   (cdkDragEnded)="endPokemonCdkDrag()"
                 >
@@ -588,6 +601,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                   [class.active]="selectedPokemonIndex() === entry.index"
                   [class.dragging]="draggingPokemon() === entry.pokemon"
                   (click)="openPokemonCard(entry.pokemon, entry.index)"
+                  (dblclick)="openPokemonPreview(entry.pokemon, entry.index, $event)"
                   (cdkDragStarted)="startPokemonCdkDrag(entry.pokemon)"
                   (cdkDragEnded)="endPokemonCdkDrag()"
                 >
@@ -852,6 +866,84 @@ const ITEMDEX_ICONS: Record<string, string> = {
             </div>
             </div>
             </ng-container>
+
+            <ng-container *ngFor="let pokemon of current.pokemons; let i = index">
+            <div class="modal-backdrop pokemon-editor-backdrop" *ngIf="selectedPokemonPreviewIndex() === i" (click)="closePokemonPreview()">
+            <div class="achievement-editor-modal public-pokemon-modal" (click)="$event.stopPropagation()">
+              <div class="modal-head">
+                <div>
+                  <span class="eyebrow">Pokémon</span>
+                  <h3>{{ pokemon.apelido || pokemon.especie || 'Pokémon ' + (i + 1) }}</h3>
+                </div>
+                <button type="button" class="button ghost" (click)="closePokemonPreview()">Fechar</button>
+              </div>
+
+              <div class="public-pokemon-modal-hero">
+                <span class="public-pokemon-modal-sprite">
+                  <img
+                    *ngIf="pokemon.sprite"
+                    [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
+                    [src]="pokemon.sprite"
+                    [alt]="pokemon.apelido || pokemon.especie"
+                  />
+                  <span *ngIf="!pokemon.sprite">?</span>
+                  <span
+                    *ngIf="selectedMechanic(pokemon) as mechanic"
+                    class="mechanic-badge sprite"
+                    [style.--mechanic-color]="mechanic.color"
+                    [title]="mechanic.label"
+                  >
+                    <img [src]="mechanicIcon(mechanic)" [alt]="mechanic.label" />
+                  </span>
+                </span>
+                <div>
+                  <span class="eyebrow">{{ pokemon.especie ? displayPokemonText(pokemon.especie) : 'Espécie não informada' }}</span>
+                  <strong>{{ pokemon.apelido || 'Sem apelido' }}</strong>
+                </div>
+              </div>
+
+              <dl class="public-pokemon-detail-facts">
+                <div><dt>Gênero</dt><dd>{{ pokemonDisplayText(pokemon.genero) }}</dd></div>
+                <div><dt>Feature</dt><dd>{{ pokemonDisplayText(pokemon.feature) }}</dd></div>
+                <div><dt>Nature</dt><dd>{{ pokemonDisplayText(pokemon.nature) }}</dd></div>
+                <div><dt>Hold Item</dt><dd>{{ pokemonDisplayText(pokemon.holdItem) }}</dd></div>
+                <div><dt>Happiness</dt><dd>{{ displayValue(pokemon.happinessAtual) }}</dd></div>
+              </dl>
+
+              <section class="public-pokemon-moves">
+                <h4>Moveset</h4>
+                <div class="public-move-list" *ngIf="pokemonMoveset(pokemon).length; else emptyEditMoveset">
+                  <article
+                    class="public-move-card"
+                    *ngFor="let move of pokemonMoveset(pokemon)"
+                    [style.--public-move-color]="moveTypeColor(move.tipo)"
+                  >
+                    <div class="public-move-title">
+                      <strong>{{ displayPokemonText(move.nome) }}</strong>
+                      <span *ngIf="move.tipo">{{ displayPokemonText(move.tipo) }}</span>
+                    </div>
+                    <dl>
+                      <div><dt>Power</dt><dd>{{ displayValue(move.poder) }}</dd></div>
+                      <div><dt>Accuracy</dt><dd>{{ displayValue(move.accuracy) }}</dd></div>
+                      <div><dt>Categoria</dt><dd>{{ pokemonDisplayText(move.categoria) }}</dd></div>
+                      <div
+                        class="public-move-style"
+                        [class.has-style]="!!move.style"
+                        [style.--contest-style-color]="contestStyleColor(move.style)"
+                      ><dt>Style</dt><dd>{{ pokemonDisplayText(move.style) }}</dd></div>
+                    </dl>
+                  </article>
+                </div>
+                <ng-template #emptyEditMoveset><p class="public-empty-copy">Nenhum movimento cadastrado.</p></ng-template>
+              </section>
+
+              <section class="public-pokemon-combo" *ngIf="pokemon.combo">
+                <h4>Combo</h4>
+                <p>{{ pokemon.combo }}</p>
+              </section>
+            </div>
+            </div>
+            </ng-container>
           </section>
 
           <section class="tab-panel" *ngIf="tab() === 'inventario'">
@@ -859,18 +951,29 @@ const ITEMDEX_ICONS: Record<string, string> = {
               <h3>Inventário</h3>
               <button type="button" class="button ghost" (click)="openInventoryPicker()">Adicionar item</button>
             </div>
-            <div class="inventory-card-grid">
-              <button type="button" class="inventory-card" *ngFor="let item of current.itens; let i = index" (click)="openInventoryEditor(i)">
+            <div class="inventory-pocket-list">
+              <section class="inventory-pocket" *ngFor="let group of inventoryPocketGroups(current)">
+                <div class="inventory-pocket-head">
+                  <h4>{{ group.pocket.label }}</h4>
+                  <small>{{ group.items.length }}</small>
+                </div>
+                <div class="inventory-card-grid" *ngIf="group.items.length; else emptyInventoryPocket">
+                  <button type="button" class="inventory-card" *ngFor="let entry of group.items" (click)="openInventoryEditor(entry.index)">
                 <span class="inventory-card-icon">
-                  <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome || 'Item'" (error)="clearBrokenInventoryItemIcon($event, item)" />
-                  <span *ngIf="!item.icone">?</span>
-                  <small class="inventory-card-qty" *ngIf="(item.quantidade || 1) > 1">x{{ item.quantidade }}</small>
+                  <img *ngIf="entry.item.icone" [src]="entry.item.icone" [alt]="entry.item.nome || 'Item'" (error)="clearBrokenInventoryItemIcon($event, entry.item)" />
+                  <span *ngIf="!entry.item.icone">?</span>
+                  <small class="inventory-card-qty" *ngIf="(entry.item.quantidade || 1) > 1">x{{ entry.item.quantidade }}</small>
                 </span>
                 <span>
-                  <strong>{{ item.nome || 'Item ' + (i + 1) }}</strong>
-                  <small>{{ item.descricao || 'Sem descrição cadastrada.' }}</small>
+                  <strong>{{ entry.item.nome || 'Item ' + (entry.index + 1) }}</strong>
+                  <small>{{ entry.item.descricao || 'Sem descrição cadastrada.' }}</small>
                 </span>
-              </button>
+                  </button>
+                </div>
+                <ng-template #emptyInventoryPocket>
+                  <p class="inventory-pocket-empty">Nenhum item neste bolso.</p>
+                </ng-template>
+              </section>
             </div>
           </section>
 
@@ -1270,7 +1373,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
             <input
               placeholder="Buscar por nome ou número, exemplo: pikachu ou 25"
               [ngModel]="spriteSearch()"
-              (ngModelChange)="spriteSearch.set($event)"
+              (ngModelChange)="updateSpriteSearch($event)"
             />
           </div>
 
@@ -1282,8 +1385,8 @@ const ITEMDEX_ICONS: Record<string, string> = {
               [class.active]="selectedPokemon.sprite === sprite.url"
               (click)="selectSprite(selectedPokemon, sprite)"
             >
-              <img [src]="sprite.url" [alt]="'Pokémon #' + sprite.dex" loading="lazy" />
-              <span>#{{ sprite.dex }}</span>
+              <img [src]="sprite.url" [alt]="sprite.name || 'Pokemon'" loading="lazy" />
+              <span>{{ sprite.custom ? 'Custom' : '#' + sprite.dex }}</span>
               <small *ngIf="sprite.name">{{ sprite.name }}</small>
             </button>
           </div>
@@ -1452,7 +1555,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 </button>
               </label>
               <label>Nome personalizado<input [(ngModel)]="item.nome" /></label>
-              <label>Categoria<input [(ngModel)]="item.categoria" /></label>
+              <label>Bolso<input [ngModel]="inventoryPocketLabel(item)" readonly /></label>
               <label>Quantidade<input type="number" [(ngModel)]="item.quantidade" /></label>
             </div>
             <label class="full-field">Descrição<textarea rows="5" [(ngModel)]="item.descricao"></textarea></label>
@@ -1467,6 +1570,7 @@ export class FichaPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly customPokemonApi = inject(CustomPokemonApiService);
   private autoSaveTimer?: ReturnType<typeof setTimeout>;
   private autoSaveInFlight = false;
   private autoSavePending = false;
@@ -1475,6 +1579,7 @@ export class FichaPageComponent implements OnInit {
   private readonly customMoveEditors = new WeakSet<FichaPokemonMovimento>();
   private nextPokemonIdentity = 1;
   private suppressPokemonClick = false;
+  private pokemonClickTimer?: ReturnType<typeof setTimeout>;
   @ViewChild(ImageCropperComponent) private imageCropper?: ImageCropperComponent;
 
   protected readonly ficha = signal<Ficha | null>(null);
@@ -1484,6 +1589,7 @@ export class FichaPageComponent implements OnInit {
   protected readonly success = signal('');
   protected readonly tab = signal<FichaTab>('dados');
   protected readonly selectedPokemonIndex = signal<number | null>(null);
+  protected readonly selectedPokemonPreviewIndex = signal<number | null>(null);
   protected readonly pokeballPickerIndex = signal<number | null>(null);
   protected readonly mechanicPickerIndex = signal<number | null>(null);
   protected readonly heldItemPickerIndex = signal<number | null>(null);
@@ -1502,7 +1608,18 @@ export class FichaPageComponent implements OnInit {
   protected readonly imageCropDraft = signal<ImageCropDraft | null>(null);
   protected readonly customHeldItemDraft = signal<CustomHeldItemDraft | null>(null);
   protected readonly defaultTheme = '#aeb5bf';
-  private readonly localCacheVersion = '2026-07-03-a';
+  private readonly localCacheVersion = '2026-07-04-a';
+  protected readonly inventoryPockets: InventoryPocketOption[] = [
+    { id: 'hp-pp', label: 'Restauração HP / PP' },
+    { id: 'status', label: 'Restaurar status' },
+    { id: 'pokeballs', label: 'Pokébolas' },
+    { id: 'battle', label: 'Itens de batalha' },
+    { id: 'evolutionary', label: 'Evolutionary' },
+    { id: 'berries', label: 'Berries' },
+    { id: 'treasure', label: 'Treasure' },
+    { id: 'trainer-keys', label: 'Trainer itens (Keys)' },
+    { id: 'tm-pill', label: 'TM / Pill case' },
+  ];
   protected readonly classes = ['Coordenador', 'Treinador', 'Criador', 'Delinquente'];
   protected readonly equipes = ['Bright', 'Reborn', 'Power'];
   protected readonly alinhamentos = [
@@ -1625,6 +1742,8 @@ export class FichaPageComponent implements OnInit {
     'calm', 'gentle', 'sassy', 'careful', 'quirky',
   ].sort((first, second) => first.localeCompare(second));
   protected readonly spriteSearch = signal('');
+  protected readonly customSpriteChoices = signal<PokemonSpriteChoice[]>([]);
+  private customSpriteSearchTimer?: ReturnType<typeof setTimeout>;
   protected readonly pokemonNames = signal<Record<number, string>>({});
   private readonly officialPokemonKeys = signal<Set<string>>(new Set());
   protected readonly pokemonDexCount = signal(1025);
@@ -1649,6 +1768,7 @@ export class FichaPageComponent implements OnInit {
   });
   protected readonly filteredSpriteChoices = computed(() => {
     const term = this.normalizeSearch(this.spriteSearch());
+    const customChoices = this.customSpriteChoices();
     const choices = this.pokemonSpriteChoices();
     const filtered = term
       ? choices.filter((sprite) => {
@@ -1658,7 +1778,7 @@ export class FichaPageComponent implements OnInit {
         })
       : choices;
 
-    return filtered;
+    return [...customChoices, ...filtered];
   });
 
   protected readonly filteredHeldItemMatches = computed(() => {
@@ -1696,6 +1816,18 @@ export class FichaPageComponent implements OnInit {
   protected readonly inventoryHasMore = computed(() => {
     return this.filteredInventoryMatches().length > this.filteredInventoryItems().length;
   });
+
+  protected inventoryPocketGroups(ficha: Ficha): InventoryPocketGroup[] {
+    const entries = (ficha.itens ?? []).map((item, index) => ({ item, index }));
+    return this.inventoryPockets.map((pocket) => ({
+      pocket,
+      items: entries.filter((entry) => this.inventoryPocketId(entry.item) === pocket.id),
+    }));
+  }
+
+  protected inventoryPocketLabel(item: FichaItem): string {
+    return this.inventoryPockets.find((pocket) => pocket.id === this.inventoryPocketId(item))?.label ?? this.inventoryPockets[3].label;
+  }
 
   ngOnInit(): void {
     this.loadPokemonNames();
@@ -1800,7 +1932,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected addItem(ficha: Ficha): void {
-    ficha.itens.push({ categoria: 'Item', nome: `Item ${ficha.itens.length + 1}`, quantidade: 1, ordem: ficha.itens.length });
+    ficha.itens.push({ categoria: this.inventoryPocketLabelById('trainer-keys'), nome: `Item ${ficha.itens.length + 1}`, quantidade: 1, ordem: ficha.itens.length });
     this.scheduleAutoSave();
   }
 
@@ -1889,7 +2021,7 @@ export class FichaPageComponent implements OnInit {
     }
 
     const item: FichaItem = {
-      categoria: 'Item personalizado',
+      categoria: this.inventoryPocketLabelById('trainer-keys'),
       nome: `Item ${ficha.itens.length + 1}`,
       quantidade: 1,
       descricao: '',
@@ -1913,7 +2045,7 @@ export class FichaPageComponent implements OnInit {
     }
 
     const item: FichaItem = {
-      categoria: 'Item',
+      categoria: this.inventoryPocketLabelById('trainer-keys'),
       codigo: '',
       icone: '',
       nome: 'Item',
@@ -1931,7 +2063,7 @@ export class FichaPageComponent implements OnInit {
   private applyInventoryOption(item: FichaItem, option: InventoryItemOption): void {
     item.codigo = option.name;
     item.nome = option.label;
-    item.categoria = option.category || 'Item';
+    item.categoria = this.inventoryPocketLabelForOption(option);
     item.icone = option.icon ?? '';
     item.descricao = option.description ?? 'Descrição em português não disponível.';
     this.loadInventoryItemDescription(item, option);
@@ -2375,12 +2507,26 @@ export class FichaPageComponent implements OnInit {
       return;
     }
 
-    this.openPokemonEditor(pokemon, index);
+    window.clearTimeout(this.pokemonClickTimer);
+    this.pokemonClickTimer = setTimeout(() => this.openPokemonEditor(pokemon, index), 220);
+  }
+
+  protected openPokemonPreview(pokemon: FichaPokemon, index: number, event?: MouseEvent): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    window.clearTimeout(this.pokemonClickTimer);
+    this.selectedPokemonIndex.set(null);
+    this.selectedPokemonPreviewIndex.set(index);
+    this.loadPokemonDexData(pokemon);
   }
 
   protected closePokemonEditor(): void {
     this.selectedPokemonIndex.set(null);
     this.closeInlinePickers();
+  }
+
+  protected closePokemonPreview(): void {
+    this.selectedPokemonPreviewIndex.set(null);
   }
 
   protected removeMovimento(pokemon: FichaPokemon, index: number): void {
@@ -2390,11 +2536,46 @@ export class FichaPageComponent implements OnInit {
 
   protected openSpritePicker(pokemon: FichaPokemon): void {
     this.spriteSearch.set('');
+    this.customSpriteChoices.set([]);
     this.spritePickerFor.set(pokemon);
   }
 
   protected closeSpritePicker(): void {
+    if (this.customSpriteSearchTimer) {
+      clearTimeout(this.customSpriteSearchTimer);
+      this.customSpriteSearchTimer = undefined;
+    }
+    this.customSpriteChoices.set([]);
     this.spritePickerFor.set(null);
+  }
+
+  protected updateSpriteSearch(value: string): void {
+    this.spriteSearch.set(value);
+    if (this.customSpriteSearchTimer) {
+      clearTimeout(this.customSpriteSearchTimer);
+    }
+
+    const term = value.trim();
+    if (term.length < 2) {
+      this.customSpriteChoices.set([]);
+      return;
+    }
+
+    this.customSpriteSearchTimer = setTimeout(() => {
+      this.customPokemonApi.search(term).subscribe({
+        next: (pokemons) => {
+          const choices = pokemons
+            .filter((pokemon) => Boolean(pokemon.name?.trim()) && Boolean(pokemon.sprite?.trim()))
+            .map((pokemon) => ({
+              name: this.displayPokemonText(pokemon.name),
+              url: pokemon.sprite ?? '',
+              custom: true,
+            }));
+          this.customSpriteChoices.set(choices);
+        },
+        error: () => this.customSpriteChoices.set([]),
+      });
+    }, 250);
   }
 
   protected hasCustomSprite(pokemon: FichaPokemon): boolean {
@@ -2572,6 +2753,14 @@ export class FichaPageComponent implements OnInit {
 
   protected displayOptionalPokemonText(value?: string): string {
     return value ? this.displayPokemonText(value) : '—';
+  }
+
+  protected pokemonDisplayText(value?: string): string {
+    return value?.trim() ? this.displayPokemonText(value) : '-';
+  }
+
+  protected pokemonMoveset(pokemon: FichaPokemon): FichaPokemonMovimento[] {
+    return (pokemon.movimentos ?? []).filter((move) => Boolean(move.nome?.trim()));
   }
 
   protected displayNumber(value?: number): string {
@@ -3397,6 +3586,124 @@ export class FichaPageComponent implements OnInit {
     return categories[this.pokemonKey(category)] ?? this.displayPokemonText(category);
   }
 
+  private inventoryPocketId(item: FichaItem): string {
+    return this.inventoryPocketIdFrom(item.codigo, item.categoria, item.nome);
+  }
+
+  private inventoryPocketLabelById(id: string): string {
+    return this.inventoryPockets.find((pocket) => pocket.id === id)?.label ?? this.inventoryPockets[3].label;
+  }
+
+  private inventoryPocketLabelForOption(option: InventoryItemOption, apiCategory?: string): string {
+    return this.inventoryPocketLabelById(this.inventoryPocketIdFrom(option.name, apiCategory ?? option.category, option.label));
+  }
+
+  private inventoryPocketIdFrom(code?: string, category?: string, name?: string): string {
+    const key = this.pokemonKey(code || name || '');
+    const categoryKey = this.pokemonKey(category ?? '');
+    const source = `${key} ${categoryKey} ${this.pokemonKey(name ?? '')}`;
+
+    const categoryPocket: Record<string, string> = {
+      'healing': 'hp-pp',
+      'medicine': 'hp-pp',
+      'pp-recovery': 'hp-pp',
+      'revival': 'hp-pp',
+      'status': 'status',
+      'status-cures': 'status',
+      'standard-balls': 'pokeballs',
+      'special-balls': 'pokeballs',
+      'apricorn-balls': 'pokeballs',
+      'battle-items': 'battle',
+      'effort-training': 'battle',
+      'held-items': 'battle',
+      'bad-held-items': 'battle',
+      'choice': 'battle',
+      'training': 'battle',
+      'type-enhancement': 'battle',
+      'vitamins': 'battle',
+      'vitamin': 'battle',
+      'evolution': 'evolutionary',
+      'species-specific': 'evolutionary',
+      'plates': 'evolutionary',
+      'mulch': 'berries',
+      'berries': 'berries',
+      'loot': 'treasure',
+      'collectibles': 'treasure',
+      'spelunking': 'treasure',
+      'treasure-items': 'treasure',
+      'key-items': 'trainer-keys',
+      'event-items': 'trainer-keys',
+      'gameplay': 'trainer-keys',
+      'plot-advancement': 'trainer-keys',
+      'all-machines': 'tm-pill',
+      'machines': 'tm-pill',
+      'maquinas': 'tm-pill',
+      'restauracao-hp-pp': 'hp-pp',
+      'restaurar-status': 'status',
+      'pokebolas': 'pokeballs',
+      'pokeballs': 'pokeballs',
+      'itens-de-batalha': 'battle',
+      'itens-segurados': 'battle',
+      'itens-de-escolha': 'battle',
+      'treinamento': 'battle',
+      'aprimoramento-de-tipo': 'battle',
+      'evolutionary': 'evolutionary',
+      'evolucao': 'evolutionary',
+      'itens-especificos': 'evolutionary',
+      'placas': 'evolutionary',
+      'treasure': 'treasure',
+      'tesouros': 'treasure',
+      'trainer-itens-keys': 'trainer-keys',
+      'itens-de-treinador': 'trainer-keys',
+      'itens-de-jornada': 'trainer-keys',
+      'itens-de-historia': 'trainer-keys',
+      'itens-de-evento': 'trainer-keys',
+      'tm-pill-case': 'tm-pill',
+    };
+
+    if (categoryPocket[categoryKey]) {
+      return categoryPocket[categoryKey];
+    }
+
+    if (/(?:^|-)berry$|\bberry\b|berries|berry-pouch|berry-pot/.test(source)) {
+      return 'berries';
+    }
+
+    if (/pok[eé]?balls?|(?:^|-)ball$|master-ball|ultra-ball|great-ball|poke-ball/.test(source)) {
+      return 'pokeballs';
+    }
+
+    if (/^(?:tm|tr)(?:-|$)|\btm\b|\btr\b|machine|pill|capsule|patch|tm-case|pill-case/.test(source)) {
+      return 'tm-pill';
+    }
+
+    if (/potion|ether|elixir|revive|restore|hp|pp|lemonade|fresh-water|soda-pop|moomoo-milk|energy-(?:root|powder)|heal-powder|sacred-ash/.test(source)) {
+      return 'hp-pp';
+    }
+
+    if (/antidote|awakening|burn-heal|ice-heal|paraly[sz]e-heal|full-heal|status|lava-cookie|old-gateau|casteliacone|shalour-sable|lumiose-galette|pewter-crunchies|rage-candy-bar/.test(source)) {
+      return 'status';
+    }
+
+    if (/^x-|dire-hit|guard-spec|battle|choice|band|specs|scarf|orb|vest|sash|policy|herb|incense|leftovers|rocky-helmet|eviolite|expert-belt|life-orb|focus-(?:band|sash)|quick-claw|scope-lens/.test(source)) {
+      return 'battle';
+    }
+
+    if (/evolution|stone|scale|coat|upgrade|dubious-disc|protector|reaper-cloth|sachet|whipped-dream|prism-scale|peat-block|auspicious-armor|malicious-armor|cracked-pot|chipped-pot|scroll|sweet-apple|tart-apple|linking-cord|mega-stone|(?:ite\b)/.test(source)) {
+      return 'evolutionary';
+    }
+
+    if (/nugget|pearl|shard|stardust|star-piece|comet-shard|big-mushroom|balm-mushroom|bone|relic|treasure|ore|gem|bottle-cap|gold-bottle-cap/.test(source)) {
+      return 'treasure';
+    }
+
+    if (/key|case|card|ticket|pass|coupon|charm|rod|gear|kit|poketch|pokedex|map|scope|flute|bike|repel|slot-upgrade|mini-slot-upgrade|trainer/.test(source)) {
+      return 'trainer-keys';
+    }
+
+    return 'battle';
+  }
+
   private loadInventoryItemDescription(item: FichaItem, option: InventoryItemOption): void {
     fetch(`https://pokeapi.co/api/v2/item/${option.name}`)
       .then((response) => response.ok ? response.json() : Promise.reject())
@@ -3414,7 +3721,7 @@ export class FichaPageComponent implements OnInit {
           ?? flavor?.text?.replace(/\s+/g, ' ')
           ?? item.descricao
           ?? 'Descrição em português não disponível.';
-        item.categoria = option.category || this.inventoryCategoryLabel(data.category?.name ?? 'Item');
+        item.categoria = this.inventoryPocketLabelForOption(option, data.category?.name);
         item.icone = data.sprites?.default ?? item.icone ?? '';
         this.scheduleAutoSave();
       })
@@ -3472,12 +3779,25 @@ export class FichaPageComponent implements OnInit {
   protected loadPokemonDexData(pokemon: FichaPokemon): void {
     const lookupKey = this.pokemonApiLookupKey(pokemon);
     const key = this.pokemonKey(pokemon.especie) || lookupKey;
-    if (!lookupKey || !key || this.pokemonDexData()[key] || this.pokemonLoading()[key]) {
+    if (!key || this.pokemonDexData()[key] || this.pokemonLoading()[key]) {
       return;
     }
 
     this.pokemonLoading.update((loading) => ({ ...loading, [key]: true }));
 
+    this.customPokemonApi.findByName(key).subscribe({
+      next: (customPokemon) => this.applyCustomPokemonDexData(pokemon, key, customPokemon),
+      error: () => {
+        if (lookupKey) {
+          this.loadPokeApiDexData(pokemon, key, lookupKey);
+        } else {
+          this.pokemonLoading.update((loading) => ({ ...loading, [key]: false }));
+        }
+      },
+    });
+  }
+
+  private loadPokeApiDexData(pokemon: FichaPokemon, key: string, lookupKey: string): void {
     fetch(`https://pokeapi.co/api/v2/pokemon/${lookupKey}`)
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((data: {
@@ -3503,6 +3823,38 @@ export class FichaPageComponent implements OnInit {
         this.pokemonLoading.update((loading) => ({ ...loading, [key]: false }));
       })
       .catch(() => this.pokemonLoading.update((loading) => ({ ...loading, [key]: false })));
+  }
+
+  private applyCustomPokemonDexData(pokemon: FichaPokemon, key: string, customPokemon: CustomPokemonDetails): void {
+    const stats = customPokemon.stats ?? {};
+    const abilities = (customPokemon.abilities ?? [])
+      .filter(Boolean)
+      .sort((first, second) => first.localeCompare(second));
+    const moves = (customPokemon.moves ?? [])
+      .filter((move) => Boolean(move.name?.trim()))
+      .map((move) => ({
+        name: this.pokemonKey(move.name),
+        category: this.pokemonKey(move.category),
+        type: this.pokemonKey(move.type),
+        style: move.style ? this.displayPokemonText(move.style) : '',
+        power: move.power,
+        accuracy: move.accuracy,
+      }))
+      .sort((first, second) => first.name.localeCompare(second.name));
+
+    pokemon.hp = stats.hp ?? pokemon.hp;
+    pokemon.atk = stats.atk ?? pokemon.atk;
+    pokemon.def = stats.def ?? pokemon.def;
+    pokemon.satk = stats.satk ?? pokemon.satk;
+    pokemon.sdef = stats.sdef ?? pokemon.sdef;
+    pokemon.speed = stats.speed ?? pokemon.speed;
+    if (customPokemon.sprite && !pokemon.sprite?.startsWith('data:image/')) {
+      pokemon.sprite = customPokemon.sprite;
+    }
+
+    this.pokemonDexData.update((cache) => ({ ...cache, [key]: { abilities, moves, stats } }));
+    this.pokemonLoading.update((loading) => ({ ...loading, [key]: false }));
+    this.scheduleAutoSave();
   }
 
   private resetPokemonDexSelections(pokemon: FichaPokemon): void {
@@ -3775,9 +4127,10 @@ export class FichaPageComponent implements OnInit {
     const codigo = item.codigo?.trim() || this.inventoryCodeFromName(item.nome);
     const resolvedIcon = this.inventoryIconFromCode(codigo);
     const resolvedDescription = ITEMDEX_DETAILS[codigo]?.description;
+    const categoria = this.inventoryPocketLabelById(this.inventoryPocketIdFrom(codigo, ITEMDEX_DETAILS[codigo]?.category ?? item.categoria, item.nome));
     return {
       ...item,
-      categoria: item.categoria?.trim() || 'Item',
+      categoria,
       codigo,
       icone: this.shouldRefreshInventoryIcon(item.icone, resolvedIcon) ? resolvedIcon : item.icone,
       nome: item.nome?.trim() || `Item ${index + 1}`,
@@ -3944,3 +4297,4 @@ export class FichaPageComponent implements OnInit {
     return /^#[0-9a-fA-F]{6}$/.test(value) ? value : legacyThemes[value] ?? this.defaultTheme;
   }
 }
+
