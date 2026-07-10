@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/pokemon/custom")
+@RequestMapping({"/pokemon/custom", "/public/pokemon/custom"})
 @Tag(name = "Pokemon customizados", description = "APIs para consulta de Pokemon customizados")
 public class CustomPokemonController {
 

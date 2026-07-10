@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-const API_BASE = '/api';
+const API_BASE = '/api/public';
 
 export interface CustomPokemonMove {
   name: string;

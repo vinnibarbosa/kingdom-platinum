@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -112,10 +113,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String path = normalizedPath(request);
+        final String requestUri = Optional.ofNullable(request.getRequestURI()).orElse("");
+        return isPublicPath(path) || isPublicPath(requestUri);
+    }
+
+    private boolean isPublicPath(final String path) {
         return path.startsWith("/auth/")
                 || path.equals("/bootstrap")
                 || path.startsWith("/fichas/publicas")
+                || path.startsWith("/public/")
                 || path.startsWith("/pokemon/custom")
+                || path.contains("/pokemon/custom/")
                 || path.startsWith("/actuator/")
                 || path.startsWith("/swagger-ui")
                 || path.equals("/swagger-ui.html")

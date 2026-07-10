@@ -15,7 +15,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  const skipsAuthentication = /\/auth\/(?:login|registrar|refresh)(?:$|\?)/.test(request.url);
+  const skipsAuthentication = /\/auth\/(?:login|registrar|refresh)(?:$|\?)/.test(request.url)
+    || /\/public\//.test(request.url);
   const send = (token?: string | null): Observable<HttpEvent<unknown>> => next(withAuthentication(request, token));
   const endSession = (error: unknown): Observable<never> => {
     auth.clearSession();

@@ -3,6 +3,7 @@ package com.br.pokefichas.commons.config;
 import com.br.pokefichas.commons.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,6 +36,51 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Order(0)
+    public SecurityFilterChain publicSecurityFilterChain(final HttpSecurity http) throws Exception {
+        http
+                .securityMatcher(
+                        "/auth/login",
+                        "/auth/registrar",
+                        "/auth/refresh",
+                        "/auth/csrf",
+                        "/bootstrap",
+                        "/fichas/publicas/**",
+                        "/public/**",
+                        "/pokemon/custom",
+                        "/pokemon/custom/**",
+                        "/actuator/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/api-docs/**",
+                        "/v3/api-docs/**",
+                        "/api/auth/login",
+                        "/api/auth/registrar",
+                        "/api/auth/refresh",
+                        "/api/auth/csrf",
+                        "/api/bootstrap",
+                        "/api/fichas/publicas/**",
+                        "/api/public/**",
+                        "/api/pokemon/custom",
+                        "/api/pokemon/custom/**",
+                        "/api/actuator/**",
+                        "/api/swagger-ui/**",
+                        "/api/swagger-ui.html",
+                        "/api/api-docs/**",
+                        "/api/v3/api-docs/**"
+                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                );
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(1)
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -77,6 +123,7 @@ public class SecurityConfig {
                 "/auth/csrf",
                 "/bootstrap",
                 "/fichas/publicas/**",
+                "/public/**",
                 "/pokemon/custom",
                 "/pokemon/custom/**",
                 "/actuator/**",
@@ -90,6 +137,7 @@ public class SecurityConfig {
                 "/api/auth/csrf",
                 "/api/bootstrap",
                 "/api/fichas/publicas/**",
+                "/api/public/**",
                 "/api/pokemon/custom",
                 "/api/pokemon/custom/**",
                 "/api/actuator/**",
@@ -104,7 +152,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(corsProperties.getAllowedOriginPatterns());
+        final List<String> allowedOriginPatterns = corsProperties.getAllowedOriginPatterns().isEmpty()
+                ? List.of("https://*.vercel.app", "http://localhost:*", "http://127.0.0.1:*")
+                : corsProperties.getAllowedOriginPatterns();
+        configuration.setAllowedOriginPatterns(allowedOriginPatterns);
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
