@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -65,6 +66,38 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers(
+                "/auth/login",
+                "/auth/registrar",
+                "/auth/refresh",
+                "/auth/csrf",
+                "/bootstrap",
+                "/fichas/publicas/**",
+                "/pokemon/custom",
+                "/pokemon/custom/**",
+                "/actuator/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/api-docs/**",
+                "/v3/api-docs/**",
+                "/api/auth/login",
+                "/api/auth/registrar",
+                "/api/auth/refresh",
+                "/api/auth/csrf",
+                "/api/bootstrap",
+                "/api/fichas/publicas/**",
+                "/api/pokemon/custom",
+                "/api/pokemon/custom/**",
+                "/api/actuator/**",
+                "/api/swagger-ui/**",
+                "/api/swagger-ui.html",
+                "/api/api-docs/**",
+                "/api/v3/api-docs/**"
+        );
     }
 
     @Bean
