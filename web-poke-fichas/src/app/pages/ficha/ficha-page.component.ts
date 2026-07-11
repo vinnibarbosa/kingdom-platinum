@@ -572,7 +572,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       <img *ngIf="entry.pokemon.sprite" [class.custom-pokemon-art]="entry.pokemon.sprite.startsWith('data:image/')" [src]="entry.pokemon.sprite" [alt]="entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon'" draggable="false" />
                       <span *ngIf="!entry.pokemon.sprite">{{ initials(entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon') }}</span>
                     </span>
-                    <strong>{{ entry.pokemon.apelido || 'Pokémon ' + (entry.index + 1) }}</strong>
+                    <strong>{{ pokemonTitle(entry.pokemon, entry.index) }}</strong>
                   </div>
                 </div>
               </div>
@@ -618,7 +618,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       <img *ngIf="entry.pokemon.sprite" [class.custom-pokemon-art]="entry.pokemon.sprite.startsWith('data:image/')" [src]="entry.pokemon.sprite" [alt]="entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon'" draggable="false" />
                       <span *ngIf="!entry.pokemon.sprite">{{ initials(entry.pokemon.apelido || entry.pokemon.especie || 'Pokémon') }}</span>
                     </span>
-                    <strong>{{ entry.pokemon.apelido || 'Pokémon ' + (entry.index + 1) }}</strong>
+                    <strong>{{ pokemonTitle(entry.pokemon, entry.index) }}</strong>
                   </div>
                 </div>
               </div>
@@ -629,7 +629,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
             <div class="modal-backdrop pokemon-editor-backdrop" *ngIf="selectedPokemonIndex() === i" (click)="closePokemonEditor()">
             <div class="pokemon-editor-modal" (click)="$event.stopPropagation()">
               <div class="repeat-actions">
-                <strong>{{ pokemon.apelido || pokemon.especie || 'Pokémon ' + (i + 1) }}</strong>
+                <strong>{{ pokemonTitle(pokemon, i) }}</strong>
                 <div class="collection-actions">
                   <button type="button" class="button ghost" (click)="removePokemon(current.pokemons, i)">Remover</button>
                   <button type="button" class="button ghost" (click)="closePokemonEditor()">Fechar</button>
@@ -663,9 +663,15 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       </ng-template>
                     </button>
                     <div class="pokeball-options" *ngIf="pokeballPickerIndex() === i">
+                      <input
+                        placeholder="Buscar Pokébola"
+                        [ngModel]="pokeballSearch()"
+                        (ngModelChange)="updatePokeballSearch($event)"
+                        (click)="$event.stopPropagation()"
+                      />
                       <button
                         type="button"
-                        *ngFor="let ball of pokeballs"
+                        *ngFor="let ball of filteredPokeballs(); trackBy: trackByPokeball"
                         [class.active]="pokemon.pokebola === ball.name"
                         (click)="selectPokeball(pokemon, ball)"
                       >
@@ -740,11 +746,29 @@ const ITEMDEX_ICONS: Record<string, string> = {
                     </div>
                   </div>
                 </label>
-                <label>
+                <label class="nature-field">
                   Nature
-                  <select [(ngModel)]="pokemon.nature">
-                    <option *ngFor="let nature of natures" [value]="nature">{{ displayPokemonText(nature) }}</option>
-                  </select>
+                  <div class="nature-select">
+                    <button type="button" class="nature-selected" (click)="toggleNaturePicker(i)">
+                      <span>{{ selectedNatureLabel(pokemon) }}</span>
+                    </button>
+                    <div class="nature-options" *ngIf="naturePickerIndex() === i">
+                      <input
+                        placeholder="Buscar nature"
+                        [ngModel]="natureSearch()"
+                        (ngModelChange)="updateNatureSearch($event)"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <button
+                        type="button"
+                        *ngFor="let nature of filteredNatures(); trackBy: trackByNature"
+                        [class.active]="pokemon.nature === nature"
+                        (click)="selectNature(pokemon, nature)"
+                      >
+                        <span>{{ displayPokemonText(nature) }}</span>
+                      </button>
+                    </div>
+                  </div>
                 </label>
                 <label class="held-item-field">
                   Item segurado
@@ -873,7 +897,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
               <div class="modal-head">
                 <div>
                   <span class="eyebrow">Pokémon</span>
-                  <h3>{{ pokemon.apelido || pokemon.especie || 'Pokémon ' + (i + 1) }}</h3>
+                  <h3>{{ pokemonTitle(pokemon, i) }}</h3>
                 </div>
                 <button type="button" class="button ghost" (click)="closePokemonPreview()">Fechar</button>
               </div>
@@ -898,7 +922,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 </span>
                 <div>
                   <span class="eyebrow">{{ pokemon.especie ? displayPokemonText(pokemon.especie) : 'Espécie não informada' }}</span>
-                  <strong>{{ pokemon.apelido || 'Sem apelido' }}</strong>
+                  <strong>{{ pokemonTitle(pokemon, i) }}</strong>
                 </div>
               </div>
 
@@ -906,7 +930,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 <div><dt>Gênero</dt><dd>{{ pokemonDisplayText(pokemon.genero) }}</dd></div>
                 <div><dt>Feature</dt><dd>{{ pokemonDisplayText(pokemon.feature) }}</dd></div>
                 <div><dt>Nature</dt><dd>{{ pokemonDisplayText(pokemon.nature) }}</dd></div>
-                <div><dt>Hold Item</dt><dd>{{ pokemonDisplayText(pokemon.holdItem) }}</dd></div>
+                <div><dt>Hold Item</dt><dd>{{ heldItemDisplayName(pokemon) }}</dd></div>
                 <div><dt>Happiness</dt><dd>{{ displayValue(pokemon.happinessAtual) }}</dd></div>
               </dl>
 
@@ -1386,7 +1410,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
               (click)="selectSprite(selectedPokemon, sprite)"
             >
               <img [src]="sprite.url" [alt]="sprite.name || 'Pokemon'" loading="lazy" />
-              <span>{{ sprite.custom ? 'Custom' : '#' + sprite.dex }}</span>
+              <span>{{ sprite.dex ? '#' + sprite.dex : (sprite.custom ? 'Custom' : '') }}</span>
               <small *ngIf="sprite.name">{{ sprite.name }}</small>
             </button>
           </div>
@@ -1591,6 +1615,9 @@ export class FichaPageComponent implements OnInit {
   protected readonly selectedPokemonIndex = signal<number | null>(null);
   protected readonly selectedPokemonPreviewIndex = signal<number | null>(null);
   protected readonly pokeballPickerIndex = signal<number | null>(null);
+  protected readonly pokeballSearch = signal('');
+  protected readonly naturePickerIndex = signal<number | null>(null);
+  protected readonly natureSearch = signal('');
   protected readonly mechanicPickerIndex = signal<number | null>(null);
   protected readonly heldItemPickerIndex = signal<number | null>(null);
   protected readonly inventoryPickerOpen = signal(false);
@@ -1741,6 +1768,18 @@ export class FichaPageComponent implements OnInit {
     'modest', 'mild', 'quiet', 'bashful', 'rash',
     'calm', 'gentle', 'sassy', 'careful', 'quirky',
   ].sort((first, second) => first.localeCompare(second));
+  protected readonly filteredPokeballs = computed(() => {
+    const term = this.normalizeSearch(this.pokeballSearch());
+    return term
+      ? this.pokeballs.filter((ball) => this.normalizeSearch(ball.label).includes(term) || this.normalizeSearch(ball.name).includes(term))
+      : this.pokeballs;
+  });
+  protected readonly filteredNatures = computed(() => {
+    const term = this.normalizeSearch(this.natureSearch());
+    return term
+      ? this.natures.filter((nature) => this.normalizeSearch(nature).includes(term) || this.normalizeSearch(this.displayPokemonText(nature)).includes(term))
+      : this.natures;
+  });
   protected readonly spriteSearch = signal('');
   protected readonly customSpriteChoices = signal<PokemonSpriteChoice[]>([]);
   private customSpriteSearchTimer?: ReturnType<typeof setTimeout>;
@@ -1860,7 +1899,7 @@ export class FichaPageComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   protected closePickersOnOutsideClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
-    if (target?.closest('.pokeball-select, .mechanic-select, .held-item-select')) {
+    if (target?.closest('.pokeball-select, .nature-select, .mechanic-select, .held-item-select')) {
       return;
     }
 
@@ -1869,8 +1908,11 @@ export class FichaPageComponent implements OnInit {
 
   private closeInlinePickers(): void {
     this.pokeballPickerIndex.set(null);
+    this.naturePickerIndex.set(null);
     this.mechanicPickerIndex.set(null);
     this.heldItemPickerIndex.set(null);
+    this.pokeballSearch.set('');
+    this.natureSearch.set('');
   }
 
   protected save(): void {
@@ -2568,6 +2610,7 @@ export class FichaPageComponent implements OnInit {
             .filter((pokemon) => Boolean(pokemon.name?.trim()) && Boolean(pokemon.sprite?.trim()))
             .map((pokemon) => ({
               name: this.displayPokemonText(pokemon.name),
+              dex: pokemon.dex,
               url: pokemon.sprite ?? '',
               custom: true,
             }));
@@ -2757,6 +2800,22 @@ export class FichaPageComponent implements OnInit {
 
   protected pokemonDisplayText(value?: string): string {
     return value?.trim() ? this.displayPokemonText(value) : '-';
+  }
+
+  protected pokemonTitle(pokemon: FichaPokemon, index: number): string {
+    const nickname = pokemon.apelido?.trim();
+    const species = pokemon.especie?.trim();
+    if (nickname && !this.isGeneratedPokemonName(nickname)) {
+      return nickname;
+    }
+
+    return species
+      ? this.displayPokemonText(species)
+      : nickname || `Pokémon ${index + 1}`;
+  }
+
+  private isGeneratedPokemonName(value: string): boolean {
+    return /^pok[eé]mon\s+\d+$/i.test(value.trim());
   }
 
   protected pokemonMoveset(pokemon: FichaPokemon): FichaPokemonMovimento[] {
@@ -3109,6 +3168,12 @@ export class FichaPageComponent implements OnInit {
     return this.pokeballs.find((ball) => ball.name === pokemon.pokebola);
   }
 
+  protected selectedNatureLabel(pokemon: FichaPokemon): string {
+    return pokemon.nature?.trim()
+      ? this.displayPokemonText(pokemon.nature)
+      : 'Escolher nature';
+  }
+
   protected selectedMechanic(pokemon: FichaPokemon): PokemonMechanicOption | undefined {
     return this.pokemonMechanics.find((mechanic) => mechanic.name === pokemon.mecanica);
   }
@@ -3116,8 +3181,12 @@ export class FichaPageComponent implements OnInit {
   protected selectedHeldItem(pokemon: FichaPokemon): HeldItemOption | undefined {
     return this.heldItems().find((item) => item.name === pokemon.holdItem)
       ?? (pokemon.holdItem?.trim()
-        ? { name: pokemon.holdItem, label: pokemon.holdItem, icon: pokemon.holdItemIcon }
+        ? { name: pokemon.holdItem, label: this.displayPokemonText(pokemon.holdItem), icon: pokemon.holdItemIcon }
         : undefined);
+  }
+
+  protected heldItemDisplayName(pokemon: FichaPokemon): string {
+    return this.selectedHeldItem(pokemon)?.label ?? this.pokemonDisplayText(pokemon.holdItem);
   }
 
   protected mechanicIcon(mechanic: PokemonMechanicOption): string {
@@ -3127,7 +3196,17 @@ export class FichaPageComponent implements OnInit {
   protected togglePokeballPicker(index: number): void {
     this.mechanicPickerIndex.set(null);
     this.heldItemPickerIndex.set(null);
+    this.naturePickerIndex.set(null);
+    this.pokeballSearch.set('');
     this.pokeballPickerIndex.update((current) => current === index ? null : index);
+  }
+
+  protected updatePokeballSearch(value: string): void {
+    this.pokeballSearch.set(value);
+  }
+
+  protected trackByPokeball(_: number, ball: PokeballOption): string {
+    return ball.name;
   }
 
   protected selectPokeball(pokemon: FichaPokemon, ball: PokeballOption): void {
@@ -3136,8 +3215,31 @@ export class FichaPageComponent implements OnInit {
     this.scheduleAutoSave();
   }
 
+  protected toggleNaturePicker(index: number): void {
+    this.pokeballPickerIndex.set(null);
+    this.mechanicPickerIndex.set(null);
+    this.heldItemPickerIndex.set(null);
+    this.natureSearch.set('');
+    this.naturePickerIndex.update((current) => current === index ? null : index);
+  }
+
+  protected updateNatureSearch(value: string): void {
+    this.natureSearch.set(value);
+  }
+
+  protected trackByNature(_: number, nature: string): string {
+    return nature;
+  }
+
+  protected selectNature(pokemon: FichaPokemon, nature: string): void {
+    pokemon.nature = nature;
+    this.naturePickerIndex.set(null);
+    this.scheduleAutoSave();
+  }
+
   protected toggleMechanicPicker(index: number): void {
     this.pokeballPickerIndex.set(null);
+    this.naturePickerIndex.set(null);
     this.heldItemPickerIndex.set(null);
     this.mechanicPickerIndex.update((current) => current === index ? null : index);
   }
@@ -3150,6 +3252,7 @@ export class FichaPageComponent implements OnInit {
 
   protected toggleHeldItemPicker(index: number): void {
     this.pokeballPickerIndex.set(null);
+    this.naturePickerIndex.set(null);
     this.mechanicPickerIndex.set(null);
     this.heldItemSearch.set('');
     this.heldItemVisibleLimit.set(this.heldItemPageSize);

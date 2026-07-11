@@ -15,6 +15,7 @@ export interface CustomPokemonMove {
 
 export interface CustomPokemonDetails {
   name: string;
+  dex?: number;
   sprite?: string;
   types?: string[];
   abilities?: string[];
@@ -23,6 +24,7 @@ export interface CustomPokemonDetails {
 }
 
 interface SupabasePokemonRow {
+  id?: string | number | null;
   name?: string | null;
   url_slug?: string | null;
   sprite?: string | null;
@@ -73,7 +75,9 @@ export class CustomPokemonApiService {
     const normalizedTerm = normalize(term);
     return this.loadSupabaseCatalog().pipe(
       map((catalog) => catalog
-        .filter((pokemon) => !normalizedTerm || normalize(pokemon.name).includes(normalizedTerm))
+        .filter((pokemon) => !normalizedTerm
+          || normalize(pokemon.name).includes(normalizedTerm)
+          || String(pokemon.dex ?? '').includes(normalizedTerm.replace('#', '')))
         .slice(0, 50)),
     );
   }
@@ -160,6 +164,7 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
 
   return {
     name: firstText(row.name, row.url_slug),
+    dex: dexNumber(row.id),
     sprite: firstText(row.sprite, row.sprite_shiny),
     types: uniqueTexts(row.tipo1, row.tipo2),
     abilities: uniqueTexts(row.habilidade1, row.habilidade2, row.habilidade_oculta, row.habilidade_mega),
@@ -173,6 +178,24 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
       speed: numberOrUndefined(row.spe),
     },
   };
+}
+
+function dexNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  const text = String(value ?? '').trim();
+  if (!text) {
+    return undefined;
+  }
+
+  if (/^\d+$/.test(text)) {
+    return Number(text);
+  }
+
+  const match = text.match(/\d+/);
+  return match ? Number(match[0]) : undefined;
 }
 
 function moveFromSupabase(row: SupabaseMoveRow): CustomPokemonMove {

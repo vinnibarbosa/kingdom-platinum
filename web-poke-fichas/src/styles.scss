@@ -1572,17 +1572,23 @@ dd {
 }
 
 .pokeball-field,
+.nature-field,
 .held-item-field {
   grid-column: span 1;
 }
 
 .pokeball-select,
+.nature-select,
 .held-item-select {
   position: relative;
 }
 
 .pokeball-selected,
 .pokeball-options button,
+.pokeball-options input,
+.nature-selected,
+.nature-options button,
+.nature-options input,
 .held-item-selected,
 .held-item-options button,
 .held-item-options input {
@@ -1606,6 +1612,12 @@ dd {
 .pokeball-selected:focus,
 .pokeball-options button:hover,
 .pokeball-options button.active,
+.pokeball-options input:focus,
+.nature-selected:hover,
+.nature-selected:focus,
+.nature-options button:hover,
+.nature-options button.active,
+.nature-options input:focus,
 .held-item-selected:hover,
 .held-item-selected:focus,
 .held-item-options button:hover,
@@ -1616,6 +1628,7 @@ dd {
 }
 
 .pokeball-options,
+.nature-options,
 .held-item-options {
   position: absolute;
   z-index: 10;
@@ -1633,8 +1646,15 @@ dd {
   padding: 0.45rem;
 }
 
-.pokeball-options button {
+.pokeball-options button,
+.nature-options button {
   min-height: 2.35rem;
+  box-shadow: none;
+}
+
+.pokeball-options input,
+.nature-options input {
+  cursor: text;
   box-shadow: none;
 }
 
