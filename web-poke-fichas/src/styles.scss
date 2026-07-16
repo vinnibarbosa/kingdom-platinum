@@ -3664,6 +3664,11 @@ button.public-pokemon-card:focus-visible {
     border-bottom: 1px solid color-mix(in srgb, var(--green) 20%, var(--line));
   }
 
+  .public-portrait img {
+    object-fit: contain;
+    background: color-mix(in srgb, var(--green) 6%, #fffdf7);
+  }
+
   .public-hero-main {
     grid-row: 2;
     padding: 1.1rem 1rem 0;

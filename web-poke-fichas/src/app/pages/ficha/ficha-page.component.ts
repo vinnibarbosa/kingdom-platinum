@@ -2788,7 +2788,7 @@ export class FichaPageComponent implements OnInit {
 
   protected displayPokemonText(value: string): string {
     return value
-      .split('-')
+      .split(/[-_\s]+/)
       .filter(Boolean)
       .map((part) => part[0]?.toUpperCase() + part.slice(1))
       .join(' ');
@@ -2811,7 +2811,7 @@ export class FichaPageComponent implements OnInit {
 
     return species
       ? this.displayPokemonText(species)
-      : nickname || `Pokémon ${index + 1}`;
+      : 'Pokémon';
   }
 
   private isGeneratedPokemonName(value: string): boolean {
@@ -3186,7 +3186,9 @@ export class FichaPageComponent implements OnInit {
   }
 
   protected heldItemDisplayName(pokemon: FichaPokemon): string {
-    return this.selectedHeldItem(pokemon)?.label ?? this.pokemonDisplayText(pokemon.holdItem);
+    const item = this.selectedHeldItem(pokemon);
+    const value = item?.label ?? pokemon.holdItem;
+    return value?.trim() ? this.displayPokemonText(value) : '-';
   }
 
   protected mechanicIcon(mechanic: PokemonMechanicOption): string {
