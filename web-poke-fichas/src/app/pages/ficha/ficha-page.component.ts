@@ -2789,7 +2789,7 @@ export class FichaPageComponent implements OnInit {
 
   protected displayPokemonText(value: string): string {
     return value
-      .split(/[-_\s]+/)
+      .split(/[-_\s\u2010-\u2015]+/)
       .filter(Boolean)
       .map((part) => part[0]?.toUpperCase() + part.slice(1))
       .join(' ');

@@ -435,9 +435,10 @@ export class FichaViewPageComponent implements OnInit {
 
   protected titleCase(value: string): string {
     return value
-      .split(/([\s-]+)/)
-      .map((part) => (/[\s-]+/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()))
-      .join('');
+      .split(/[-_\s\u2010-\u2015]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
   }
 
   protected pokemonText(value?: string): string {
