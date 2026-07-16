@@ -777,7 +777,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       <ng-container *ngIf="selectedHeldItem(pokemon) as item; else emptyHeldItem">
                         <img *ngIf="item.icon" [src]="item.icon" [alt]="item.label" loading="lazy" decoding="async" (error)="clearBrokenHeldItemIcon($event, item)" />
                         <span class="item-empty-dot" *ngIf="!item.icon"></span>
-                        <span>{{ item.label }}</span>
+                        <span>{{ displayPokemonText(item.label) }}</span>
                       </ng-container>
                       <ng-template #emptyHeldItem>
                         <span>Escolher item</span>
@@ -806,7 +806,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
                       >
                         <img *ngIf="item.icon" [src]="item.icon" [alt]="item.label" loading="lazy" decoding="async" (error)="clearBrokenHeldItemIcon($event, item)" />
                         <span class="item-empty-dot" *ngIf="!item.icon"></span>
-                        <span>{{ item.label }}</span>
+                        <span>{{ displayPokemonText(item.label) }}</span>
                       </button>
                     </div>
                   </div>
@@ -927,6 +927,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
               </div>
 
               <dl class="public-pokemon-detail-facts">
+                <div><dt>Ability</dt><dd>{{ pokemonDisplayText(pokemon.ability) }}</dd></div>
                 <div><dt>Gênero</dt><dd>{{ pokemonDisplayText(pokemon.genero) }}</dd></div>
                 <div><dt>Feature</dt><dd>{{ pokemonDisplayText(pokemon.feature) }}</dd></div>
                 <div><dt>Nature</dt><dd>{{ pokemonDisplayText(pokemon.nature) }}</dd></div>

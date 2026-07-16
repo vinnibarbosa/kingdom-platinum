@@ -3659,13 +3659,14 @@ button.public-pokemon-card:focus-visible {
   .public-portrait {
     grid-row: 1;
     min-height: 0;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--green) 20%, var(--line));
   }
 
   .public-portrait img {
-    object-fit: contain;
+    object-fit: contain !important;
+    object-position: center center;
     background: color-mix(in srgb, var(--green) 6%, #fffdf7);
   }
 
@@ -3768,6 +3769,16 @@ button.public-pokemon-card:focus-visible {
 
   .public-hero {
     grid-template-rows: auto auto auto;
+  }
+
+  .public-portrait {
+    aspect-ratio: 4 / 5;
+    max-height: min(72vh, 430px);
+  }
+
+  .public-portrait img {
+    object-fit: contain !important;
+    object-position: center center;
   }
 
   .public-stats {
