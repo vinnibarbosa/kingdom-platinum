@@ -23,12 +23,20 @@ import { PasswordResetComponent } from './components/password-reset/password-res
         </a>
 
         <nav class="topbar-actions">
-          <a class="topbar-library-link" routerLink="/">Fichário</a>
-          <span>{{ username() }}</span>
-          <button type="button" class="button ghost" *ngIf="isAdmin()" (click)="passwordResetOpen.set(true)">
-            Redefinir senha de usuário
+          <a class="topbar-library-link" routerLink="/">Fich&aacute;rio</a>
+          <button
+            type="button"
+            class="topbar-admin-link"
+            *ngIf="isAdmin()"
+            title="Redefinir senha de usuario"
+            (click)="passwordResetOpen.set(true)"
+          >
+            Senha
           </button>
-          <button type="button" class="button ghost" (click)="logout()">Sair</button>
+          <button type="button" class="topbar-user-chip" title="Sair da conta" (click)="logout()">
+            <span>{{ username() || 'Conta' }}</span>
+            <span aria-hidden="true">x</span>
+          </button>
         </nav>
       </header>
 

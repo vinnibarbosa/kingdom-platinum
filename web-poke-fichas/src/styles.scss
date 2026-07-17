@@ -97,15 +97,15 @@ label {
   top: 0;
   z-index: 20;
   display: flex;
-  height: 58px;
+  height: 52px;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   box-sizing: border-box;
-  border-bottom: 1px solid rgb(85 94 105 / 14%);
-  background: rgb(255 250 240 / 86%);
-  padding: 0 clamp(1rem, 3vw, 2rem);
-  backdrop-filter: blur(16px);
+  border-bottom: 0;
+  background: #3b1605;
+  padding: 0 clamp(0.7rem, 2vw, 1rem);
+  box-shadow: 0 8px 22px rgb(45 19 6 / 14%);
 }
 
 .brand,
@@ -122,36 +122,80 @@ label {
 
 .brand-logo {
   display: block;
-  width: clamp(8.5rem, 14vw, 10rem);
-  max-height: 42px;
+  width: clamp(6.8rem, 12vw, 8rem);
+  max-height: 32px;
   height: auto;
   object-fit: contain;
-  filter: brightness(48%) contrast(115%);
+  filter: none;
 }
 
 .topbar-actions {
-  color: var(--muted);
-  font-size: 0.92rem;
+  margin-left: auto;
+  color: #fffaf0;
+  font-size: 0.82rem;
+  gap: 0.45rem;
 }
 
 .topbar-library-link {
   position: absolute;
   left: 50%;
-  border: 1px solid color-mix(in srgb, var(--green) 16%, transparent);
+  min-height: 2rem;
+  border: 1px solid rgb(255 250 240 / 22%);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--green) 7%, #fffdf7);
-  color: color-mix(in srgb, var(--green-dark) 70%, var(--muted));
-  padding: 0.48rem 1.1rem;
+  background: rgb(255 250 240 / 10%);
+  color: #fffaf0;
+  padding: 0.38rem 0.82rem;
   transform: translateX(-50%);
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .topbar-library-link:hover,
 .topbar-library-link:focus-visible {
-  border-color: color-mix(in srgb, var(--green) 32%, transparent);
-  background: color-mix(in srgb, var(--green) 13%, #fffdf7);
-  color: var(--green-dark);
+  border-color: rgb(255 250 240 / 34%);
+  background: rgb(255 250 240 / 16%);
+  color: #ffffff;
   outline: none;
+}
+
+.topbar-admin-link,
+.topbar-user-chip {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 250 240 / 24%);
+  border-radius: 999px;
+  background: rgb(255 250 240 / 10%);
+  color: #fffaf0;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.38rem 0.72rem;
+}
+
+.topbar-admin-link:hover,
+.topbar-admin-link:focus-visible,
+.topbar-user-chip:hover,
+.topbar-user-chip:focus-visible {
+  border-color: rgb(255 250 240 / 38%);
+  background: rgb(255 250 240 / 18%);
+  outline: none;
+}
+
+.topbar-user-chip {
+  gap: 0.45rem;
+  max-width: 11rem;
+  overflow: hidden;
+}
+
+.topbar-user-chip span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-user-chip span:last-child {
+  opacity: 0.75;
 }
 
 .button {
@@ -3573,7 +3617,6 @@ button.public-pokemon-card:focus-visible {
 }
 
 @media (max-width: 860px) {
-  .topbar,
   .section-head,
   .sheet-header {
     align-items: stretch;
@@ -3585,10 +3628,11 @@ button.public-pokemon-card:focus-visible {
   }
 
   .topbar {
-    height: auto;
-    min-height: 58px;
-    gap: 0.65rem;
-    padding: 0.7rem 1rem;
+    height: 52px;
+    min-height: 52px;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.65rem;
   }
 
   .brand {
@@ -3596,23 +3640,31 @@ button.public-pokemon-card:focus-visible {
   }
 
   .brand-logo {
-    width: 8rem;
+    width: 6.7rem;
   }
 
   .topbar-actions {
-    width: 100%;
-    justify-content: flex-start;
-    gap: 0.55rem 0.8rem;
+    width: auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    font-size: 0.76rem;
   }
 
   .topbar-library-link {
-    position: static;
-    transform: none;
+    position: absolute;
+    transform: translateX(-50%);
+    padding: 0.34rem 0.66rem;
   }
 
-  .topbar-actions .button {
-    min-height: 2.25rem;
-    padding: 0.55rem 0.75rem;
+  .topbar-admin-link,
+  .topbar-user-chip {
+    min-height: 1.85rem;
+    padding: 0.34rem 0.58rem;
+  }
+
+  .topbar-user-chip {
+    max-width: 6.6rem;
   }
 
   .sheet-header {
