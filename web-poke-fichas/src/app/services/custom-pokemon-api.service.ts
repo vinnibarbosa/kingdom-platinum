@@ -63,19 +63,21 @@ interface SupabaseMoveRow {
 @Injectable({ providedIn: 'root' })
 export class CustomPokemonApiService {
   private readonly http = inject(HttpClient);
+  private combinedCatalog$?: Observable<CustomPokemonDetails[]>;
   private supabaseCatalog$?: Observable<CustomPokemonDetails[]>;
+  private backendCatalog$?: Observable<CustomPokemonDetails[]>;
 
   search(term: string): Observable<CustomPokemonDetails[]> {
-    return this.searchSupabase(term);
+    return this.searchCatalog(term);
   }
 
   findByName(name: string): Observable<CustomPokemonDetails> {
-    return this.findSupabaseByName(name);
+    return this.findCatalogByName(name);
   }
 
-  private searchSupabase(term: string): Observable<CustomPokemonDetails[]> {
+  private searchCatalog(term: string): Observable<CustomPokemonDetails[]> {
     const normalizedTerm = normalize(term);
-    return this.loadSupabaseCatalog().pipe(
+    return this.loadCombinedCatalog().pipe(
       map((catalog) => catalog
         .filter((pokemon) => !normalizedTerm
           || pokemonSearchTerms(pokemon).some((term) => term.includes(normalizedTerm))
@@ -84,9 +86,9 @@ export class CustomPokemonApiService {
     );
   }
 
-  private findSupabaseByName(name: string): Observable<CustomPokemonDetails> {
+  private findCatalogByName(name: string): Observable<CustomPokemonDetails> {
     const normalizedName = normalize(name);
-    return this.loadSupabaseCatalog().pipe(
+    return this.loadCombinedCatalog().pipe(
       map((catalog) => catalog.find((pokemon) => pokemonSearchTerms(pokemon).includes(normalizedName))),
       map((pokemon) => {
         if (!pokemon) {
@@ -95,6 +97,38 @@ export class CustomPokemonApiService {
         return pokemon;
       }),
     );
+  }
+
+  private loadCombinedCatalog(): Observable<CustomPokemonDetails[]> {
+    if (!this.combinedCatalog$) {
+      this.combinedCatalog$ = forkJoin({
+        backend: this.loadBackendCatalog().pipe(catchError(() => of([]))),
+        supabase: this.loadSupabaseCatalog().pipe(catchError(() => of([]))),
+      }).pipe(
+        map(({ backend, supabase }) => mergeCatalogs(backend, supabase)),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    }
+
+    return this.combinedCatalog$;
+  }
+
+  private loadBackendCatalog(): Observable<CustomPokemonDetails[]> {
+    if (!environment.apiUrl) {
+      return of([]);
+    }
+
+    if (!this.backendCatalog$) {
+      const url = `${trimTrailingSlash(environment.apiUrl)}/pokemon/custom`;
+      this.backendCatalog$ = this.http.get<CustomPokemonDetails[]>(url, {
+        params: { termo: '' },
+      }).pipe(
+        map((catalog) => catalog.map(normalizeCatalogPokemon).filter((pokemon) => !!pokemon.name)),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    }
+
+    return this.backendCatalog$;
   }
 
   private loadSupabaseCatalog(): Observable<CustomPokemonDetails[]> {
@@ -116,13 +150,11 @@ export class CustomPokemonApiService {
       }).pipe(
         map(({ moves, pokemons }) => {
           const movesByName = moves
-            .filter(isApproved)
             .map(moveFromSupabase)
             .filter((move) => !!move.name)
             .reduce((index, move) => index.set(normalize(move.name), move), new Map<string, CustomPokemonMove>());
 
           return pokemons
-            .filter(isApproved)
             .map((pokemon) => pokemonFromSupabase(pokemon, movesByName))
             .filter((pokemon) => !!pokemon.name);
         }),
@@ -180,6 +212,72 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
       satk: numberOrUndefined(row.spa),
       sdef: numberOrUndefined(row.spd),
       speed: numberOrUndefined(row.spe),
+    },
+  };
+}
+
+function mergeCatalogs(...catalogs: CustomPokemonDetails[][]): CustomPokemonDetails[] {
+  const byKey = new Map<string, CustomPokemonDetails>();
+
+  catalogs.flat()
+    .map(normalizeCatalogPokemon)
+    .filter((pokemon) => !!pokemon.name)
+    .forEach((pokemon) => {
+      const keys = pokemonSearchTerms(pokemon);
+      const existingKey = keys.find((key) => byKey.has(key));
+      if (existingKey) {
+        byKey.set(existingKey, mergePokemon(byKey.get(existingKey)!, pokemon));
+        return;
+      }
+
+      byKey.set(keys[0] || normalize(pokemon.name), pokemon);
+    });
+
+  return [...byKey.values()];
+}
+
+function normalizeCatalogPokemon(pokemon: CustomPokemonDetails): CustomPokemonDetails {
+  const name = firstText(pokemon.name, pokemon.slug);
+  return {
+    ...pokemon,
+    name,
+    slug: firstText(pokemon.slug),
+    searchTerms: uniqueTexts(
+      name,
+      pokemon.slug,
+      ...(pokemon.searchTerms ?? []),
+      pokemon.dex === undefined ? undefined : String(pokemon.dex),
+    ),
+    types: uniqueTexts(...(pokemon.types ?? [])),
+    abilities: uniqueTexts(...(pokemon.abilities ?? [])),
+    moves: uniqueMoves(pokemon.moves ?? []),
+  };
+}
+
+function mergePokemon(base: CustomPokemonDetails, incoming: CustomPokemonDetails): CustomPokemonDetails {
+  return {
+    ...base,
+    ...incoming,
+    name: incoming.name || base.name,
+    slug: incoming.slug || base.slug,
+    dex: incoming.dex ?? base.dex,
+    sprite: incoming.sprite || base.sprite,
+    searchTerms: uniqueTexts(
+      base.name,
+      base.slug,
+      incoming.name,
+      incoming.slug,
+      ...(base.searchTerms ?? []),
+      ...(incoming.searchTerms ?? []),
+      base.dex === undefined ? undefined : String(base.dex),
+      incoming.dex === undefined ? undefined : String(incoming.dex),
+    ),
+    types: uniqueTexts(...(base.types ?? []), ...(incoming.types ?? [])),
+    abilities: uniqueTexts(...(base.abilities ?? []), ...(incoming.abilities ?? [])),
+    moves: uniqueMoves([...(base.moves ?? []), ...(incoming.moves ?? [])]),
+    stats: {
+      ...(base.stats ?? {}),
+      ...(incoming.stats ?? {}),
     },
   };
 }
@@ -301,10 +399,6 @@ function numberOrUndefined(value: unknown): number | undefined {
     return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
-}
-
-function isApproved(row: { approved?: boolean | null }): boolean {
-  return row.approved !== false;
 }
 
 function normalize(value: string | null | undefined): string {
