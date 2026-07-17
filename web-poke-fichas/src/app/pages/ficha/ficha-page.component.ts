@@ -3988,8 +3988,9 @@ export class FichaPageComponent implements OnInit {
     pokemon.satk = stats.satk ?? pokemon.satk;
     pokemon.sdef = stats.sdef ?? pokemon.sdef;
     pokemon.speed = stats.speed ?? pokemon.speed;
-    if (customPokemon.sprite && !pokemon.sprite?.startsWith('data:image/')) {
-      pokemon.sprite = customPokemon.sprite;
+    const customSprite = this.customPokemonSpriteForFeature(customPokemon, pokemon.feature);
+    if (customSprite && !pokemon.sprite?.startsWith('data:image/')) {
+      pokemon.sprite = customSprite;
     }
 
     this.pokemonDexData.update((cache) => ({ ...cache, [key]: { abilities, moves, stats } }));
@@ -4005,7 +4006,7 @@ export class FichaPageComponent implements OnInit {
   private applyPokemonFeatureSprite(pokemon: FichaPokemon): void {
     const pokemonKey = this.pokemonApiLookupKey(pokemon);
     if (!pokemonKey) {
-      this.scheduleAutoSave();
+      this.applyCustomPokemonFeatureSprite(pokemon);
       return;
     }
 
@@ -4021,6 +4022,32 @@ export class FichaPageComponent implements OnInit {
         this.scheduleAutoSave();
       })
       .catch(() => this.scheduleAutoSave());
+  }
+
+  private applyCustomPokemonFeatureSprite(pokemon: FichaPokemon): void {
+    const key = this.pokemonKey(pokemon.especie);
+    if (!key || pokemon.sprite?.startsWith('data:image/')) {
+      this.scheduleAutoSave();
+      return;
+    }
+
+    this.customPokemonApi.findByName(key).subscribe({
+      next: (customPokemon) => {
+        const sprite = this.customPokemonSpriteForFeature(customPokemon, pokemon.feature);
+        if (sprite) {
+          pokemon.sprite = sprite;
+        }
+        this.scheduleAutoSave();
+      },
+      error: () => this.scheduleAutoSave(),
+    });
+  }
+
+  private customPokemonSpriteForFeature(customPokemon: CustomPokemonDetails, feature?: string): string {
+    const isShiny = this.pokemonKey(feature) === 'shiny';
+    return isShiny
+      ? (customPokemon.spriteShiny || customPokemon.sprite || '')
+      : (customPokemon.sprite || customPokemon.spriteShiny || '');
   }
 
   private replaceAnimatedPokemonSprites(ficha: Ficha): void {

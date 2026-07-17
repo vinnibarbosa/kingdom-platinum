@@ -18,6 +18,7 @@ export interface CustomPokemonDetails {
   slug?: string;
   dex?: number;
   sprite?: string;
+  spriteShiny?: string;
   searchTerms?: string[];
   types?: string[];
   abilities?: string[];
@@ -279,6 +280,7 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
     slug: firstText(row.url_slug),
     dex: dexNumber(row.id),
     sprite: firstText(row.sprite, row.sprite_shiny),
+    spriteShiny: firstText(row.sprite_shiny),
     searchTerms: uniqueTexts(row.name, row.url_slug, row.id === undefined || row.id === null ? undefined : String(row.id)),
     types: uniqueTexts(row.tipo1, row.tipo2),
     abilities: uniqueTexts(row.habilidade1, row.habilidade2, row.habilidade_oculta, row.habilidade_mega),
@@ -320,6 +322,7 @@ function normalizeCatalogPokemon(pokemon: CustomPokemonDetails): CustomPokemonDe
     ...pokemon,
     name,
     slug: firstText(pokemon.slug),
+    spriteShiny: firstText(pokemon.spriteShiny),
     searchTerms: uniqueTexts(
       name,
       pokemon.slug,
@@ -340,6 +343,7 @@ function mergePokemon(base: CustomPokemonDetails, incoming: CustomPokemonDetails
     slug: incoming.slug || base.slug,
     dex: incoming.dex ?? base.dex,
     sprite: incoming.sprite || base.sprite,
+    spriteShiny: incoming.spriteShiny || base.spriteShiny,
     searchTerms: uniqueTexts(
       base.name,
       base.slug,
