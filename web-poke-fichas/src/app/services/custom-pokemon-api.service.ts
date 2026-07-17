@@ -15,8 +15,10 @@ export interface CustomPokemonMove {
 
 export interface CustomPokemonDetails {
   name: string;
+  slug?: string;
   dex?: number;
   sprite?: string;
+  searchTerms?: string[];
   types?: string[];
   abilities?: string[];
   moves?: CustomPokemonMove[];
@@ -76,7 +78,7 @@ export class CustomPokemonApiService {
     return this.loadSupabaseCatalog().pipe(
       map((catalog) => catalog
         .filter((pokemon) => !normalizedTerm
-          || normalize(pokemon.name).includes(normalizedTerm)
+          || pokemonSearchTerms(pokemon).some((term) => term.includes(normalizedTerm))
           || String(pokemon.dex ?? '').includes(normalizedTerm.replace('#', '')))
         .slice(0, 50)),
     );
@@ -85,7 +87,7 @@ export class CustomPokemonApiService {
   private findSupabaseByName(name: string): Observable<CustomPokemonDetails> {
     const normalizedName = normalize(name);
     return this.loadSupabaseCatalog().pipe(
-      map((catalog) => catalog.find((pokemon) => normalize(pokemon.name) === normalizedName)),
+      map((catalog) => catalog.find((pokemon) => pokemonSearchTerms(pokemon).includes(normalizedName))),
       map((pokemon) => {
         if (!pokemon) {
           throw new Error('Pokemon customizado nao encontrado');
@@ -164,8 +166,10 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
 
   return {
     name: firstText(row.name, row.url_slug),
+    slug: firstText(row.url_slug),
     dex: dexNumber(row.id),
     sprite: firstText(row.sprite, row.sprite_shiny),
+    searchTerms: uniqueTexts(row.name, row.url_slug, row.id === undefined || row.id === null ? undefined : String(row.id)),
     types: uniqueTexts(row.tipo1, row.tipo2),
     abilities: uniqueTexts(row.habilidade1, row.habilidade2, row.habilidade_oculta, row.habilidade_mega),
     moves: uniqueMoves(moves),
@@ -178,6 +182,14 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
       speed: numberOrUndefined(row.spe),
     },
   };
+}
+
+function pokemonSearchTerms(pokemon: CustomPokemonDetails): string[] {
+  return uniqueTexts(
+    pokemon.name,
+    pokemon.slug,
+    ...(pokemon.searchTerms ?? []),
+  ).map((term) => normalize(term));
 }
 
 function dexNumber(value: unknown): number | undefined {
