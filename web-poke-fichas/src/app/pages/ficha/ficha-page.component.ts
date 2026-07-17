@@ -1410,7 +1410,10 @@ const ITEMDEX_ICONS: Record<string, string> = {
               [class.active]="selectedPokemon.sprite === sprite.url"
               (click)="selectSprite(selectedPokemon, sprite)"
             >
-              <img [src]="sprite.url" [alt]="sprite.name || 'Pokemon'" loading="lazy" />
+              <img *ngIf="sprite.url; else spriteFallback" [src]="sprite.url" [alt]="sprite.name || 'Pokemon'" loading="lazy" />
+              <ng-template #spriteFallback>
+                <span class="sprite-fallback">?</span>
+              </ng-template>
               <span>{{ sprite.dex ? '#' + sprite.dex : (sprite.custom ? 'Custom' : '') }}</span>
               <small *ngIf="sprite.name">{{ sprite.name }}</small>
             </button>
@@ -1818,7 +1821,7 @@ export class FichaPageComponent implements OnInit {
         })
       : choices;
 
-    return [...customChoices, ...filtered];
+    return this.uniqueSpriteChoices([...customChoices, ...filtered]);
   });
 
   protected readonly filteredHeldItemMatches = computed(() => {
@@ -2609,7 +2612,7 @@ export class FichaPageComponent implements OnInit {
       this.customPokemonApi.search(term).subscribe({
         next: (pokemons) => {
           const choices = pokemons
-            .filter((pokemon) => Boolean(pokemon.name?.trim()) && Boolean(pokemon.sprite?.trim()))
+            .filter((pokemon) => Boolean(pokemon.name?.trim()))
             .map((pokemon) => ({
               name: this.displayPokemonText(pokemon.name),
               dex: pokemon.dex,
@@ -2621,6 +2624,20 @@ export class FichaPageComponent implements OnInit {
         error: () => this.customSpriteChoices.set([]),
       });
     }, 250);
+  }
+
+  private uniqueSpriteChoices(choices: PokemonSpriteChoice[]): PokemonSpriteChoice[] {
+    const byKey = new Map<string, PokemonSpriteChoice>();
+
+    choices.forEach((sprite) => {
+      const name = this.normalizeSearch(sprite.name ?? '');
+      const key = sprite.dex ? `dex:${sprite.dex}` : `name:${name || sprite.url}`;
+      if (!byKey.has(key)) {
+        byKey.set(key, sprite);
+      }
+    });
+
+    return [...byKey.values()];
   }
 
   protected hasCustomSprite(pokemon: FichaPokemon): boolean {

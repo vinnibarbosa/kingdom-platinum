@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of, shareReplay } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, shareReplay, switchMap } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
@@ -65,6 +65,7 @@ export class CustomPokemonApiService {
   private readonly http = inject(HttpClient);
   private combinedCatalog$?: Observable<CustomPokemonDetails[]>;
   private supabaseCatalog$?: Observable<CustomPokemonDetails[]>;
+  private supabaseMoves$?: Observable<Map<string, CustomPokemonMove>>;
   private backendCatalog$?: Observable<CustomPokemonDetails[]>;
 
   search(term: string): Observable<CustomPokemonDetails[]> {
@@ -77,8 +78,16 @@ export class CustomPokemonApiService {
 
   private searchCatalog(term: string): Observable<CustomPokemonDetails[]> {
     const normalizedTerm = normalize(term);
-    return this.loadCombinedCatalog().pipe(
-      map((catalog) => catalog
+    return forkJoin({
+      catalog: this.loadCombinedCatalog().pipe(catchError(() => of([]))),
+      backendTargeted: normalizedTerm
+        ? this.searchBackendCatalog(term).pipe(catchError(() => of([])))
+        : of([]),
+      targeted: normalizedTerm
+        ? this.searchSupabaseCatalog(term).pipe(catchError(() => of([])))
+        : of([]),
+    }).pipe(
+      map(({ catalog, backendTargeted, targeted }) => mergeCatalogs(catalog, backendTargeted, targeted)
         .filter((pokemon) => !normalizedTerm
           || pokemonSearchTerms(pokemon).some((term) => term.includes(normalizedTerm))
           || String(pokemon.dex ?? '').includes(normalizedTerm.replace('#', '')))
@@ -88,8 +97,17 @@ export class CustomPokemonApiService {
 
   private findCatalogByName(name: string): Observable<CustomPokemonDetails> {
     const normalizedName = normalize(name);
-    return this.loadCombinedCatalog().pipe(
-      map((catalog) => catalog.find((pokemon) => pokemonSearchTerms(pokemon).includes(normalizedName))),
+    return forkJoin({
+      catalog: this.loadCombinedCatalog().pipe(catchError(() => of([]))),
+      backendTargeted: normalizedName
+        ? this.searchBackendCatalog(name).pipe(catchError(() => of([])))
+        : of([]),
+      targeted: normalizedName
+        ? this.searchSupabaseCatalog(name).pipe(catchError(() => of([])))
+        : of([]),
+    }).pipe(
+      map(({ catalog, backendTargeted, targeted }) => mergeCatalogs(catalog, backendTargeted, targeted)
+        .find((pokemon) => pokemonSearchTerms(pokemon).includes(normalizedName))),
       map((pokemon) => {
         if (!pokemon) {
           throw new Error('Pokemon customizado nao encontrado');
@@ -131,6 +149,38 @@ export class CustomPokemonApiService {
     return this.backendCatalog$;
   }
 
+  private searchBackendCatalog(term: string): Observable<CustomPokemonDetails[]> {
+    if (!environment.apiUrl || !term.trim()) {
+      return of([]);
+    }
+
+    const url = `${trimTrailingSlash(environment.apiUrl)}/pokemon/custom`;
+    return this.http.get<CustomPokemonDetails[]>(url, {
+      params: { termo: term.trim() },
+    }).pipe(
+      map((catalog) => catalog.map(normalizeCatalogPokemon).filter((pokemon) => !!pokemon.name)),
+    );
+  }
+
+  private searchSupabaseCatalog(term: string): Observable<CustomPokemonDetails[]> {
+    const search = supabaseSearchText(term);
+    if (!this.isSupabaseConfigured() || !search) {
+      return of([]);
+    }
+
+    return this.loadSupabaseMoves().pipe(
+      switchMap((movesByName) => this.fetchSupabaseRowsBySearch<SupabasePokemonRow>(
+        environment.supabasePokemonTable,
+        search,
+        80,
+      ).pipe(
+        map((rows) => rows
+          .map((pokemon) => pokemonFromSupabase(pokemon, movesByName))
+          .filter((pokemon) => !!pokemon.name)),
+      )),
+    );
+  }
+
   private loadSupabaseCatalog(): Observable<CustomPokemonDetails[]> {
     if (!this.isSupabaseConfigured()) {
       return of([]);
@@ -138,9 +188,7 @@ export class CustomPokemonApiService {
 
     if (!this.supabaseCatalog$) {
       this.supabaseCatalog$ = forkJoin({
-        moves: this.fetchSupabaseRows<SupabaseMoveRow>(environment.supabaseMoveTable, 5000).pipe(
-          catchError(() => of([])),
-        ),
+        movesByName: this.loadSupabaseMoves(),
         pokemons: this.fetchSupabaseRows<SupabasePokemonRow>(
           environment.supabasePokemonTable,
           environment.supabasePokemonLimit,
@@ -148,12 +196,7 @@ export class CustomPokemonApiService {
           catchError(() => of([])),
         ),
       }).pipe(
-        map(({ moves, pokemons }) => {
-          const movesByName = moves
-            .map(moveFromSupabase)
-            .filter((move) => !!move.name)
-            .reduce((index, move) => index.set(normalize(move.name), move), new Map<string, CustomPokemonMove>());
-
+        map(({ movesByName, pokemons }) => {
           return pokemons
             .map((pokemon) => pokemonFromSupabase(pokemon, movesByName))
             .filter((pokemon) => !!pokemon.name);
@@ -163,6 +206,25 @@ export class CustomPokemonApiService {
     }
 
     return this.supabaseCatalog$;
+  }
+
+  private loadSupabaseMoves(): Observable<Map<string, CustomPokemonMove>> {
+    if (!this.isSupabaseConfigured()) {
+      return of(new Map<string, CustomPokemonMove>());
+    }
+
+    if (!this.supabaseMoves$) {
+      this.supabaseMoves$ = this.fetchSupabaseRows<SupabaseMoveRow>(environment.supabaseMoveTable, 5000).pipe(
+        map((moves) => moves
+          .map(moveFromSupabase)
+          .filter((move) => !!move.name)
+          .reduce((index, move) => index.set(normalize(move.name), move), new Map<string, CustomPokemonMove>())),
+        catchError(() => of(new Map<string, CustomPokemonMove>())),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    }
+
+    return this.supabaseMoves$;
   }
 
   private fetchSupabaseRows<T>(table: string, limit: number): Observable<T[]> {
@@ -176,6 +238,22 @@ export class CustomPokemonApiService {
       params: {
         select: '*',
         limit,
+      },
+    });
+  }
+
+  private fetchSupabaseRowsBySearch<T>(table: string, term: string, limit: number): Observable<T[]> {
+    const url = `${trimTrailingSlash(environment.supabasePokemonUrl)}/rest/v1/${encodeURIComponent(table)}`;
+    return this.http.get<T[]>(url, {
+      headers: new HttpHeaders({
+        apikey: environment.supabasePokemonAnonKey,
+        Authorization: `Bearer ${environment.supabasePokemonAnonKey}`,
+        Accept: 'application/json',
+      }),
+      params: {
+        select: '*',
+        limit,
+        or: `(name.ilike.*${term}*,url_slug.ilike.*${term}*,id.ilike.*${term}*)`,
       },
     });
   }
@@ -300,12 +378,8 @@ function dexNumber(value: unknown): number | undefined {
     return undefined;
   }
 
-  if (/^\d+$/.test(text)) {
-    return Number(text);
-  }
-
-  const match = text.match(/\d+/);
-  return match ? Number(match[0]) : undefined;
+  const match = text.match(/^#?(\d+)$/);
+  return match ? Number(match[1]) : undefined;
 }
 
 function moveFromSupabase(row: SupabaseMoveRow): CustomPokemonMove {
@@ -409,6 +483,10 @@ function normalize(value: string | null | undefined): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function supabaseSearchText(value: string): string {
+  return normalize(value).replace(/[%*(),]/g, '');
 }
 
 function trimTrailingSlash(value: string): string {
