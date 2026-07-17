@@ -2439,7 +2439,8 @@ button.public-pokemon-card:focus-visible {
   overflow: hidden;
   color: var(--ink);
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.28;
+  padding-bottom: 0.06rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2450,6 +2451,7 @@ button.public-pokemon-card:focus-visible {
   overflow: hidden;
   color: var(--muted);
   font-weight: 400;
+  line-height: 1.28;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
