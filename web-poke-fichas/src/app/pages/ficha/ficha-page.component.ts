@@ -1821,7 +1821,7 @@ export class FichaPageComponent implements OnInit {
         })
       : choices;
 
-    return this.uniqueSpriteChoices([...customChoices, ...filtered]);
+    return this.uniqueSpriteChoices([...filtered, ...customChoices]);
   });
 
   protected readonly filteredHeldItemMatches = computed(() => {
@@ -2628,10 +2628,13 @@ export class FichaPageComponent implements OnInit {
 
   private uniqueSpriteChoices(choices: PokemonSpriteChoice[]): PokemonSpriteChoice[] {
     const byKey = new Map<string, PokemonSpriteChoice>();
+    const officialNames = this.pokemonNames();
 
     choices.forEach((sprite) => {
       const name = this.normalizeSearch(sprite.name ?? '');
-      const key = sprite.dex ? `dex:${sprite.dex}` : `name:${name || sprite.url}`;
+      const officialName = sprite.dex ? this.normalizeSearch(officialNames[sprite.dex] ?? '') : '';
+      const isOfficialDuplicate = Boolean(sprite.dex && (!sprite.custom || !name || name === officialName));
+      const key = isOfficialDuplicate ? `dex:${sprite.dex}` : `custom:${name || sprite.url || sprite.dex}`;
       if (!byKey.has(key)) {
         byKey.set(key, sprite);
       }
@@ -3471,11 +3474,12 @@ export class FichaPageComponent implements OnInit {
   }
 
   private pokemonSpriteUrl(dex: number): string {
-    return `https://resource.pokemon-home.com/battledata/img/pokei128/icon${String(dex).padStart(4, '0')}_f00_s0.png`;
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${dex}.png`;
   }
 
   private dexFromSpriteUrl(sprite?: string): number | undefined {
-    const match = sprite?.match(/icon(\d{4})_f00_s[01]\.png/);
+    const match = sprite?.match(/icon(\d{4})_f00_s[01]\.png/)
+      ?? sprite?.match(/official-artwork\/(?:shiny\/)?(\d+)\.png/);
     return match ? Number(match[1]) : undefined;
   }
 
