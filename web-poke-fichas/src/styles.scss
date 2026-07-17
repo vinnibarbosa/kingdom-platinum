@@ -168,16 +168,17 @@ label {
   border-radius: 999px;
   background: color-mix(in srgb, var(--green) 7%, #fffdf7);
   color: var(--green-dark);
-  cursor: pointer;
   font-weight: 600;
   line-height: 1;
   padding: 0.38rem 0.72rem;
 }
 
+.topbar-admin-link {
+  cursor: pointer;
+}
+
 .topbar-admin-link:hover,
-.topbar-admin-link:focus-visible,
-.topbar-user-chip:hover,
-.topbar-user-chip:focus-visible {
+.topbar-admin-link:focus-visible {
   border-color: color-mix(in srgb, var(--green) 34%, var(--line));
   background: color-mix(in srgb, var(--green) 13%, #fffdf7);
   outline: none;
@@ -195,8 +196,29 @@ label {
   white-space: nowrap;
 }
 
-.topbar-user-chip span:last-child {
+.topbar-user-chip button {
+  display: inline-flex;
+  width: 1.1rem;
+  height: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
   opacity: 0.75;
+}
+
+.topbar-user-chip button:hover,
+.topbar-user-chip button:focus-visible {
+  background: color-mix(in srgb, var(--green) 18%, transparent);
+  opacity: 1;
+  outline: none;
 }
 
 .button {

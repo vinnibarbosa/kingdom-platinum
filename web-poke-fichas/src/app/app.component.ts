@@ -33,10 +33,10 @@ import { PasswordResetComponent } from './components/password-reset/password-res
           >
             Senha
           </button>
-          <button type="button" class="topbar-user-chip" title="Sair da conta" (click)="logout()">
+          <span class="topbar-user-chip">
             <span>{{ username() || 'Conta' }}</span>
-            <span aria-hidden="true">x</span>
-          </button>
+            <button type="button" title="Sair da conta" aria-label="Sair da conta" (click)="logout()">x</button>
+          </span>
         </nav>
       </header>
 
