@@ -382,8 +382,9 @@ img.custom-pokemon-art {
   margin: 0;
   overflow: hidden;
   font-size: 1.24rem;
-  line-height: 1.1;
+  line-height: 1.24;
   min-height: 0;
+  padding-bottom: 0.08rem;
   text-overflow: ellipsis;
 }
 
@@ -392,7 +393,7 @@ img.custom-pokemon-art {
   grid-row: 3;
   align-content: start;
   justify-items: center;
-  gap: 0.22rem;
+  gap: 0.18rem;
   min-width: 0;
   width: 100%;
   padding: 0;
@@ -403,7 +404,7 @@ img.custom-pokemon-art {
   color: var(--muted);
   font-size: 0.86rem;
   font-style: italic;
-  line-height: 1.2;
+  line-height: 1.28;
 }
 
 .ficha-card-thumb {
@@ -2419,12 +2420,17 @@ button.public-pokemon-card:focus-visible {
 }
 
 .public-pokemon-sprite img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   padding: 0.15rem;
 }
 
 .public-pokemon-info {
+  display: grid;
+  gap: 0.15rem;
   min-width: 0;
+  overflow: hidden;
 }
 
 .public-pokemon-card strong,
@@ -3748,12 +3754,14 @@ button.public-pokemon-card:focus-visible {
 
   .ficha-card h2 {
     font-size: 0.95rem;
-    line-height: 1.05;
+    line-height: 1.24;
+    padding-bottom: 0.08rem;
   }
 
   .ficha-card-content p {
     margin-bottom: 0.1rem;
     font-size: 0.7rem;
+    line-height: 1.28;
   }
 
   .ficha-card-team {
