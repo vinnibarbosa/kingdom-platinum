@@ -1885,6 +1885,7 @@ export class FichaPageComponent implements OnInit {
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
+        this.fillMissingOfficialPokemonSpecies(this.pokemonNames());
         this.loadFichaPokemonDexData(normalized);
         this.replaceAnimatedPokemonSprites(normalized);
         this.hydrateMissingMoveStyles(normalized);
@@ -2629,9 +2630,10 @@ export class FichaPageComponent implements OnInit {
   protected selectSprite(pokemon: FichaPokemon, sprite: PokemonSpriteChoice): void {
     const previousSpecies = this.pokemonKey(pokemon.especie);
     pokemon.sprite = sprite.url;
-    if (sprite.name) {
-      pokemon.especie = sprite.name;
-      if (this.pokemonKey(sprite.name) !== previousSpecies) {
+    const spriteName = sprite.name ?? (sprite.dex ? this.pokemonNames()[sprite.dex] : undefined);
+    if (spriteName) {
+      pokemon.especie = spriteName;
+      if (this.pokemonKey(spriteName) !== previousSpecies) {
         this.resetPokemonDexSelections(pokemon);
       }
       this.loadPokemonDexData(pokemon);
@@ -2816,7 +2818,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   private isGeneratedPokemonName(value: string): boolean {
-    return /^pok[eé]mon\s+\d+$/i.test(value.trim());
+    return /^pokemon\s+\d+$/i.test(this.normalizeSearch(value).replace(/[-_]+/g, ' '));
   }
 
   protected pokemonMoveset(pokemon: FichaPokemon): FichaPokemonMovimento[] {
@@ -3514,7 +3516,18 @@ export class FichaPageComponent implements OnInit {
     this.pokemonDexCount.set(Math.max(1025, Object.keys(names).length));
     this.pokemonNames.set(names);
     this.officialPokemonKeys.set(new Set(Object.values(names).map((name) => this.pokemonKey(name))));
+    this.fillMissingOfficialPokemonSpecies(names);
     this.loadFichaPokemonDexData();
+  }
+
+  private fillMissingOfficialPokemonSpecies(names: Record<number, string>): void {
+    this.ficha()?.pokemons.forEach((pokemon) => {
+      const dex = this.dexFromSpriteUrl(pokemon.sprite);
+      const name = dex ? names[dex] : undefined;
+      if (name && (!pokemon.especie?.trim() || this.isGeneratedPokemonName(pokemon.especie))) {
+        pokemon.especie = name;
+      }
+    });
   }
 
   private loadHeldItems(): void {

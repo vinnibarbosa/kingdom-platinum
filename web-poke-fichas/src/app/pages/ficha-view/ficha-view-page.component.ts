@@ -123,17 +123,17 @@ interface BadgeOption {
             >
               <div class="public-pokemon-sprite">
                 <img
-                  *ngIf="pokemon.sprite"
-                  [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
-                  [src]="pokemon.sprite"
-                  [alt]="pokemon.apelido || pokemon.especie"
+                  *ngIf="pokemonImage(pokemon) as sprite"
+                  [class.custom-pokemon-art]="pokemon.sprite?.startsWith('data:image/')"
+                  [src]="sprite"
+                  [alt]="pokemonTitle(pokemon)"
                 />
-                <span *ngIf="!pokemon.sprite">?</span>
+                <span *ngIf="!pokemonImage(pokemon)">?</span>
               </div>
 
               <div class="public-pokemon-info">
-                <strong>{{ pokemon.apelido || (pokemon.especie ? titleCase(pokemon.especie) : 'Pokémon') }}</strong>
-                <small>{{ pokemon.especie ? titleCase(pokemon.especie) : 'Espécie não informada' }}</small>
+                <strong>{{ pokemonTitle(pokemon) }}</strong>
+                <small>{{ pokemonSpeciesText(pokemon) }}</small>
               </div>
             </button>
           </div>
@@ -243,7 +243,7 @@ interface BadgeOption {
           <div class="modal-head">
             <div>
               <span class="eyebrow">Pokémon da equipe</span>
-              <h3>{{ pokemon.apelido || (pokemon.especie ? titleCase(pokemon.especie) : 'Pokémon') }}</h3>
+              <h3>{{ pokemonTitle(pokemon) }}</h3>
             </div>
             <button type="button" class="button ghost" (click)="selectedPokemon.set(null)">Fechar</button>
           </div>
@@ -251,16 +251,16 @@ interface BadgeOption {
           <div class="public-pokemon-modal-hero">
             <span class="public-pokemon-modal-sprite">
               <img
-                *ngIf="pokemon.sprite"
-                [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
-                [src]="pokemon.sprite"
-                [alt]="pokemon.apelido || pokemon.especie"
+                *ngIf="pokemonImage(pokemon) as sprite"
+                [class.custom-pokemon-art]="pokemon.sprite?.startsWith('data:image/')"
+                [src]="sprite"
+                  [alt]="pokemonTitle(pokemon)"
               />
-              <span *ngIf="!pokemon.sprite">?</span>
+              <span *ngIf="!pokemonImage(pokemon)">?</span>
             </span>
             <div>
-              <span class="eyebrow">{{ pokemon.especie ? titleCase(pokemon.especie) : 'Espécie não informada' }}</span>
-              <strong>{{ pokemon.apelido || 'Sem apelido' }}</strong>
+              <span class="eyebrow">{{ pokemonSpeciesText(pokemon) }}</span>
+              <strong>{{ pokemonTitle(pokemon) }}</strong>
             </div>
           </div>
 
@@ -443,6 +443,68 @@ export class FichaViewPageComponent implements OnInit {
 
   protected pokemonText(value?: string): string {
     return value?.trim() ? this.titleCase(value) : '-';
+  }
+
+  protected pokemonTitle(pokemon: FichaPokemon): string {
+    const nickname = pokemon.apelido?.trim();
+    if (nickname && !this.isGeneratedPokemonName(nickname)) {
+      return nickname;
+    }
+
+    return pokemon.especie?.trim()
+      ? this.titleCase(pokemon.especie)
+      : 'Pokémon';
+  }
+
+  protected pokemonSpeciesText(pokemon: FichaPokemon): string {
+    return pokemon.especie?.trim()
+      ? this.titleCase(pokemon.especie)
+      : 'Espécie não informada';
+  }
+
+  protected pokemonImage(pokemon: FichaPokemon): string {
+    const sprite = pokemon.sprite?.trim() ?? '';
+    if (!sprite) {
+      return '';
+    }
+
+    if (sprite.startsWith('data:image/')) {
+      return sprite;
+    }
+
+    const dex = this.dexFromPokemonSprite(sprite);
+    if (dex) {
+      return this.officialArtworkUrl(dex, pokemon.feature === 'Shiny');
+    }
+
+    return sprite;
+  }
+
+  private isGeneratedPokemonName(value: string): boolean {
+    return /^pokemon\s+\d+$/i.test(this.normalizeText(value).replace(/[-_]+/g, ' '));
+  }
+
+  private normalizeText(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private dexFromPokemonSprite(sprite: string): number | undefined {
+    const homeMatch = sprite.match(/icon(\d{4})_f00_s[01]\.png/);
+    if (homeMatch) {
+      return Number(homeMatch[1]);
+    }
+
+    const showdownMatch = sprite.match(/\/pokemon\/other\/showdown\/(?:shiny\/)?(\d+)\.gif/);
+    return showdownMatch ? Number(showdownMatch[1]) : undefined;
+  }
+
+  private officialArtworkUrl(dex: number, shiny: boolean): string {
+    const variant = shiny ? 'shiny/' : '';
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${variant}${dex}.png`;
   }
 
   protected moveset(pokemon: FichaPokemon) {
