@@ -60,12 +60,13 @@ import { FichaApiService } from '../../services/ficha-api.service';
                 [title]="pokemon.apelido || pokemon.especie"
               >
                 <img
-                  *ngIf="pokemon.sprite"
+                  *ngIf="pokemon.sprite && !isPokemonSpriteBroken(pokemon.sprite)"
                   [class.custom-pokemon-art]="pokemon.sprite.startsWith('data:image/')"
                   [src]="pokemon.sprite"
                   [alt]="pokemon.apelido || pokemon.especie"
+                  (error)="markBrokenPokemonSprite(pokemon.sprite)"
                 />
-                <span *ngIf="!pokemon.sprite">?</span>
+                <span *ngIf="!pokemon.sprite || isPokemonSpriteBroken(pokemon.sprite)">?</span>
               </span>
             </div>
             <ng-template #emptyTeam><small>Nenhum Pokémon na equipe</small></ng-template>
@@ -84,6 +85,7 @@ export class FichaListPageComponent implements OnInit {
   protected readonly loading = signal(true);
   protected readonly creating = signal(false);
   protected readonly error = signal('');
+  private readonly brokenPokemonSprites = signal(new Set<string>());
   protected readonly ownFichaCount = computed(() => {
     const idOrganizacao = this.auth.currentUser()?.idOrganizacao;
     return this.fichas().filter((ficha) => ficha.idOrganizacao === idOrganizacao).length;
@@ -141,6 +143,22 @@ export class FichaListPageComponent implements OnInit {
     const rawTheme = ficha.corTema ?? (ficha as FichaResumo & { cor_tema?: string }).cor_tema ?? '';
     const theme = rawTheme.trim();
     return /^#[0-9a-f]{6}$/i.test(theme) ? theme : '#aeb5bf';
+  }
+
+  protected isPokemonSpriteBroken(sprite?: string): boolean {
+    return Boolean(sprite && this.brokenPokemonSprites().has(sprite));
+  }
+
+  protected markBrokenPokemonSprite(sprite?: string): void {
+    if (!sprite) {
+      return;
+    }
+
+    this.brokenPokemonSprites.update((current) => {
+      const next = new Set(current);
+      next.add(sprite);
+      return next;
+    });
   }
 
   private fichaSlug(ficha: Pick<FichaResumo, 'id' | 'nome'>): string {
