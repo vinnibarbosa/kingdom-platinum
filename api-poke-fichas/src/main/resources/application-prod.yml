@@ -93,6 +93,7 @@ app:
   supabase:
     url: ${SUPABASE_POKEMON_URL:}
     anon-key: ${SUPABASE_POKEMON_ANON_KEY:}
+    publishable-key: ${SUPABASE_POKEMON_PUBLISHABLE_KEY:}
     pokemon-table: ${SUPABASE_POKEMON_TABLE:pokemons}
     move-table: ${SUPABASE_POKEMON_MOVE_TABLE:moves}
     limit: ${SUPABASE_POKEMON_LIMIT:2000}

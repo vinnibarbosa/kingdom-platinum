@@ -35,6 +35,7 @@ public class SupabasePokemonCatalogUseCase {
     private final HttpClient httpClient;
     private final String supabaseUrl;
     private final String anonKey;
+    private final String publishableKey;
     private final String pokemonTable;
     private final String moveTable;
     private final int limit;
@@ -45,12 +46,14 @@ public class SupabasePokemonCatalogUseCase {
     public SupabasePokemonCatalogUseCase(final ObjectMapper objectMapper,
                                          @Value("${app.supabase.url:}") final String supabaseUrl,
                                          @Value("${app.supabase.anon-key:}") final String anonKey,
+                                         @Value("${app.supabase.publishable-key:}") final String publishableKey,
                                          @Value("${app.supabase.pokemon-table:pokemons}") final String pokemonTable,
                                          @Value("${app.supabase.move-table:moves}") final String moveTable,
                                          @Value("${app.supabase.limit:2000}") final int limit) {
         this.objectMapper = objectMapper;
         this.supabaseUrl = trimTrailingSlash(supabaseUrl);
-        this.anonKey = anonKey;
+        this.anonKey = Optional.ofNullable(anonKey).orElse("").trim();
+        this.publishableKey = Optional.ofNullable(publishableKey).orElse("").trim();
         this.pokemonTable = pokemonTable;
         this.moveTable = moveTable;
         this.limit = limit;
@@ -84,6 +87,7 @@ public class SupabasePokemonCatalogUseCase {
         response.put("configured", isConfigured());
         response.put("urlConfigured", !supabaseUrl.isBlank());
         response.put("anonKeyConfigured", !anonKey.isBlank());
+        response.put("publishableKeyConfigured", !publishableKey.isBlank());
         response.put("pokemonTable", pokemonTable);
         response.put("moveTable", moveTable);
         response.put("count", catalog.size());
@@ -132,13 +136,17 @@ public class SupabasePokemonCatalogUseCase {
                 .build()
                 .toUri();
 
-        final HttpRequest request = HttpRequest.newBuilder(uri)
+        final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri)
                 .timeout(Duration.ofSeconds(12))
-                .header("apikey", anonKey)
-                .header("Authorization", "Bearer " + anonKey)
+                .header("apikey", apiKey())
                 .header("Accept", "application/json")
-                .GET()
-                .build();
+                .GET();
+
+        if (!anonKey.isBlank()) {
+            requestBuilder.header("Authorization", "Bearer " + anonKey);
+        }
+
+        final HttpRequest request = requestBuilder.build();
 
         final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -149,7 +157,11 @@ public class SupabasePokemonCatalogUseCase {
     }
 
     private boolean isConfigured() {
-        return !supabaseUrl.isBlank() && !anonKey.isBlank() && !pokemonTable.isBlank();
+        return !supabaseUrl.isBlank() && !apiKey().isBlank() && !pokemonTable.isBlank();
+    }
+
+    private String apiKey() {
+        return !publishableKey.isBlank() ? publishableKey : anonKey;
     }
 
     private CustomPokemonResponse toPokemon(final Map<String, Object> row,
