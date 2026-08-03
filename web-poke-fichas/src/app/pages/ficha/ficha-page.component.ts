@@ -922,7 +922,6 @@ const ITEMDEX_ICONS: Record<string, string> = {
                 </span>
                 <div>
                   <span class="eyebrow">{{ pokemon.especie ? displayPokemonText(pokemon.especie) : 'Espécie não informada' }}</span>
-                  <strong>{{ pokemonTitle(pokemon, i) }}</strong>
                 </div>
               </div>
 

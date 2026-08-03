@@ -432,7 +432,7 @@ function mergeCatalogs(...catalogs: CustomPokemonDetails[][]): CustomPokemonDeta
 }
 
 function normalizeCatalogPokemon(pokemon: CustomPokemonDetails): CustomPokemonDetails {
-  const name = firstText(pokemon.name, pokemon.slug);
+  const name = displayFormName(firstText(pokemon.name, pokemon.slug));
   return {
     ...pokemon,
     name,
@@ -509,6 +509,23 @@ function formVariantKey(value: string | undefined): string {
   }
 
   return text;
+}
+
+function displayFormName(value: string): string {
+  const match = value.match(/^(.+?)\s*\((Alola|Galar|Hisui|Paldea|Nendo)\s+Form\)$/i);
+  if (!match) {
+    return value;
+  }
+
+  const code = {
+    alola: 'A',
+    galar: 'G',
+    hisui: 'H',
+    paldea: 'P',
+    nendo: 'N',
+  }[match[2].toLowerCase()];
+
+  return code ? `(${code}) ${match[1]}` : value;
 }
 
 function formRegionName(code: string): string {

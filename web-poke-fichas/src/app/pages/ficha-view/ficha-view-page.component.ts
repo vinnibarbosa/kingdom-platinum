@@ -324,17 +324,16 @@ interface BadgeOption {
             </span>
             <div>
               <span class="eyebrow">{{ pokemonSpeciesText(pokemon) }}</span>
-              <strong>{{ pokemonTitle(pokemon) }}</strong>
               <div class="public-pokemon-meta">
-                <span class="public-pokeball-meta">
-                  <img [src]="pokeballIcon(pokemon)" [alt]="pokeballLabel(pokemon)" />
-                  {{ pokeballLabel(pokemon) }}
-                </span>
                 <span
                   class="public-type-chip"
                   *ngFor="let type of pokemonTypesFor(pokemon)"
                   [style.--pokemon-type-color]="moveTypeColor(type)"
                 >{{ titleCase(type) }}</span>
+                <span class="public-pokeball-meta">
+                  <img [src]="pokeballIcon(pokemon)" [alt]="pokeballLabel(pokemon)" />
+                  {{ pokeballLabel(pokemon) }}
+                </span>
               </div>
             </div>
           </div>
