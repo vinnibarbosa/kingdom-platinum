@@ -138,7 +138,7 @@ export class CustomPokemonApiService {
     }
 
     if (!this.backendCatalog$) {
-      const url = `${trimTrailingSlash(environment.apiUrl)}/pokemon/custom`;
+      const url = this.customPokemonEndpoint();
       this.backendCatalog$ = this.http.get<CustomPokemonDetails[]>(url, {
         params: { termo: '' },
       }).pipe(
@@ -155,7 +155,7 @@ export class CustomPokemonApiService {
       return of([]);
     }
 
-    const url = `${trimTrailingSlash(environment.apiUrl)}/pokemon/custom`;
+    const url = this.customPokemonEndpoint();
     return this.http.get<CustomPokemonDetails[]>(url, {
       params: { termo: term.trim() },
     }).pipe(
@@ -264,6 +264,10 @@ export class CustomPokemonApiService {
       && !!environment.supabasePokemonAnonKey
       && !!environment.supabasePokemonTable
       && !!environment.supabaseMoveTable;
+  }
+
+  private customPokemonEndpoint(): string {
+    return `${trimTrailingSlash(environment.apiUrl)}/public/pokemon/custom`;
   }
 }
 

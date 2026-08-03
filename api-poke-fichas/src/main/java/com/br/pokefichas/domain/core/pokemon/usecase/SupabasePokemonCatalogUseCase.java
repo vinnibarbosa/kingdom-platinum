@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,6 +29,7 @@ import java.util.Optional;
 @Service
 public class SupabasePokemonCatalogUseCase {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SupabasePokemonCatalogUseCase.class);
     private static final TypeReference<List<Map<String, Object>>> ROW_LIST_TYPE = new TypeReference<>() {
     };
     private static final Duration CACHE_TTL = Duration.ofMinutes(5);
@@ -42,6 +45,7 @@ public class SupabasePokemonCatalogUseCase {
 
     private Instant cachedAt;
     private List<CustomPokemonResponse> cache = List.of();
+    private String lastError = "";
 
     public SupabasePokemonCatalogUseCase(final ObjectMapper objectMapper,
                                          @Value("${app.supabase.url:}") final String supabaseUrl,
@@ -91,6 +95,7 @@ public class SupabasePokemonCatalogUseCase {
         response.put("pokemonTable", pokemonTable);
         response.put("moveTable", moveTable);
         response.put("count", catalog.size());
+        response.put("lastError", lastError);
         response.put("sample", catalog.stream().limit(5).map(CustomPokemonResponse::name).toList());
         return response;
     }
@@ -117,8 +122,11 @@ public class SupabasePokemonCatalogUseCase {
                     .filter(pokemon -> !pokemon.name().isBlank())
                     .toList();
             cachedAt = Instant.now();
+            lastError = "";
             return cache;
-        } catch (final Exception ignored) {
+        } catch (final Exception exception) {
+            lastError = exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage();
+            LOG.warn("Nao foi possivel carregar o catalogo customizado do Supabase: {}", lastError);
             return cache;
         }
     }
@@ -142,15 +150,13 @@ public class SupabasePokemonCatalogUseCase {
                 .header("Accept", "application/json")
                 .GET();
 
-        if (!anonKey.isBlank()) {
-            requestBuilder.header("Authorization", "Bearer " + anonKey);
-        }
+        requestBuilder.header("Authorization", "Bearer " + apiKey());
 
         final HttpRequest request = requestBuilder.build();
 
         final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            return List.of();
+            throw new IllegalStateException("Supabase respondeu HTTP " + response.statusCode() + " para a tabela " + table);
         }
 
         return objectMapper.readValue(response.body(), ROW_LIST_TYPE);
