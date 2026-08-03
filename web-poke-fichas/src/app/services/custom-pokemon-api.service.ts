@@ -417,14 +417,15 @@ function mergeCatalogs(...catalogs: CustomPokemonDetails[][]): CustomPokemonDeta
     .map(normalizeCatalogPokemon)
     .filter((pokemon) => !!pokemon.name)
     .forEach((pokemon) => {
-      const keys = pokemonSearchTerms(pokemon);
-      const existingKey = keys.find((key) => byKey.has(key));
+      const searchKeys = pokemonSearchTerms(pokemon);
+      const identityKeys = pokemonIdentityKeys(pokemon);
+      const existingKey = [...identityKeys, ...searchKeys].find((key) => byKey.has(key));
       if (existingKey) {
         byKey.set(existingKey, mergePokemon(byKey.get(existingKey)!, pokemon));
         return;
       }
 
-      byKey.set(keys[0] || normalize(pokemon.name), pokemon);
+      byKey.set(identityKeys[0] || searchKeys[0] || normalize(pokemon.name), pokemon);
     });
 
   return [...byKey.values()];
@@ -484,6 +485,40 @@ function pokemonSearchTerms(pokemon: CustomPokemonDetails): string[] {
     pokemon.slug,
     ...(pokemon.searchTerms ?? []),
   ).map((term) => normalize(term));
+}
+
+function pokemonIdentityKeys(pokemon: CustomPokemonDetails): string[] {
+  const variantKey = formVariantKey(pokemon.name) || formVariantKey(pokemon.slug);
+  return uniqueTexts(variantKey, pokemon.slug, pokemon.name).map((term) => normalize(term));
+}
+
+function formVariantKey(value: string | undefined): string {
+  const text = String(value ?? '').trim();
+  if (!text) {
+    return '';
+  }
+
+  const prefix = text.match(/^\(([AGHPN])\)\s*(.+)$/i);
+  if (prefix) {
+    return `${prefix[2]} ${formRegionName(prefix[1])}`;
+  }
+
+  const suffix = text.match(/^(.+?)\s*\((Alola|Galar|Hisui|Paldea|Nendo)\s+Form\)$/i);
+  if (suffix) {
+    return `${suffix[1]} ${suffix[2]}`;
+  }
+
+  return text;
+}
+
+function formRegionName(code: string): string {
+  return {
+    A: 'Alola',
+    G: 'Galar',
+    H: 'Hisui',
+    P: 'Paldea',
+    N: 'Nendo',
+  }[code.toUpperCase()] ?? code;
 }
 
 function dexNumber(value: unknown): number | undefined {
