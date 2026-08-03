@@ -147,7 +147,10 @@ export class FichaActivityLogComponent {
     this.loadingHistory.set(true);
     this.api.getHistory(ficha.id).subscribe({
       next: (entries) => {
-        this.history.set(entries ?? []);
+        this.history.set([...(entries ?? [])].sort((first, second) => {
+          const dateDifference = new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime();
+          return dateDifference || second.id - first.id;
+        }));
         this.loadingHistory.set(false);
       },
       error: () => {
