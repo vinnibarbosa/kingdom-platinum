@@ -49,6 +49,7 @@ public class SecurityConfig {
                         "/public/**",
                         "/pokemon/custom",
                         "/pokemon/custom/**",
+                        "/catalogo/pokemon/status",
                         "/actuator/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
@@ -63,6 +64,7 @@ public class SecurityConfig {
                         "/api/public/**",
                         "/api/pokemon/custom",
                         "/api/pokemon/custom/**",
+                        "/api/catalogo/pokemon/status",
                         "/api/actuator/**",
                         "/api/swagger-ui/**",
                         "/api/swagger-ui.html",
@@ -93,6 +95,7 @@ public class SecurityConfig {
                         .requestMatchers("/public/**", "/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/fichas/publicas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pokemon/custom", "/pokemon/custom/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/catalogo/pokemon/status").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
@@ -127,6 +130,7 @@ public class SecurityConfig {
                 "/public/**",
                 "/pokemon/custom",
                 "/pokemon/custom/**",
+                "/catalogo/pokemon/status",
                 "/actuator/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
@@ -141,6 +145,7 @@ public class SecurityConfig {
                 "/api/public/**",
                 "/api/pokemon/custom",
                 "/api/pokemon/custom/**",
+                "/api/catalogo/pokemon/status",
                 "/api/actuator/**",
                 "/api/swagger-ui/**",
                 "/api/swagger-ui.html",

@@ -124,6 +124,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/public/")
                 || path.startsWith("/pokemon/custom")
                 || path.contains("/pokemon/custom/")
+                || path.equals("/catalogo/pokemon/status")
                 || path.startsWith("/actuator/")
                 || path.startsWith("/swagger-ui")
                 || path.equals("/swagger-ui.html")

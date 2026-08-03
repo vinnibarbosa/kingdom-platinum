@@ -16,7 +16,7 @@ public class CustomPokemonStatusController {
         this.catalog = catalog;
     }
 
-    @GetMapping({"/actuator/pokemon-custom", "/actuator/pokemon-custom/status"})
+    @GetMapping("/catalogo/pokemon/status")
     public ResponseEntity<Map<String, Object>> status() {
         return ResponseEntity.ok(catalog.status());
     }
