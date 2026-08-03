@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { FichaHistorico, FichaHistoricoGlobal } from '../../models/ficha.model';
+import { FichaHistorico, FichaResumo } from '../../models/ficha.model';
 import { AuthService } from '../../services/auth.service';
 import { FichaApiService } from '../../services/ficha-api.service';
 
@@ -16,38 +15,57 @@ import { FichaApiService } from '../../services/ficha-api.service';
         <div class="modal-head">
           <div>
             <span class="eyebrow">Administracao</span>
-            <h3>Registros de todas as fichas</h3>
+            <h3>Registros das fichas</h3>
           </div>
           <button type="button" class="button ghost" (click)="close()">Fechar</button>
         </div>
 
-        <div class="state-card" *ngIf="loading()">Carregando registros...</div>
+        <div class="state-card" *ngIf="loadingFichas()">Carregando fichas...</div>
         <div class="state-card error" *ngIf="error()">{{ error() }}</div>
-        <div class="state-card" *ngIf="!loading() && !error() && !history().length">
-          Nenhuma alteracao registrada ainda.
-        </div>
 
-        <div class="history-list" *ngIf="!loading() && history().length">
-          <article class="history-entry" *ngFor="let entry of history(); trackBy: trackByHistory">
-            <div class="history-entry-head">
-              <div class="global-history-heading">
-                <span class="history-action" [class]="'history-action action-' + entry.acao.toLowerCase()">
-                  {{ historyAction(entry.acao) }}
-                </span>
-                <strong>{{ entry.nomeFicha }}</strong>
-              </div>
-              <time>{{ entry.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
+        <div class="admin-history-layout" *ngIf="!loadingFichas() && !error()">
+          <aside class="history-ficha-picker">
+            <span class="history-picker-label">Fichas</span>
+            <button
+              type="button"
+              class="history-ficha-option"
+              *ngFor="let ficha of fichas(); trackBy: trackByFicha"
+              [class.selected]="selectedFicha()?.id === ficha.id"
+              (click)="selectFicha(ficha)"
+            >
+              <span>{{ ficha.nome }}</span>
+              <small>{{ ficha.player || 'Sem player' }}</small>
+            </button>
+            <p class="empty-picker" *ngIf="!fichas().length">Nenhuma ficha encontrada.</p>
+          </aside>
+
+          <section class="history-details">
+            <div class="state-card" *ngIf="!selectedFicha()">Selecione uma ficha para ver os registros.</div>
+            <div class="state-card" *ngIf="selectedFicha() && loadingHistory()">Carregando registros...</div>
+            <div class="state-card" *ngIf="selectedFicha() && !loadingHistory() && !history().length">
+              Nenhuma alteracao registrada nesta ficha.
             </div>
-            <strong>{{ historyField(entry.campo) }}</strong>
-            <div class="history-values" *ngIf="entry.acao === 'ALTERADO'">
-              <span>{{ entry.valorAnterior || 'Vazio' }}</span>
-              <span aria-hidden="true">&rarr;</span>
-              <span>{{ entry.valorNovo || 'Vazio' }}</span>
+
+            <div class="history-list" *ngIf="selectedFicha() && !loadingHistory() && history().length">
+              <article class="history-entry" *ngFor="let entry of history(); trackBy: trackByHistory">
+                <div class="history-entry-head">
+                  <span class="history-action" [class]="'history-action action-' + entry.acao.toLowerCase()">
+                    {{ historyAction(entry.acao) }}
+                  </span>
+                  <time>{{ entry.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
+                </div>
+                <strong>{{ historyField(entry.campo) }}</strong>
+                <div class="history-values" *ngIf="entry.acao === 'ALTERADO'">
+                  <span>{{ entry.valorAnterior || 'Vazio' }}</span>
+                  <span aria-hidden="true">&rarr;</span>
+                  <span>{{ entry.valorNovo || 'Vazio' }}</span>
+                </div>
+                <p *ngIf="entry.acao === 'ADICIONADO'">{{ entry.valorNovo || 'Item adicionado' }}</p>
+                <p *ngIf="entry.acao === 'REMOVIDO'">{{ entry.valorAnterior || 'Item removido' }}</p>
+                <small>por {{ entry.createdBy || 'sistema' }}</small>
+              </article>
             </div>
-            <p *ngIf="entry.acao === 'ADICIONADO'">{{ entry.valorNovo || 'Item adicionado' }}</p>
-            <p *ngIf="entry.acao === 'REMOVIDO'">{{ entry.valorAnterior || 'Item removido' }}</p>
-            <small>por {{ entry.createdBy || 'sistema' }}</small>
-          </article>
+          </section>
         </div>
       </div>
     </div>
@@ -63,15 +81,18 @@ export class FichaActivityLogComponent {
   set isOpened(value: boolean) {
     this.openedState.set(value);
     if (value) {
-      this.load();
+      this.loadFichas();
     }
   }
 
   protected readonly openedState = signal(false);
   protected readonly opened = this.openedState.asReadonly();
-  protected readonly loading = signal(false);
+  protected readonly loadingFichas = signal(false);
+  protected readonly loadingHistory = signal(false);
   protected readonly error = signal('');
-  protected readonly history = signal<FichaHistoricoGlobal[]>([]);
+  protected readonly fichas = signal<FichaResumo[]>([]);
+  protected readonly selectedFicha = signal<FichaResumo | null>(null);
+  protected readonly history = signal<FichaHistorico[]>([]);
   private readonly isAdmin = computed(() => ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? ''));
 
   protected close(): void {
@@ -79,7 +100,11 @@ export class FichaActivityLogComponent {
     this.closed.emit();
   }
 
-  protected trackByHistory(_: number, entry: FichaHistoricoGlobal): number {
+  protected trackByFicha(_: number, ficha: FichaResumo): number {
+    return ficha.id;
+  }
+
+  protected trackByHistory(_: number, entry: FichaHistorico): number {
     return entry.id;
   }
 
@@ -111,51 +136,48 @@ export class FichaActivityLogComponent {
     }).join(' > ');
   }
 
-  private load(): void {
+  protected selectFicha(ficha: FichaResumo): void {
+    if (this.selectedFicha()?.id === ficha.id) {
+      return;
+    }
+
+    this.selectedFicha.set(ficha);
+    this.history.set([]);
+    this.error.set('');
+    this.loadingHistory.set(true);
+    this.api.getHistory(ficha.id).subscribe({
+      next: (entries) => {
+        this.history.set(entries ?? []);
+        this.loadingHistory.set(false);
+      },
+      error: () => {
+        this.error.set(`Nao foi possivel carregar os registros de ${ficha.nome}.`);
+        this.loadingHistory.set(false);
+      },
+    });
+  }
+
+  private loadFichas(): void {
     if (!this.isAdmin()) {
       this.close();
       return;
     }
 
-    this.loading.set(true);
+    this.loadingFichas.set(true);
+    this.loadingHistory.set(false);
     this.error.set('');
-    this.api.getAllHistory().pipe(
-      catchError(() => this.loadHistoryByFicha()),
-    ).subscribe({
-      next: (entries) => {
-        this.history.set(entries ?? []);
-        this.loading.set(false);
+    this.selectedFicha.set(null);
+    this.history.set([]);
+    this.api.list(0, 500).subscribe({
+      next: (page) => {
+        this.fichas.set(page.content ?? []);
+        this.loadingFichas.set(false);
       },
       error: () => {
-        this.error.set('Nao foi possivel carregar os registros administrativos.');
-        this.loading.set(false);
+        this.error.set('Nao foi possivel carregar as fichas.');
+        this.loadingFichas.set(false);
       },
     });
-  }
-
-  private loadHistoryByFicha() {
-    return this.api.list(0, 500).pipe(
-      switchMap((page) => {
-        const fichas = page.content ?? [];
-        if (!fichas.length) {
-          return of<FichaHistoricoGlobal[]>([]);
-        }
-
-        return forkJoin(fichas.map((ficha) => this.api.getHistory(ficha.id).pipe(
-          map((entries) => (entries ?? []).map((entry) => ({
-            ...entry,
-            fichaId: ficha.id,
-            nomeFicha: ficha.nome,
-          }))),
-          catchError(() => of<FichaHistoricoGlobal[]>([])),
-        ))).pipe(
-          map((entriesByFicha) => entriesByFicha
-            .flat()
-            .sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime())
-            .slice(0, 600)),
-        );
-      }),
-    );
   }
 
   private capitalize(value: string): string {

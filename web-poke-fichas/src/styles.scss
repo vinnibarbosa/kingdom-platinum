@@ -3171,6 +3171,81 @@ button.public-pokemon-card:focus-visible {
   width: min(880px, 100%);
 }
 
+.admin-history-layout {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: minmax(170px, 0.38fr) minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.history-ficha-picker,
+.history-details {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.history-ficha-picker {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  border-right: 1px solid var(--line);
+  padding-right: 0.75rem;
+}
+
+.history-picker-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.history-ficha-option {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  padding: 0.55rem 0.6rem;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.history-ficha-option:hover,
+.history-ficha-option.selected {
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+.history-ficha-option.selected {
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
+.history-ficha-option span {
+  overflow: hidden;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-ficha-option small,
+.empty-picker {
+  color: var(--muted);
+  font-size: 0.73rem;
+}
+
+.empty-picker {
+  margin: 0.5rem 0;
+}
+
+.history-details {
+  display: grid;
+}
+
 .global-history-heading {
   display: inline-flex;
   align-items: center;
@@ -3870,6 +3945,26 @@ button.public-pokemon-card:focus-visible {
 }
 
 @media (max-width: 540px) {
+  .admin-history-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(92px, 0.32fr) minmax(0, 1fr);
+  }
+
+  .history-ficha-picker {
+    grid-auto-columns: minmax(132px, 1fr);
+    grid-auto-flow: column;
+    grid-template-rows: auto 1fr;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 0.55rem;
+  }
+
+  .history-picker-label,
+  .empty-picker {
+    grid-column: 1 / -1;
+  }
+
   .page-wrap {
     width: min(100% - 1rem, 1180px);
   }
