@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { FichaHistorico, FichaHistoricoGlobal } from '../../models/ficha.model';
 import { AuthService } from '../../services/auth.service';
@@ -118,7 +119,9 @@ export class FichaActivityLogComponent {
 
     this.loading.set(true);
     this.error.set('');
-    this.api.getAllHistory().subscribe({
+    this.api.getAllHistory().pipe(
+      catchError(() => this.loadHistoryByFicha()),
+    ).subscribe({
       next: (entries) => {
         this.history.set(entries ?? []);
         this.loading.set(false);
@@ -128,6 +131,31 @@ export class FichaActivityLogComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  private loadHistoryByFicha() {
+    return this.api.list(0, 500).pipe(
+      switchMap((page) => {
+        const fichas = page.content ?? [];
+        if (!fichas.length) {
+          return of<FichaHistoricoGlobal[]>([]);
+        }
+
+        return forkJoin(fichas.map((ficha) => this.api.getHistory(ficha.id).pipe(
+          map((entries) => (entries ?? []).map((entry) => ({
+            ...entry,
+            fichaId: ficha.id,
+            nomeFicha: ficha.nome,
+          }))),
+          catchError(() => of<FichaHistoricoGlobal[]>([])),
+        ))).pipe(
+          map((entriesByFicha) => entriesByFicha
+            .flat()
+            .sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime())
+            .slice(0, 600)),
+        );
+      }),
+    );
   }
 
   private capitalize(value: string): string {
