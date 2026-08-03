@@ -2398,6 +2398,20 @@ dd {
   gap: 1rem;
 }
 
+.public-section-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.button.compact {
+  min-height: 1.9rem;
+  padding: 0.3rem 0.58rem;
+  font-size: 0.75rem;
+}
+
 .public-section h2 {
   color: var(--ink);
   font-size: 1.35rem;
@@ -2436,6 +2450,16 @@ dd {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 0.7rem;
+}
+
+.public-collection-modal {
+  width: min(1000px, 100%);
+  max-height: min(760px, 88vh);
+  overflow: auto;
+}
+
+.public-collection-grid {
+  padding-right: 0.2rem;
 }
 
 .public-pokemon-card,
@@ -2557,6 +2581,41 @@ button.public-pokemon-card:focus-visible {
   display: grid;
   min-width: 0;
   gap: 0.3rem;
+}
+
+.public-pokemon-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.public-pokeball-meta,
+.public-type-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.public-pokeball-meta {
+  gap: 0.3rem;
+  color: var(--muted);
+}
+
+.public-pokeball-meta img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+}
+
+.public-type-chip {
+  border: 1px solid color-mix(in srgb, var(--pokemon-type-color) 42%, var(--line));
+  background: color-mix(in srgb, var(--pokemon-type-color) 13%, #fffaf0);
+  color: color-mix(in srgb, var(--pokemon-type-color) 75%, var(--ink));
+  padding: 0.08rem 0.42rem;
 }
 
 .public-pokemon-modal-hero strong {
@@ -3106,6 +3165,17 @@ button.public-pokemon-card:focus-visible {
   background: #fffdf7;
   padding: 1rem;
   box-shadow: var(--shadow);
+}
+
+.global-history-modal {
+  width: min(880px, 100%);
+}
+
+.global-history-heading {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .sheet-actions app-ficha-history,

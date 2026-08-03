@@ -96,6 +96,21 @@ public class FichaQuery {
                 .toList();
     }
 
+    public List<FichaHistorico> findAllHistoricosWithoutContext() {
+        return repository.findAllWithoutTenantFilter(FichaHistorico.class).stream()
+                .sorted((first, second) -> {
+                    final int dateOrder = java.util.Comparator.nullsLast(java.util.Comparator.<java.time.Instant>reverseOrder())
+                            .compare(first.getCreatedAt(), second.getCreatedAt());
+                    if (dateOrder != 0) {
+                        return dateOrder;
+                    }
+                    return java.util.Comparator.nullsLast(java.util.Comparator.<Long>reverseOrder())
+                            .compare(first.getId(), second.getId());
+                })
+                .limit(600)
+                .toList();
+    }
+
     public boolean existsByNome(final Long idOrganizacao, final String nome, final Long id) {
         if (id == null) {
             return repository.existsWithoutTenant(

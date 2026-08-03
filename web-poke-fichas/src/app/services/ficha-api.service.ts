@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Ficha, FichaHistorico, FichaPayload, FichaResumo, Page } from '../models/ficha.model';
+import { Ficha, FichaHistorico, FichaHistoricoGlobal, FichaPayload, FichaResumo, Page } from '../models/ficha.model';
 
 const API_BASE = '/api';
 
@@ -38,6 +38,12 @@ export class FichaApiService {
 
   getHistory(id: number): Observable<FichaHistorico[]> {
     return this.http.get<FichaHistorico[]>(`${API_BASE}/fichas/${id}/historico`, {
+      withCredentials: true,
+    });
+  }
+
+  getAllHistory(): Observable<FichaHistoricoGlobal[]> {
+    return this.http.get<FichaHistoricoGlobal[]>(`${API_BASE}/fichas/historico`, {
       withCredentials: true,
     });
   }

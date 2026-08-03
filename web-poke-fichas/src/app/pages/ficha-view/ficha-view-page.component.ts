@@ -7,6 +7,7 @@ import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete
 import { Ficha, FichaConquista, FichaItem, FichaPokemon, FichaRelacionado } from '../../models/ficha.model';
 import { FichaApiService } from '../../services/ficha-api.service';
 import { AuthService } from '../../services/auth.service';
+import { CustomPokemonApiService } from '../../services/custom-pokemon-api.service';
 import { display, money } from '../../services/ficha-utils';
 import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
 
@@ -110,7 +111,10 @@ interface BadgeOption {
         <section class="public-section">
           <div class="public-section-head">
             <h2>Pokémon</h2>
-            <span>{{ teamCount(current) }} na equipe · {{ boxCount(current) }} na box</span>
+            <div class="public-section-actions">
+              <span>{{ teamCount(current) }} na equipe &middot; {{ boxCount(current) }} na box</span>
+              <button type="button" class="button ghost compact" *ngIf="boxCount(current)" (click)="boxOpen.set(true)">Ver Box</button>
+            </div>
           </div>
 
           <div class="public-pokemon-grid">
@@ -118,7 +122,7 @@ interface BadgeOption {
               type="button"
               class="public-pokemon-card"
               *ngFor="let pokemon of teamPokemons(current)"
-              (click)="selectedPokemon.set(pokemon)"
+              (click)="openPokemon(pokemon)"
               [attr.aria-label]="'Ver detalhes de ' + (pokemon.apelido || pokemon.especie || 'Pokémon')"
             >
               <div class="public-pokemon-sprite">
@@ -190,7 +194,10 @@ interface BadgeOption {
         <section class="public-section" *ngIf="current.itens.length">
           <div class="public-section-head">
             <h2>Inventário</h2>
-            <span>{{ current.itens.length }} itens</span>
+            <div class="public-section-actions">
+              <span>{{ current.itens.length }} itens</span>
+              <button type="button" class="button ghost compact" *ngIf="current.itens.length > visibleItems(current.itens).length" (click)="inventoryOpen.set(true)">Ver tudo</button>
+            </div>
           </div>
 
           <div class="public-item-grid">
@@ -208,6 +215,63 @@ interface BadgeOption {
           </div>
         </section>
       </article>
+
+      <div class="modal-backdrop" *ngIf="boxOpen() && ficha() as current" (click)="boxOpen.set(false)">
+        <div class="achievement-editor-modal public-collection-modal" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Pokémon</span>
+              <h3>Box de {{ current.nome }}</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="boxOpen.set(false)">Fechar</button>
+          </div>
+
+          <div class="public-pokemon-grid public-collection-grid">
+            <button
+              type="button"
+              class="public-pokemon-card"
+              *ngFor="let pokemon of boxPokemons(current)"
+              (click)="boxOpen.set(false); openPokemon(pokemon)"
+              [attr.aria-label]="'Ver detalhes de ' + (pokemon.apelido || pokemon.especie || 'Pokémon')"
+            >
+              <div class="public-pokemon-sprite">
+                <img *ngIf="pokemonImage(pokemon) as sprite" [class.custom-pokemon-art]="pokemon.sprite?.startsWith('data:image/')" [src]="sprite" [alt]="pokemonTitle(pokemon)" />
+                <span *ngIf="!pokemonImage(pokemon)">?</span>
+              </div>
+              <div class="public-pokemon-info">
+                <strong>{{ pokemonTitle(pokemon) }}</strong>
+                <small>{{ pokemonSpeciesText(pokemon) }}</small>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" *ngIf="inventoryOpen() && ficha() as current" (click)="inventoryOpen.set(false)">
+        <div class="achievement-editor-modal public-collection-modal" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <div>
+              <span class="eyebrow">Inventário</span>
+              <h3>Inventário de {{ current.nome }}</h3>
+            </div>
+            <button type="button" class="button ghost" (click)="inventoryOpen.set(false)">Fechar</button>
+          </div>
+
+          <div class="public-item-grid public-collection-grid">
+            <article class="public-item-card" *ngFor="let item of current.itens">
+              <span class="inventory-card-icon">
+                <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome" />
+                <span *ngIf="!item.icone">?</span>
+                <small class="inventory-card-qty" *ngIf="(item.quantidade || 1) > 1">x{{ item.quantidade }}</small>
+              </span>
+              <div>
+                <strong>{{ item.nome }}</strong>
+                <small>{{ item.descricao || item.categoria }}</small>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
 
       <div class="modal-backdrop" *ngIf="selectedRelacionado() as pessoa" (click)="selectedRelacionado.set(null)">
         <div class="achievement-editor-modal public-relacionado-modal" (click)="$event.stopPropagation()">
@@ -261,6 +325,17 @@ interface BadgeOption {
             <div>
               <span class="eyebrow">{{ pokemonSpeciesText(pokemon) }}</span>
               <strong>{{ pokemonTitle(pokemon) }}</strong>
+              <div class="public-pokemon-meta">
+                <span class="public-pokeball-meta">
+                  <img [src]="pokeballIcon(pokemon)" [alt]="pokeballLabel(pokemon)" />
+                  {{ pokeballLabel(pokemon) }}
+                </span>
+                <span
+                  class="public-type-chip"
+                  *ngFor="let type of pokemonTypesFor(pokemon)"
+                  [style.--pokemon-type-color]="moveTypeColor(type)"
+                >{{ titleCase(type) }}</span>
+              </div>
             </div>
           </div>
 
@@ -312,6 +387,7 @@ interface BadgeOption {
 export class FichaViewPageComponent implements OnInit {
   private readonly api = inject(FichaApiService);
   private readonly auth = inject(AuthService);
+  private readonly customPokemonApi = inject(CustomPokemonApiService);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly ficha = signal<Ficha | null>(null);
@@ -319,6 +395,9 @@ export class FichaViewPageComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly selectedRelacionado = signal<FichaRelacionado | null>(null);
   protected readonly selectedPokemon = signal<FichaPokemon | null>(null);
+  protected readonly pokemonTypes = signal<Record<string, string[]>>({});
+  protected readonly boxOpen = signal(false);
+  protected readonly inventoryOpen = signal(false);
   protected readonly defaultTheme = '#aeb5bf';
 
   protected themeAccent(theme?: string): string {
@@ -462,6 +541,35 @@ export class FichaViewPageComponent implements OnInit {
       : 'Espécie não informada';
   }
 
+  protected openPokemon(pokemon: FichaPokemon): void {
+    this.selectedPokemon.set(pokemon);
+    this.loadPokemonTypes(pokemon);
+  }
+
+  protected pokemonTypesFor(pokemon: FichaPokemon): string[] {
+    return this.pokemonTypes()[this.pokemonIdentityKey(pokemon)] ?? [];
+  }
+
+  protected pokeballLabel(pokemon: FichaPokemon): string {
+    const key = (pokemon.pokebola || 'poke-ball').trim().toLowerCase();
+    const labels: Record<string, string> = {
+      'poke-ball': 'Poké Ball', 'great-ball': 'Great Ball', 'ultra-ball': 'Ultra Ball',
+      'master-ball': 'Master Ball', 'premier-ball': 'Premier Ball', 'luxury-ball': 'Luxury Ball',
+      'heal-ball': 'Heal Ball', 'quick-ball': 'Quick Ball', 'dusk-ball': 'Dusk Ball',
+      'dive-ball': 'Dive Ball', 'net-ball': 'Net Ball', 'nest-ball': 'Nest Ball',
+      'repeat-ball': 'Repeat Ball', 'timer-ball': 'Timer Ball', 'level-ball': 'Level Ball',
+      'lure-ball': 'Lure Ball', 'friend-ball': 'Friend Ball', 'love-ball': 'Love Ball',
+      'safari-ball': 'Safari Ball', 'cherish-ball': 'Cherish Ball', 'beast-ball': 'Beast Ball',
+      'fast-ball': 'Fast Ball', 'heavy-ball': 'Heavy Ball', 'moon-ball': 'Moon Ball', 'strange-ball': 'Strange Ball',
+    };
+    return labels[key] ?? this.titleCase(key);
+  }
+
+  protected pokeballIcon(pokemon: FichaPokemon): string {
+    const key = (pokemon.pokebola || 'poke-ball').trim().toLowerCase() || 'poke-ball';
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${encodeURIComponent(key)}.png`;
+  }
+
   protected pokemonImage(pokemon: FichaPokemon): string {
     const sprite = pokemon.sprite?.trim() ?? '';
     if (!sprite) {
@@ -531,6 +639,10 @@ export class FichaViewPageComponent implements OnInit {
     return ficha.pokemons.filter((pokemon) => this.pokemonLocation(pokemon) === 'box').length;
   }
 
+  protected boxPokemons(ficha: Ficha): FichaPokemon[] {
+    return ficha.pokemons.filter((pokemon) => this.pokemonLocation(pokemon) === 'box');
+  }
+
   protected badgeConquista(ficha: Ficha, slot: number): FichaConquista | undefined {
     return ficha.conquistas.find((conquista) => conquista.tipo === `insignia-${slot + 1}`);
   }
@@ -554,6 +666,55 @@ export class FichaViewPageComponent implements OnInit {
   private pokemonLocation(pokemon: FichaPokemon): 'equipe' | 'box' {
     const location = (pokemon.box ?? '').trim().toLowerCase();
     return location === 'box' || location === 'pc' ? 'box' : 'equipe';
+  }
+
+  private loadPokemonTypes(pokemon: FichaPokemon): void {
+    const key = this.pokemonIdentityKey(pokemon);
+    if (this.pokemonTypes()[key] !== undefined) {
+      return;
+    }
+
+    const species = pokemon.especie?.trim();
+    if (!species) {
+      this.setPokemonTypes(key, []);
+      return;
+    }
+
+    this.customPokemonApi.findByName(species).subscribe({
+      next: (details) => this.setPokemonTypes(key, details.types ?? []),
+      error: () => this.loadOfficialPokemonTypes(key, species, pokemon),
+    });
+  }
+
+  private loadOfficialPokemonTypes(key: string, species: string, pokemon: FichaPokemon): void {
+    const dex = this.dexFromPokemonSprite(pokemon.sprite ?? '');
+    const lookup = dex ? String(dex) : this.normalizeText(species);
+    if (!lookup) {
+      this.setPokemonTypes(key, []);
+      return;
+    }
+
+    fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(lookup)}`)
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data: { types?: Array<{ slot?: number; type?: { name?: string } }> }) => {
+        const types = (data.types ?? [])
+          .sort((first, second) => (first.slot ?? 0) - (second.slot ?? 0))
+          .map((entry) => entry.type?.name ?? '')
+          .filter(Boolean);
+        this.setPokemonTypes(key, types);
+      })
+      .catch(() => this.setPokemonTypes(key, []));
+  }
+
+  private setPokemonTypes(key: string, types: string[]): void {
+    this.pokemonTypes.update((current) => ({
+      ...current,
+      [key]: [...new Set(types.map((type) => type.trim()).filter(Boolean))],
+    }));
+  }
+
+  private pokemonIdentityKey(pokemon: FichaPokemon): string {
+    return String(pokemon.id ?? pokemon.especie ?? pokemon.apelido ?? '').trim().toLowerCase();
   }
 
   private hydrateMissingMoveStyles(ficha: Ficha): void {

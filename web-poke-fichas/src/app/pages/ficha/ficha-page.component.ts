@@ -1345,7 +1345,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
               [imageQuality]="crop.target === 'profile' ? 86 : 82"
               [autoCrop]="false"
               [allowMoveImage]="true"
-              [containWithinAspectRatio]="true"
+              [containWithinAspectRatio]="false"
               [hideResizeSquares]="false"
               backgroundColor="#fffdf7"
               (imageCropped)="onImageCropped($event)"
@@ -1645,9 +1645,11 @@ export class FichaPageComponent implements OnInit {
     { id: 'status', label: 'Restaurar status' },
     { id: 'pokeballs', label: 'Pokébolas' },
     { id: 'battle', label: 'Itens de batalha' },
+    { id: 'contest', label: 'Contest itens' },
     { id: 'evolutionary', label: 'Evolutionary' },
     { id: 'berries', label: 'Berries' },
     { id: 'treasure', label: 'Treasure' },
+    { id: 'thrash', label: 'Thrash itens' },
     { id: 'trainer-keys', label: 'Trainer itens (Keys)' },
     { id: 'tm-pill', label: 'TM / Pill case' },
   ];
@@ -3762,6 +3764,11 @@ export class FichaPageComponent implements OnInit {
       'type-enhancement': 'battle',
       'vitamins': 'battle',
       'vitamin': 'battle',
+      'contest': 'contest',
+      'contest-items': 'contest',
+      'contest-type': 'contest',
+      'contest-scarves': 'contest',
+      'scarves': 'contest',
       'evolution': 'evolutionary',
       'species-specific': 'evolutionary',
       'plates': 'evolutionary',
@@ -3771,6 +3778,10 @@ export class FichaPageComponent implements OnInit {
       'collectibles': 'treasure',
       'spelunking': 'treasure',
       'treasure-items': 'treasure',
+      'trash': 'thrash',
+      'thrash': 'thrash',
+      'junk': 'thrash',
+      'unused': 'thrash',
       'key-items': 'trainer-keys',
       'event-items': 'trainer-keys',
       'gameplay': 'trainer-keys',
@@ -3787,12 +3798,17 @@ export class FichaPageComponent implements OnInit {
       'itens-de-escolha': 'battle',
       'treinamento': 'battle',
       'aprimoramento-de-tipo': 'battle',
+      'contest-itens': 'contest',
+      'itens-de-contest': 'contest',
       'evolutionary': 'evolutionary',
       'evolucao': 'evolutionary',
       'itens-especificos': 'evolutionary',
       'placas': 'evolutionary',
       'treasure': 'treasure',
       'tesouros': 'treasure',
+      'thrash-itens': 'thrash',
+      'trash-itens': 'thrash',
+      'itens-descartados': 'thrash',
       'trainer-itens-keys': 'trainer-keys',
       'itens-de-treinador': 'trainer-keys',
       'itens-de-jornada': 'trainer-keys',
@@ -3825,6 +3841,10 @@ export class FichaPageComponent implements OnInit {
       return 'status';
     }
 
+    if (/contest|appeal|dress-up|accessory|ribbon-syndicate/.test(source)) {
+      return 'contest';
+    }
+
     if (/^x-|dire-hit|guard-spec|battle|choice|band|specs|scarf|orb|vest|sash|policy|herb|incense|leftovers|rocky-helmet|eviolite|expert-belt|life-orb|focus-(?:band|sash)|quick-claw|scope-lens/.test(source)) {
       return 'battle';
     }
@@ -3835,6 +3855,10 @@ export class FichaPageComponent implements OnInit {
 
     if (/nugget|pearl|shard|stardust|star-piece|comet-shard|big-mushroom|balm-mushroom|bone|relic|treasure|ore|gem|bottle-cap|gold-bottle-cap/.test(source)) {
       return 'treasure';
+    }
+
+    if (/trash|thrash|junk|discard|used-item/.test(source)) {
+      return 'thrash';
     }
 
     if (/key|case|card|ticket|pass|coupon|charm|rod|gear|kit|poketch|pokedex|map|scope|flute|bike|repel|slot-upgrade|mini-slot-upgrade|trainer/.test(source)) {

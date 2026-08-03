@@ -100,6 +100,11 @@ export interface FichaHistorico {
   createdBy?: string;
 }
 
+export interface FichaHistoricoGlobal extends FichaHistorico {
+  fichaId: number;
+  nomeFicha: string;
+}
+
 export interface FichaPokemonResumo {
   apelido: string;
   especie: string;

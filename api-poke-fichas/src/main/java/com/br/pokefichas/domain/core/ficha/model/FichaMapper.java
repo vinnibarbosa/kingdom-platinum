@@ -22,6 +22,7 @@ import com.br.pokefichas.domain.core.ficha.dto.FichaResponse;
 import com.br.pokefichas.domain.core.ficha.dto.FichaResumoResponse;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,8 @@ public class FichaMapper {
     private static final String DEFAULT_THEME_COLOR = "#aeb5bf";
     private static final String LEGACY_GREEN_THEME_COLOR = "#2f6f55";
     private static final String LEGACY_BLUE_THEME_COLOR = "#586a9b";
+    private static final int INITIAL_REPUTATION = 0;
+    private static final BigDecimal INITIAL_MONEY = BigDecimal.valueOf(1_000L);
 
     public Ficha toEntity(final CriarFichaRequest request, final Long idOrganizacao) {
         return apply(Ficha.Builder.create().idOrganizacao(idOrganizacao), request).build();
@@ -55,8 +58,8 @@ public class FichaMapper {
                 .indole(request.indole())
                 .ranking(request.ranking())
                 .ocupacao(request.ocupacao())
-                .reputacao(request.reputacao())
-                .dinheiro(request.dinheiro())
+                .reputacao(INITIAL_REPUTATION)
+                .dinheiro(INITIAL_MONEY)
                 .pontosVida(request.pontosVida())
                 .equipe(request.equipe())
                 .pontos(request.pontos())
