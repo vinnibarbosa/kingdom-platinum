@@ -48,6 +48,7 @@ interface SupabasePokemonRow {
   moves_tm?: unknown;
   moves_egg?: unknown;
   moves_tutor?: unknown;
+  formas_alt?: unknown;
   approved?: boolean | null;
 }
 
@@ -176,7 +177,7 @@ export class CustomPokemonApiService {
         80,
       ).pipe(
         map((rows) => rows
-          .map((pokemon) => pokemonFromSupabase(pokemon, movesByName))
+          .flatMap((pokemon) => pokemonsFromSupabase(pokemon, movesByName))
           .filter((pokemon) => !!pokemon.name)),
       )),
     );
@@ -199,7 +200,7 @@ export class CustomPokemonApiService {
       }).pipe(
         map(({ movesByName, pokemons }) => {
           return pokemons
-            .map((pokemon) => pokemonFromSupabase(pokemon, movesByName))
+            .flatMap((pokemon) => pokemonsFromSupabase(pokemon, movesByName))
             .filter((pokemon) => !!pokemon.name);
         }),
         shareReplay({ bufferSize: 1, refCount: true }),
@@ -271,6 +272,11 @@ export class CustomPokemonApiService {
   }
 }
 
+function pokemonsFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, CustomPokemonMove>): CustomPokemonDetails[] {
+  const base = pokemonFromSupabase(row, movesByName);
+  return [base, ...alternativeForms(row.formas_alt).map((form) => pokemonFormFromSupabase(base, form, movesByName))];
+}
+
 function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, CustomPokemonMove>): CustomPokemonDetails {
   const moves = [
     ...moveList(row.moves_level, movesByName),
@@ -298,6 +304,110 @@ function pokemonFromSupabase(row: SupabasePokemonRow, movesByName: Map<string, C
       speed: numberOrUndefined(row.spe),
     },
   };
+}
+
+function pokemonFormFromSupabase(
+  base: CustomPokemonDetails,
+  form: Record<string, unknown>,
+  movesByName: Map<string, CustomPokemonMove>,
+): CustomPokemonDetails {
+  const name = firstText(form['name'], form['nome'], form['form_name'], form['form'], form['url_slug'], form['slug']);
+  const slug = firstText(form['url_slug'], form['slug'], name);
+  const formTypes = Array.isArray(form['types']) ? form['types'] : [form['types']];
+  const moves = [
+    ...moveList(form['moves_level'], movesByName),
+    ...moveList(form['moves_tm'], movesByName),
+    ...moveList(form['moves_egg'], movesByName),
+    ...moveList(form['moves_tutor'], movesByName),
+  ];
+
+  return {
+    ...base,
+    name: name || base.name,
+    // A form is a catalog entry of its own. Do not reuse the base slug/dex,
+    // otherwise the catalog merger treats it as the official species.
+    slug,
+    dex: dexNumber(form['id']),
+    sprite: firstText(form['sprite'], form['sprite_url'], form['image'], form['image_url'], form['artwork'], form['imagem']) || base.sprite,
+    spriteShiny: firstText(form['sprite_shiny'], form['shiny_sprite'], form['image_shiny']) || base.spriteShiny,
+    searchTerms: uniqueTexts(
+      name,
+      slug,
+      form['id'] === undefined || form['id'] === null ? undefined : String(form['id']),
+    ),
+    types: uniqueTexts(
+      firstText(form['tipo1'], form['type1']),
+      firstText(form['tipo2'], form['type2']),
+      ...formTypes.map((type) => firstText(type)),
+      ...(base.types ?? []),
+    ),
+    abilities: uniqueTexts(
+      firstText(form['habilidade1'], form['ability1']),
+      firstText(form['habilidade2'], form['ability2']),
+      firstText(form['habilidade_oculta'], form['hidden_ability']),
+      ...(base.abilities ?? []),
+    ),
+    moves: moves.length ? uniqueMoves(moves) : base.moves,
+    stats: {
+      ...(base.stats ?? {}),
+      hp: numberOrUndefined(form['hp']) ?? base.stats?.hp,
+      atk: numberOrUndefined(form['atk']) ?? base.stats?.atk,
+      def: numberOrUndefined(form['def']) ?? base.stats?.def,
+      satk: numberOrUndefined(form['spa'], form['satk']) ?? base.stats?.satk,
+      sdef: numberOrUndefined(form['spd'], form['sdef']) ?? base.stats?.sdef,
+      speed: numberOrUndefined(form['spe'], form['speed']) ?? base.stats?.speed,
+    },
+  };
+}
+
+function alternativeForms(value: unknown): Record<string, unknown>[] {
+  const parsed = parseJsonValue(value);
+  if (Array.isArray(parsed)) {
+    return parsed.flatMap((entry) => alternativeForms(entry));
+  }
+
+  if (!isRecord(parsed)) {
+    return [];
+  }
+
+  const nestedForms = parsed['formas_alt'] ?? parsed['forms'] ?? parsed['formas'];
+  if (nestedForms !== undefined) {
+    return alternativeForms(nestedForms);
+  }
+
+  if (hasFormFields(parsed)) {
+    return [parsed];
+  }
+
+  return Object.entries(parsed).flatMap(([name, entry]) => {
+    if (isRecord(entry)) {
+      return [{ ...entry, name: firstText(entry['name'], entry['nome'], name) }];
+    }
+    if (typeof entry === 'string' && entry.trim()) {
+      return [{ name, sprite: entry }];
+    }
+    return [];
+  });
+}
+
+function parseJsonValue(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasFormFields(value: Record<string, unknown>): boolean {
+  return ['name', 'nome', 'form_name', 'form', 'sprite', 'sprite_url', 'image', 'url_slug', 'slug']
+    .some((key) => value[key] !== undefined && value[key] !== null);
 }
 
 function mergeCatalogs(...catalogs: CustomPokemonDetails[][]): CustomPokemonDetails[] {
@@ -472,13 +582,17 @@ function firstText(...values: unknown[]): string {
     .find(Boolean) ?? '';
 }
 
-function numberOrUndefined(value: unknown): number | undefined {
-  if (typeof value === 'number') {
-    return value;
-  }
-  if (typeof value === 'string' && value.trim()) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
+function numberOrUndefined(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
   }
   return undefined;
 }
