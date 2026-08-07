@@ -8,6 +8,8 @@ import com.br.pokefichas.domain.core.ficha.dto.FichaHistoricoResponse;
 import com.br.pokefichas.domain.core.ficha.dto.FichaHistoricoGlobalResponse;
 import com.br.pokefichas.domain.core.ficha.dto.FichaResponse;
 import com.br.pokefichas.domain.core.ficha.dto.FichaResumoResponse;
+import com.br.pokefichas.domain.core.ficha.dto.FichaTimelineEntryRequest;
+import com.br.pokefichas.domain.core.ficha.dto.FichaTimelineEntryResponse;
 import com.br.pokefichas.domain.core.ficha.usecase.AtualizarFichaUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.BuscarFichaUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.CriarFichaUseCase;
@@ -15,6 +17,7 @@ import com.br.pokefichas.domain.core.ficha.usecase.ExcluirFichaUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.ListarFichasUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.ListarHistoricoFichaUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.ListarHistoricoGlobalUseCase;
+import com.br.pokefichas.domain.core.ficha.usecase.GerenciarFichaTimelineUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -43,6 +46,7 @@ public class FichaController {
     private final AtualizarFichaUseCase atualizar;
     private final ListarHistoricoFichaUseCase listarHistorico;
     private final ListarHistoricoGlobalUseCase listarHistoricoGlobal;
+    private final GerenciarFichaTimelineUseCase timeline;
     private final ExcluirFichaUseCase excluir;
 
     public FichaController(final CriarFichaUseCase criar,
@@ -51,6 +55,7 @@ public class FichaController {
                            final AtualizarFichaUseCase atualizar,
                            final ListarHistoricoFichaUseCase listarHistorico,
                            final ListarHistoricoGlobalUseCase listarHistoricoGlobal,
+                           final GerenciarFichaTimelineUseCase timeline,
                            final ExcluirFichaUseCase excluir) {
         this.criar = criar;
         this.buscar = buscar;
@@ -58,6 +63,7 @@ public class FichaController {
         this.atualizar = atualizar;
         this.listarHistorico = listarHistorico;
         this.listarHistoricoGlobal = listarHistoricoGlobal;
+        this.timeline = timeline;
         this.excluir = excluir;
     }
 
@@ -113,6 +119,22 @@ public class FichaController {
     @Operation(summary = "Listar historico administrativo de todas as fichas")
     public ResponseEntity<List<FichaHistoricoGlobalResponse>> findAllHistory() {
         return ResponseEntity.ok(listarHistoricoGlobal.handle());
+    }
+
+    @GetMapping("/{id}/timeline")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Consultar timeline administrativa da ficha")
+    public ResponseEntity<List<FichaTimelineEntryResponse>> findTimeline(@PathVariable final Long id) {
+        return ResponseEntity.ok(timeline.buscar(id));
+    }
+
+    @PutMapping("/{id}/timeline")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Atualizar timeline administrativa da ficha")
+    public ResponseEntity<List<FichaTimelineEntryResponse>> updateTimeline(
+            @PathVariable final Long id,
+            @Valid @RequestBody final List<@Valid FichaTimelineEntryRequest> request) {
+        return ResponseEntity.ok(timeline.substituir(id, request));
     }
 
     @DeleteMapping("/{id}")

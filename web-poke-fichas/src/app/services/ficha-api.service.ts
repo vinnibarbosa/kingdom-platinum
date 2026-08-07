@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Ficha, FichaHistorico, FichaPayload, FichaResumo, Page } from '../models/ficha.model';
+import { Ficha, FichaHistorico, FichaPayload, FichaResumo, FichaTimelineEntry, Page } from '../models/ficha.model';
 
 const API_BASE = '/api';
 
@@ -38,6 +38,18 @@ export class FichaApiService {
 
   getHistory(id: number): Observable<FichaHistorico[]> {
     return this.http.get<FichaHistorico[]>(`${API_BASE}/fichas/${id}/historico`, {
+      withCredentials: true,
+    });
+  }
+
+  getTimeline(id: number): Observable<FichaTimelineEntry[]> {
+    return this.http.get<FichaTimelineEntry[]>(`${API_BASE}/fichas/${id}/timeline`, {
+      withCredentials: true,
+    });
+  }
+
+  updateTimeline(id: number, entries: FichaTimelineEntry[]): Observable<FichaTimelineEntry[]> {
+    return this.http.put<FichaTimelineEntry[]>(`${API_BASE}/fichas/${id}/timeline`, entries, {
       withCredentials: true,
     });
   }

@@ -18,13 +18,14 @@ import {
 } from '../../models/ficha.model';
 import { FichaHistoryComponent } from '../../components/ficha-history/ficha-history.component';
 import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete.component';
+import { FichaTimelineComponent } from '../../components/ficha-timeline/ficha-timeline.component';
 import { FichaApiService } from '../../services/ficha-api.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomPokemonApiService, CustomPokemonDetails } from '../../services/custom-pokemon-api.service';
 import { display, fichaToPayload, money } from '../../services/ficha-utils';
 import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
 
-type FichaTab = 'dados' | 'historia' | 'pokemon' | 'inventario' | 'conquistas' | 'extras';
+type FichaTab = 'dados' | 'historia' | 'pokemon' | 'inventario' | 'conquistas' | 'extras' | 'timeline';
 
 interface PokemonSpriteChoice {
   dex?: number;
@@ -294,7 +295,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
 @Component({
   selector: 'app-ficha-page',
   standalone: true,
-  imports: [CommonModule, DragDropModule, FichaDeleteComponent, FichaHistoryComponent, FormsModule, ImageCropperComponent, RouterLink],
+  imports: [CommonModule, DragDropModule, FichaDeleteComponent, FichaHistoryComponent, FichaTimelineComponent, FormsModule, ImageCropperComponent, RouterLink],
   template: `
     <section class="page-wrap sheet-wrap">
       <a class="back-link" routerLink="/">Voltar para fichas</a>
@@ -403,6 +404,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
             <button type="button" [class.active]="tab() === 'inventario'" (click)="tab.set('inventario')">Inventário</button>
             <button type="button" [class.active]="tab() === 'conquistas'" (click)="tab.set('conquistas')">Conquistas</button>
             <button type="button" [class.active]="tab() === 'extras'" (click)="tab.set('extras')">Extras</button>
+            <button type="button" *ngIf="isAdmin()" [class.active]="tab() === 'timeline'" (click)="tab.set('timeline')">Timeline</button>
           </nav>
 
           <section class="tab-panel" *ngIf="tab() === 'dados'">
@@ -488,6 +490,10 @@ const ITEMDEX_ICONS: Record<string, string> = {
               </span>
               <strong>{{ current.registros.length }}</strong>
             </button>
+          </section>
+
+          <section class="tab-panel" *ngIf="tab() === 'timeline' && isAdmin()">
+            <app-ficha-timeline [fichaId]="current.id" />
           </section>
 
           <section class="tab-panel" *ngIf="tab() === 'pokemon'">
@@ -4461,7 +4467,7 @@ export class FichaPageComponent implements OnInit {
     this.autoSaveFicha();
   }
 
-  private isAdmin(): boolean {
+  protected isAdmin(): boolean {
     return ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? '');
   }
 

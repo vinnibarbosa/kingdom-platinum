@@ -100,6 +100,17 @@ export interface FichaHistorico {
   createdBy?: string;
 }
 
+export interface FichaTimelineEntry {
+  id?: number;
+  secao: string;
+  periodo?: string;
+  titulo: string;
+  subtitulo?: string;
+  conteudo: string;
+  cor?: string;
+  ordem?: number;
+}
+
 export interface FichaPokemonResumo {
   apelido: string;
   especie: string;
