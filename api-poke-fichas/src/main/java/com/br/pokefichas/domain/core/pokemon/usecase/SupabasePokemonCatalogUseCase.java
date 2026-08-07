@@ -2,13 +2,13 @@ package com.br.pokefichas.domain.core.pokemon.usecase;
 
 import com.br.pokefichas.domain.core.pokemon.dto.CustomPokemonMoveResponse;
 import com.br.pokefichas.domain.core.pokemon.dto.CustomPokemonResponse;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.net.http.HttpClient;
