@@ -144,7 +144,6 @@ const EMPTY_ENTRY = (): FichaTimelineEntry => ({
     .timeline-rich-editor blockquote { margin: 12px 0; padding: 8px 12px; border-left: 3px solid #aeb5bf; color: #657080; background: #f5f6f7; }
     .timeline-rich-editor hr { border: 0; border-top: 1px solid #d9dce1; margin: 16px 0; }
     .timeline-editor-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .danger { color: #9b453e; }
     @media (max-width: 700px) { .timeline-admin-layout { grid-template-columns: 1fr; } .timeline-entry-list { max-height: 180px; } }
     @media (max-width: 460px) { .timeline-admin-header { align-items: stretch; flex-direction: column; } .timeline-field-grid { grid-template-columns: 1fr; } .timeline-field-grid .wide { grid-column: auto; } }
   `,
