@@ -25,6 +25,7 @@ import { PasswordResetComponent } from './components/password-reset/password-res
 
         <nav class="topbar-actions">
           <a class="topbar-library-link" routerLink="/">Fich&aacute;rio</a>
+          <a class="topbar-library-link" routerLink="/npcs">Fich&aacute;rio NPC</a>
           <button
             type="button"
             class="topbar-admin-link"

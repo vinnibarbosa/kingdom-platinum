@@ -30,6 +30,15 @@ public class ListarFichasUseCase {
     @Transactional(readOnly = true)
     public Page<FichaResumoResponse> handle(final PageRequest pageRequest) {
         final Page<Ficha> fichas = query.findAllWithoutContext(pageRequest);
+        return toResumo(fichas);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<FichaResumoResponse> handleNpcs(final PageRequest pageRequest) {
+        return toResumo(query.findAllNpcsWithoutContext(pageRequest));
+    }
+
+    private Page<FichaResumoResponse> toResumo(final Page<Ficha> fichas) {
         final List<Long> idsFicha = fichas.getContent().stream().map(Ficha::getId).toList();
         final Map<Long, List<FichaPokemon>> equipePorFicha = query.findPokemonsWithoutContextByFichaIds(idsFicha).stream()
                 .filter(this::isTeamPokemon)

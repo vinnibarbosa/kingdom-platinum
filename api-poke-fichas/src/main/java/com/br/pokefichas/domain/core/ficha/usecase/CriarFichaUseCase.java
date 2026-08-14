@@ -54,4 +54,15 @@ public class CriarFichaUseCase {
         historicoWriter.recordCreation(response);
         return response;
     }
+
+    @Transactional
+    public FichaResponse handleNpc(final CriarFichaRequest request) {
+        final Long idOrganizacao = organizacaoContext.getRequiredOrganizacaoId();
+        final Ficha saved = command.save(mapper.toEntity(request, idOrganizacao, true));
+        detalhesWriter.save(request, saved.getId(), idOrganizacao);
+        final FichaDetalhes detalhes = query.findDetalhes(saved.getId());
+        final FichaResponse response = mapper.toResponse(saved, detalhes);
+        historicoWriter.recordCreation(response);
+        return response;
+    }
 }

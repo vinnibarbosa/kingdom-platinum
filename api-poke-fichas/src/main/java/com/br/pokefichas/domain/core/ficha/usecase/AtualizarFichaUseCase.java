@@ -1,6 +1,7 @@
 package com.br.pokefichas.domain.core.ficha.usecase;
 
 import com.br.pokefichas.commons.exception.EntityNotFoundException;
+import com.br.pokefichas.commons.exception.BusinessException;
 import com.br.pokefichas.domain.core.ficha.dto.AtualizarFichaRequest;
 import com.br.pokefichas.domain.core.ficha.dto.FichaResponse;
 import com.br.pokefichas.domain.core.ficha.model.Ficha;
@@ -36,6 +37,9 @@ public class AtualizarFichaUseCase {
     public FichaResponse handle(final Long id, final AtualizarFichaRequest request) {
         final Ficha ficha = query.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + id));
+        if (ficha.isNpc()) {
+            throw new BusinessException("Fichas de NPC so podem ser alteradas por administradores.", "NPC_ADMIN_ONLY");
+        }
         final FichaResponse before = mapper.toResponse(ficha, query.findDetalhes(id));
         final Ficha saved = command.save(mapper.toEntity(ficha, request));
         detalhesWriter.replace(request, saved.getId(), saved.getIdOrganizacao());

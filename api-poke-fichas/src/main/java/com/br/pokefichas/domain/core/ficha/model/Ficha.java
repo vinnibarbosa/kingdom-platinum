@@ -108,6 +108,9 @@ public class Ficha extends OrgBaseEntity<Long> {
     @Column(name = "anotacoes", columnDefinition = "TEXT")
     private String anotacoes;
 
+    @Column(name = "npc", nullable = false)
+    private boolean npc;
+
     protected Ficha() {
     }
 
@@ -219,6 +222,10 @@ public class Ficha extends OrgBaseEntity<Long> {
 
     public String getAnotacoes() {
         return anotacoes;
+    }
+
+    public boolean isNpc() {
+        return npc;
     }
 
     @Override
@@ -397,6 +404,11 @@ public class Ficha extends OrgBaseEntity<Long> {
 
         public Builder anotacoes(final String anotacoes) {
             entity.anotacoes = anotacoes;
+            return this;
+        }
+
+        public Builder npc(final boolean npc) {
+            entity.npc = npc;
             return this;
         }
     }

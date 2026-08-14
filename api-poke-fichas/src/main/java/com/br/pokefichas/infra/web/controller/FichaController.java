@@ -74,6 +74,13 @@ public class FichaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(criar.handle(request));
     }
 
+    @PostMapping("/npcs")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Criar ficha de NPC")
+    public ResponseEntity<FichaResponse> createNpc(@Valid @RequestBody final CriarFichaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(criar.handleNpc(request));
+    }
+
     @GetMapping("/{id}")
     @Secured({"ROLE_ADMIN", "ROLE_DONO", "ROLE_GERENTE", "ROLE_OPERADOR"})
     @Operation(summary = "Buscar ficha por ID")
@@ -105,6 +112,12 @@ public class FichaController {
     @Operation(summary = "Listar fichas")
     public ResponseEntity<Page<FichaResumoResponse>> findAll(final PageRequest pageRequest) {
         return ResponseEntity.ok(listar.handle(pageRequest));
+    }
+
+    @GetMapping("/publicas/npcs")
+    @Operation(summary = "Listar fichas publicas de NPC")
+    public ResponseEntity<Page<FichaResumoResponse>> findAllPublicNpcs(final PageRequest pageRequest) {
+        return ResponseEntity.ok(listar.handleNpcs(pageRequest));
     }
 
     @GetMapping("/{id}/historico")

@@ -60,11 +60,16 @@ public class FichaQuery {
 
     public Page<Ficha> findAllWithoutContext(final PageRequest pageRequest) {
         final Pageable pageable = pageRequest.toPageable(Sort.of(ficha.nome.asc(), ficha.id.asc()));
-        return repository.findAll(Ficha.class, pageable, true);
+        return repository.findAll(Ficha.class, pageable, true, ficha.npc.isFalse());
+    }
+
+    public Page<Ficha> findAllNpcsWithoutContext(final PageRequest pageRequest) {
+        final Pageable pageable = pageRequest.toPageable(Sort.of(ficha.nome.asc(), ficha.id.asc()));
+        return repository.findAll(Ficha.class, pageable, true, ficha.npc.isTrue());
     }
 
     public long countCurrentOrganization() {
-        return repository.count(Ficha.class);
+        return repository.count(Ficha.class, ficha.npc.isFalse());
     }
 
     public List<FichaPokemon> findPokemonsWithoutContextByFichaIds(final List<Long> idsFicha) {

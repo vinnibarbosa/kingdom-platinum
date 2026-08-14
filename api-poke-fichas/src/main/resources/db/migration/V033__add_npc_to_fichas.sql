@@ -1,0 +1,4 @@
+ALTER TABLE fichas
+    ADD COLUMN npc BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX idx_fichas_npc ON fichas(npc);
