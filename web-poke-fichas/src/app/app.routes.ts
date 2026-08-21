@@ -10,11 +10,11 @@ import { NpcListPageComponent } from './pages/npc-list/npc-list-page.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginPageComponent },
-  { path: '', component: FichaListPageComponent, canActivate: [authGuard] },
   { path: 'npcs', component: NpcListPageComponent },
   { path: 'loja', component: LojaPageComponent, canActivate: [authGuard] },
   { path: 'ficha/:id/visualizar', component: FichaViewPageComponent },
   { path: 'ficha/:slug/editar', component: FichaPageComponent, canActivate: [authGuard] },
   { path: 'ficha/:slug', component: FichaViewPageComponent },
+  { path: '', component: FichaListPageComponent, canActivate: [authGuard], pathMatch: 'full' },
   { path: '**', redirectTo: '' },
 ];
