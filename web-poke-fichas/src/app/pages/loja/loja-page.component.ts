@@ -106,10 +106,10 @@ export class LojaPageComponent implements OnInit {
   protected readonly editingId = signal<number | null>(null);
   protected readonly saving = signal(false);
   protected readonly editorError = signal('');
+  protected readonly categories = ['Restauração HP / PP', 'Restaurar status', 'Pokébolas', 'Itens de batalha', 'Contest itens', 'Evolutionary', 'Berries', 'Treasure', 'Thrash itens', 'Trainer itens (Keys)', 'TM / Pill case'];
   protected draft: ItemDraft = this.emptyDraft();
   protected readonly isAdmin = computed(() => ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? ''));
   protected readonly purchaseTotal = computed(() => (this.purchaseItem()?.preco ?? 0) * this.purchaseQuantity);
-  protected readonly categories = ['Restauração HP / PP', 'Restaurar status', 'Pokébolas', 'Itens de batalha', 'Contest itens', 'Evolutionary', 'Berries', 'Treasure', 'Thrash itens', 'Trainer itens (Keys)', 'TM / Pill case'];
 
   ngOnInit(): void { this.load(); }
 
