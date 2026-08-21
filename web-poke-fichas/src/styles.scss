@@ -3119,6 +3119,74 @@ button.public-pokemon-card:focus-visible {
   justify-self: end;
 }
 
+.store-catalog-picker {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.store-catalog-picker > .button {
+  justify-self: start;
+}
+
+.store-catalog-results {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 330px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdf7;
+  padding: 0.65rem;
+}
+
+.store-catalog-results > input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.store-catalog-option {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  padding: 0.45rem;
+  text-align: left;
+}
+
+.store-catalog-option:hover {
+  border-color: color-mix(in srgb, var(--green) 35%, var(--line));
+  background: color-mix(in srgb, var(--green) 6%, #fffdf7);
+}
+
+.store-catalog-option img,
+.store-catalog-option > span:first-child {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.store-catalog-option > span:first-child {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.store-catalog-option strong,
+.store-catalog-option small {
+  display: block;
+}
+
+.store-catalog-option small,
+.store-catalog-state {
+  color: var(--muted);
+}
+
 .store-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3612,6 +3680,10 @@ button.public-pokemon-card:focus-visible {
 
 .history-action.action-alterado {
   background: #8a6a26;
+}
+
+.history-action.action-compra {
+  background: #4f6f9a;
 }
 
 .history-values {

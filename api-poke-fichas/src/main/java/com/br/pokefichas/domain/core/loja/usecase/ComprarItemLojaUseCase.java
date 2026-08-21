@@ -4,10 +4,8 @@ import com.br.pokefichas.commons.exception.BusinessException;
 import com.br.pokefichas.commons.exception.EntityNotFoundException;
 import com.br.pokefichas.commons.useraccess.UserAccess;
 import com.br.pokefichas.domain.core.ficha.dto.FichaItemResponse;
-import com.br.pokefichas.domain.core.ficha.dto.FichaResponse;
 import com.br.pokefichas.domain.core.ficha.model.Ficha;
 import com.br.pokefichas.domain.core.ficha.model.FichaItem;
-import com.br.pokefichas.domain.core.ficha.model.FichaMapper;
 import com.br.pokefichas.domain.core.ficha.repository.FichaCommand;
 import com.br.pokefichas.domain.core.ficha.repository.FichaQuery;
 import com.br.pokefichas.domain.core.ficha.usecase.FichaHistoricoWriter;
@@ -26,17 +24,15 @@ public class ComprarItemLojaUseCase {
     private final FichaQuery fichaQuery;
     private final FichaCommand fichaCommand;
     private final UserAccess userAccess;
-    private final FichaMapper fichaMapper;
     private final FichaHistoricoWriter historicoWriter;
 
     public ComprarItemLojaUseCase(final LojaItemQuery lojaQuery, final FichaQuery fichaQuery,
                                   final FichaCommand fichaCommand, final UserAccess userAccess,
-                                  final FichaMapper fichaMapper, final FichaHistoricoWriter historicoWriter) {
+                                  final FichaHistoricoWriter historicoWriter) {
         this.lojaQuery = lojaQuery;
         this.fichaQuery = fichaQuery;
         this.fichaCommand = fichaCommand;
         this.userAccess = userAccess;
-        this.fichaMapper = fichaMapper;
         this.historicoWriter = historicoWriter;
     }
 
@@ -52,8 +48,6 @@ public class ComprarItemLojaUseCase {
         if (ficha.isNpc() || !idUsuario.equals(ficha.getIdUsuario())) {
             throw new BusinessException("A ficha escolhida nao pertence a sua conta.", "FICHA_NOT_OWNED");
         }
-
-        final FichaResponse before = fichaMapper.toResponse(ficha, fichaQuery.findDetalhes(ficha.getId()));
 
         final BigDecimal total = itemLoja.getPreco().multiply(BigDecimal.valueOf(request.quantidade()));
         final BigDecimal saldo = ficha.getDinheiro() == null ? BigDecimal.ZERO : ficha.getDinheiro();
@@ -81,8 +75,13 @@ public class ComprarItemLojaUseCase {
                         .ordem(nextItemOrder(ficha))
                         .build());
         final FichaItem savedItem = fichaCommand.saveItens(java.util.List.of(itemInventario)).getFirst();
-        final FichaResponse after = fichaMapper.toResponse(fichaAtualizada, fichaQuery.findDetalhes(ficha.getId()));
-        historicoWriter.recordUpdate(before, after);
+        historicoWriter.recordStorePurchase(
+                fichaAtualizada.getId(),
+                fichaAtualizada.getIdOrganizacao(),
+                itemLoja.getNome(),
+                request.quantidade(),
+                total
+        );
 
         return new CompraLojaResponse(
                 fichaAtualizada.getId(),

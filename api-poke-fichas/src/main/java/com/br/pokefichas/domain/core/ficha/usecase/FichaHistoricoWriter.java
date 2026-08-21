@@ -9,8 +9,10 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,6 +51,24 @@ public class FichaHistoricoWriter {
 
     public void recordUpdateWithoutContext(final FichaResponse before, final FichaResponse after) {
         recordUpdate(before, after, true);
+    }
+
+    public void recordStorePurchase(final Long idFicha,
+                                    final Long idOrganizacao,
+                                    final String itemName,
+                                    final int quantity,
+                                    final BigDecimal totalPaid) {
+        final String item = quantity + "x " + itemName;
+        final String description = "Adicionado " + item + ", removido " + formatMoney(totalPaid) + "C$.";
+        command.saveHistoricos(List.of(build(
+                idFicha,
+                idOrganizacao,
+                UUID.randomUUID().toString(),
+                "COMPRA",
+                "compra",
+                null,
+                description
+        )));
     }
 
     private void recordUpdate(final FichaResponse before,
@@ -173,6 +193,13 @@ public class FichaHistoricoWriter {
             return value;
         }
         return value.substring(0, MAX_VALUE_LENGTH - 1) + "…";
+    }
+
+    private String formatMoney(final BigDecimal value) {
+        final NumberFormat formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("pt-BR"));
+        formatter.setMinimumFractionDigits(0);
+        formatter.setMaximumFractionDigits(2);
+        return formatter.format(value == null ? BigDecimal.ZERO : value);
     }
 
     private FichaHistorico build(final Long idFicha,

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { FichaCompra, LojaItem, LojaItemPayload } from '../../models/loja.model';
 import { AuthService } from '../../services/auth.service';
+import { CatalogItem, CatalogItemApiService } from '../../services/catalog-item-api.service';
 import { LojaApiService } from '../../services/loja-api.service';
 
 interface ItemDraft extends LojaItemPayload { id?: number; }
@@ -29,8 +30,8 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
       <div class="store-grid" *ngIf="!loading()">
         <article class="store-card" *ngFor="let item of items()">
           <div class="store-item-icon">
-            <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome" />
-            <span *ngIf="!item.icone">?</span>
+            <img *ngIf="item.icone && !brokenItemIcons().has(item.id)" [src]="item.icone" [alt]="item.nome" (error)="markItemImageBroken(item)" />
+            <span *ngIf="!item.icone || brokenItemIcons().has(item.id)">?</span>
           </div>
           <div class="store-card-content">
             <span class="eyebrow">{{ item.categoria }}</span>
@@ -70,6 +71,20 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
     <div class="modal-backdrop" *ngIf="editorOpen()" (click)="closeEditor()">
       <section class="store-modal store-editor-modal" (click)="$event.stopPropagation()" aria-modal="true" role="dialog">
         <div class="modal-head"><div><span class="eyebrow">Administração</span><h3>{{ editingId() ? 'Editar item' : 'Novo item' }}</h3></div><button type="button" class="button secondary" (click)="closeEditor()">Fechar</button></div>
+        <div class="store-catalog-picker">
+          <button type="button" class="button secondary" (click)="toggleCatalogPicker()">Usar item do catálogo</button>
+          <div class="store-catalog-results" *ngIf="catalogPickerOpen()">
+            <input [ngModel]="catalogSearch()" (ngModelChange)="searchCatalog($event)" placeholder="Buscar item no catálogo" autocomplete="off" />
+            <p *ngIf="catalogLoading()" class="store-catalog-state">Buscando itens...</p>
+            <p *ngIf="catalogError()" class="inline-error">{{ catalogError() }}</p>
+            <p *ngIf="!catalogLoading() && catalogSearch().trim() && !catalogItems().length && !catalogError()" class="store-catalog-state">Nenhum item encontrado.</p>
+            <button type="button" *ngFor="let item of catalogItems()" class="store-catalog-option" (click)="useCatalogItem(item)">
+              <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" (error)="hideBrokenPreview($event)" />
+              <span *ngIf="!item.sprite">?</span>
+              <span><strong>{{ item.name }}</strong><small>{{ item.category || 'Item' }}</small></span>
+            </button>
+          </div>
+        </div>
         <div class="store-form-grid">
           <label>Nome <input [(ngModel)]="draft.nome" /></label>
           <label>Preço <input type="number" min="0" step="1" [(ngModel)]="draft.preco" /></label>
@@ -92,6 +107,7 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
 export class LojaPageComponent implements OnInit {
   private readonly api = inject(LojaApiService);
   private readonly auth = inject(AuthService);
+  private readonly catalog = inject(CatalogItemApiService);
 
   protected readonly items = signal<LojaItem[]>([]);
   protected readonly loading = signal(true);
@@ -106,6 +122,14 @@ export class LojaPageComponent implements OnInit {
   protected readonly editingId = signal<number | null>(null);
   protected readonly saving = signal(false);
   protected readonly editorError = signal('');
+  protected readonly catalogPickerOpen = signal(false);
+  protected readonly catalogSearch = signal('');
+  protected readonly catalogItems = signal<CatalogItem[]>([]);
+  protected readonly catalogLoading = signal(false);
+  protected readonly catalogError = signal('');
+  protected readonly brokenItemIcons = signal<Set<number>>(new Set());
+  private catalogSearchTimer?: ReturnType<typeof setTimeout>;
+  private catalogSearchRequest = 0;
   protected readonly categories = ['Restauração HP / PP', 'Restaurar status', 'Pokébolas', 'Itens de batalha', 'Contest itens', 'Evolutionary', 'Berries', 'Treasure', 'Thrash itens', 'Trainer itens (Keys)', 'TM / Pill case'];
   protected draft: ItemDraft = this.emptyDraft();
   protected readonly isAdmin = computed(() => ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? ''));
@@ -137,9 +161,60 @@ export class LojaPageComponent implements OnInit {
   protected openEditor(item?: LojaItem): void {
     this.editingId.set(item?.id ?? null);
     this.draft = item ? { categoria: item.categoria, codigo: item.codigo || '', icone: item.icone || '', nome: item.nome, descricao: item.descricao || '', preco: item.preco, ativo: item.ativo, ordem: item.ordem || 0 } : this.emptyDraft();
-    this.editorError.set(''); this.editorOpen.set(true);
+    this.editorError.set(''); this.resetCatalogPicker(); this.editorOpen.set(true);
   }
-  protected closeEditor(): void { this.editorOpen.set(false); }
+  protected closeEditor(): void { this.editorOpen.set(false); this.resetCatalogPicker(); }
+
+  protected toggleCatalogPicker(): void {
+    this.catalogPickerOpen.update((open) => !open);
+    if (!this.catalogPickerOpen()) this.resetCatalogPicker();
+  }
+
+  protected searchCatalog(term: string): void {
+    this.catalogSearch.set(term);
+    this.catalogItems.set([]);
+    this.catalogError.set('');
+    if (this.catalogSearchTimer) clearTimeout(this.catalogSearchTimer);
+    if (!term.trim()) {
+      this.catalogLoading.set(false);
+      return;
+    }
+
+    this.catalogLoading.set(true);
+    const request = ++this.catalogSearchRequest;
+    this.catalogSearchTimer = setTimeout(() => this.catalog.search(term).subscribe({
+      next: (items) => {
+        if (request !== this.catalogSearchRequest) return;
+        this.catalogItems.set(items);
+        this.catalogLoading.set(false);
+      },
+      error: () => {
+        if (request !== this.catalogSearchRequest) return;
+        this.catalogError.set('Não foi possível consultar o catálogo de itens.');
+        this.catalogLoading.set(false);
+      },
+    }), 250);
+  }
+
+  protected useCatalogItem(item: CatalogItem): void {
+    this.draft = {
+      ...this.draft,
+      nome: item.name,
+      descricao: item.description,
+      categoria: this.storeCategory(item.category),
+      codigo: this.itemCode(item.name),
+      icone: item.sprite,
+    };
+    this.resetCatalogPicker();
+  }
+
+  protected markItemImageBroken(item: LojaItem): void {
+    this.brokenItemIcons.update((ids) => new Set(ids).add(item.id));
+  }
+
+  protected hideBrokenPreview(event: Event): void {
+    (event.target as HTMLImageElement).style.display = 'none';
+  }
 
   protected saveItem(): void {
     if (!this.draft.nome.trim() || !this.draft.categoria || Number(this.draft.preco) < 0) { this.editorError.set('Informe nome, categoria e um preço válido.'); return; }
@@ -162,6 +237,28 @@ export class LojaPageComponent implements OnInit {
 
   protected money(value: number): string { return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(value || 0)}C$`; }
   private emptyDraft(): ItemDraft { return { nome: '', categoria: this.categories[0], codigo: '', icone: '', descricao: '', preco: 0, ativo: true, ordem: 0 }; }
+  private resetCatalogPicker(): void {
+    if (this.catalogSearchTimer) clearTimeout(this.catalogSearchTimer);
+    this.catalogSearchRequest++;
+    this.catalogPickerOpen.set(false);
+    this.catalogSearch.set('');
+    this.catalogItems.set([]);
+    this.catalogLoading.set(false);
+    this.catalogError.set('');
+  }
+
+  private storeCategory(value: string): string {
+    const normalized = value.trim().toLocaleLowerCase('pt-BR');
+    return this.categories.find((category) => category.toLocaleLowerCase('pt-BR') === normalized)
+      ?? this.categories.find((category) => normalized.includes(category.toLocaleLowerCase('pt-BR').split(' ')[0]))
+      ?? this.draft.categoria;
+  }
+
+  private itemCode(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
   private load(): void {
     this.loading.set(true); this.error.set('');
     (this.isAdmin() ? this.api.listAdmin() : this.api.list()).subscribe({ next: (items) => { this.items.set(items); this.loading.set(false); }, error: () => { this.error.set('Não foi possível carregar a loja.'); this.loading.set(false); } });

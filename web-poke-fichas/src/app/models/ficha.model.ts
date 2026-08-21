@@ -92,7 +92,7 @@ export interface FichaRegistro {
 export interface FichaHistorico {
   id: number;
   lote: string;
-  acao: 'ADICIONADO' | 'REMOVIDO' | 'ALTERADO';
+  acao: 'ADICIONADO' | 'REMOVIDO' | 'ALTERADO' | 'COMPRA';
   campo: string;
   valorAnterior?: string;
   valorNovo?: string;

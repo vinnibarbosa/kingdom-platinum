@@ -60,7 +60,7 @@ import { FichaApiService } from '../../services/ficha-api.service';
                   <span aria-hidden="true">&rarr;</span>
                   <span>{{ entry.valorNovo || 'Vazio' }}</span>
                 </div>
-                <p *ngIf="entry.acao === 'ADICIONADO'">{{ entry.valorNovo || 'Item adicionado' }}</p>
+                <p *ngIf="entry.acao === 'ADICIONADO' || entry.acao === 'COMPRA'">{{ entry.valorNovo || 'Item adicionado' }}</p>
                 <p *ngIf="entry.acao === 'REMOVIDO'">{{ entry.valorAnterior || 'Item removido' }}</p>
                 <small>por {{ entry.createdBy || 'sistema' }}</small>
               </article>
@@ -109,7 +109,7 @@ export class FichaActivityLogComponent {
   }
 
   protected historyAction(action: FichaHistorico['acao']): string {
-    return { ADICIONADO: 'Adicionado', REMOVIDO: 'Removido', ALTERADO: 'Alterado' }[action];
+    return { ADICIONADO: 'Adicionado', REMOVIDO: 'Removido', ALTERADO: 'Alterado', COMPRA: 'Compra' }[action];
   }
 
   protected historyField(path: string): string {
