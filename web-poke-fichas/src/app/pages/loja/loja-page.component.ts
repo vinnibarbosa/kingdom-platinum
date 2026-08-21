@@ -71,20 +71,7 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
     <div class="modal-backdrop" *ngIf="editorOpen()" (click)="closeEditor()">
       <section class="store-modal store-editor-modal" (click)="$event.stopPropagation()" aria-modal="true" role="dialog">
         <div class="modal-head"><div><span class="eyebrow">Administração</span><h3>{{ editingId() ? 'Editar item' : 'Novo item' }}</h3></div><button type="button" class="button secondary" (click)="closeEditor()">Fechar</button></div>
-        <div class="store-catalog-picker">
-          <button type="button" class="button secondary" (click)="toggleCatalogPicker()">Usar item do catálogo</button>
-          <div class="store-catalog-results" *ngIf="catalogPickerOpen()">
-            <input [ngModel]="catalogSearch()" (ngModelChange)="searchCatalog($event)" placeholder="Buscar item no catálogo" autocomplete="off" />
-            <p *ngIf="catalogLoading()" class="store-catalog-state">Buscando itens...</p>
-            <p *ngIf="catalogError()" class="inline-error">{{ catalogError() }}</p>
-            <p *ngIf="!catalogLoading() && catalogSearch().trim() && !catalogItems().length && !catalogError()" class="store-catalog-state">Nenhum item encontrado.</p>
-            <button type="button" *ngFor="let item of catalogItems()" class="store-catalog-option" (click)="useCatalogItem(item)">
-              <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" (error)="hideBrokenPreview($event)" />
-              <span *ngIf="!item.sprite">?</span>
-              <span><strong>{{ item.name }}</strong><small>{{ item.category || 'Item' }}</small></span>
-            </button>
-          </div>
-        </div>
+        <button type="button" class="button secondary" (click)="openCatalogPicker()">Escolher item do catálogo</button>
         <div class="store-form-grid">
           <label>Nome <input [(ngModel)]="draft.nome" /></label>
           <label>Preço <input type="number" min="0" step="1" [(ngModel)]="draft.preco" /></label>
@@ -99,6 +86,27 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
         <div class="modal-actions">
           <button type="button" class="button danger" *ngIf="editingId()" (click)="removeItem()">Excluir</button>
           <button type="button" class="button primary" [disabled]="saving()" (click)="saveItem()">{{ saving() ? 'Salvando...' : 'Salvar item' }}</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop inventory-picker-backdrop" *ngIf="catalogPickerOpen()" (click)="closeCatalogPicker()">
+      <section class="inventory-modal" (click)="$event.stopPropagation()" aria-modal="true" role="dialog">
+        <div class="modal-head">
+          <div><span class="eyebrow">Catálogo</span><h3>Escolher item</h3></div>
+          <button type="button" class="button secondary" (click)="closeCatalogPicker()">Fechar</button>
+        </div>
+        <input [ngModel]="catalogSearch()" (ngModelChange)="updateCatalogSearch($event)" placeholder="Buscar item" autocomplete="off" />
+        <p *ngIf="catalogLoading()" class="store-catalog-state">Carregando itens...</p>
+        <p *ngIf="catalogError()" class="inline-error">{{ catalogError() }}</p>
+        <p *ngIf="!catalogLoading() && !filteredCatalogItems().length" class="store-catalog-state">Nenhum item encontrado.</p>
+        <div class="inventory-modal-grid" *ngIf="!catalogLoading()" (scroll)="onCatalogScroll($event)">
+          <button type="button" class="inventory-modal-option" *ngFor="let item of visibleCatalogItems(); trackBy: trackByCatalogItem" (click)="useCatalogItem(item)">
+            <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" loading="lazy" decoding="async" (error)="hideBrokenPreview($event)" />
+            <span class="item-empty-dot" *ngIf="!item.sprite">?</span>
+            <strong>{{ item.name }}</strong>
+            <small>{{ item.category || 'Item' }}</small>
+          </button>
         </div>
       </section>
     </div>
@@ -128,8 +136,7 @@ export class LojaPageComponent implements OnInit {
   protected readonly catalogLoading = signal(false);
   protected readonly catalogError = signal('');
   protected readonly brokenItemIcons = signal<Set<number>>(new Set());
-  private catalogSearchTimer?: ReturnType<typeof setTimeout>;
-  private catalogSearchRequest = 0;
+  protected readonly catalogVisibleLimit = signal(120);
   protected readonly categories = ['Restauração HP / PP', 'Restaurar status', 'Pokébolas', 'Itens de batalha', 'Contest itens', 'Evolutionary', 'Berries', 'Treasure', 'Thrash itens', 'Trainer itens (Keys)', 'TM / Pill case'];
   protected draft: ItemDraft = this.emptyDraft();
   protected readonly isAdmin = computed(() => ['ADMIN', 'A'].includes(this.auth.currentUser()?.perfil ?? ''));
@@ -161,51 +168,70 @@ export class LojaPageComponent implements OnInit {
   protected openEditor(item?: LojaItem): void {
     this.editingId.set(item?.id ?? null);
     this.draft = item ? { categoria: item.categoria, codigo: item.codigo || '', icone: item.icone || '', nome: item.nome, descricao: item.descricao || '', preco: item.preco, ativo: item.ativo, ordem: item.ordem || 0 } : this.emptyDraft();
-    this.editorError.set(''); this.resetCatalogPicker(); this.editorOpen.set(true);
+    this.editorError.set(''); this.closeCatalogPicker(); this.editorOpen.set(true);
   }
-  protected closeEditor(): void { this.editorOpen.set(false); this.resetCatalogPicker(); }
+  protected closeEditor(): void { this.editorOpen.set(false); this.closeCatalogPicker(); }
 
-  protected toggleCatalogPicker(): void {
-    this.catalogPickerOpen.update((open) => !open);
-    if (!this.catalogPickerOpen()) this.resetCatalogPicker();
-  }
-
-  protected searchCatalog(term: string): void {
-    this.catalogSearch.set(term);
-    this.catalogItems.set([]);
+  protected openCatalogPicker(): void {
+    this.catalogPickerOpen.set(true);
+    this.catalogSearch.set('');
+    this.catalogVisibleLimit.set(120);
     this.catalogError.set('');
-    if (this.catalogSearchTimer) clearTimeout(this.catalogSearchTimer);
-    if (!term.trim()) {
-      this.catalogLoading.set(false);
-      return;
-    }
-
+    if (this.catalogItems().length) return;
     this.catalogLoading.set(true);
-    const request = ++this.catalogSearchRequest;
-    this.catalogSearchTimer = setTimeout(() => this.catalog.search(term).subscribe({
-      next: (items) => {
-        if (request !== this.catalogSearchRequest) return;
-        this.catalogItems.set(items);
-        this.catalogLoading.set(false);
-      },
-      error: () => {
-        if (request !== this.catalogSearchRequest) return;
-        this.catalogError.set('Não foi possível consultar o catálogo de itens.');
-        this.catalogLoading.set(false);
-      },
-    }), 250);
+    this.catalog.list().subscribe({
+      next: (items) => { this.catalogItems.set(items); this.catalogLoading.set(false); },
+      error: () => { this.catalogError.set('Não foi possível carregar o catálogo de itens.'); this.catalogLoading.set(false); },
+    });
   }
+
+  protected closeCatalogPicker(): void {
+    this.catalogPickerOpen.set(false);
+    this.catalogSearch.set('');
+    this.catalogVisibleLimit.set(120);
+    this.catalogError.set('');
+  }
+
+  protected updateCatalogSearch(term: string): void {
+    this.catalogSearch.set(term);
+    this.catalogVisibleLimit.set(120);
+  }
+
+  protected readonly filteredCatalogItems = computed(() => {
+    const search = this.itemCode(this.catalogSearch());
+    if (!search) return this.catalogItems();
+    return this.catalogItems().filter((item) => this.itemCode(`${item.name} ${item.category}`).includes(search));
+  });
+  protected readonly visibleCatalogItems = computed(() => this.filteredCatalogItems().slice(0, this.catalogVisibleLimit()));
+
+  protected onCatalogScroll(event: Event): void {
+    const element = event.currentTarget as HTMLElement;
+    if (element.scrollTop + element.clientHeight < element.scrollHeight - 60 || this.visibleCatalogItems().length >= this.filteredCatalogItems().length) return;
+    this.catalogVisibleLimit.update((limit) => limit + 120);
+  }
+
+  protected trackByCatalogItem(_: number, item: CatalogItem): string { return item.name; }
 
   protected useCatalogItem(item: CatalogItem): void {
+    const code = this.itemCode(item.name);
     this.draft = {
       ...this.draft,
       nome: item.name,
       descricao: item.description,
       categoria: this.storeCategory(item.category),
-      codigo: this.itemCode(item.name),
+      codigo: code,
       icone: item.sprite,
     };
-    this.resetCatalogPicker();
+    this.closeCatalogPicker();
+    this.catalog.details(item).subscribe((details) => {
+      if (this.draft.codigo !== code) return;
+      this.draft = {
+        ...this.draft,
+        descricao: details.description || this.draft.descricao,
+        categoria: this.storeCategory(details.category),
+        icone: details.sprite || this.draft.icone,
+      };
+    });
   }
 
   protected markItemImageBroken(item: LojaItem): void {
@@ -237,18 +263,23 @@ export class LojaPageComponent implements OnInit {
 
   protected money(value: number): string { return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(value || 0)}C$`; }
   private emptyDraft(): ItemDraft { return { nome: '', categoria: this.categories[0], codigo: '', icone: '', descricao: '', preco: 0, ativo: true, ordem: 0 }; }
-  private resetCatalogPicker(): void {
-    if (this.catalogSearchTimer) clearTimeout(this.catalogSearchTimer);
-    this.catalogSearchRequest++;
-    this.catalogPickerOpen.set(false);
-    this.catalogSearch.set('');
-    this.catalogItems.set([]);
-    this.catalogLoading.set(false);
-    this.catalogError.set('');
-  }
-
   private storeCategory(value: string): string {
     const normalized = value.trim().toLocaleLowerCase('pt-BR');
+    const apiCategoryMap: Record<string, string> = {
+      medicine: 'Restauração HP / PP',
+      status: 'Restaurar status',
+      'standard-balls': 'Pokébolas',
+      'special-balls': 'Pokébolas',
+      'battle-items': 'Itens de batalha',
+      'held-items': 'Itens de batalha',
+      'evolution-items': 'Evolutionary',
+      berries: 'Berries',
+      'valuable-items': 'Treasure',
+      'key-items': 'Trainer itens (Keys)',
+      'all-machines': 'TM / Pill case',
+      'type-enhancement': 'Itens de batalha',
+    };
+    if (apiCategoryMap[normalized]) return apiCategoryMap[normalized];
     return this.categories.find((category) => category.toLocaleLowerCase('pt-BR') === normalized)
       ?? this.categories.find((category) => normalized.includes(category.toLocaleLowerCase('pt-BR').split(' ')[0]))
       ?? this.draft.categoria;
