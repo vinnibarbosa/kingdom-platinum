@@ -102,7 +102,7 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
         <p *ngIf="!catalogLoading() && !filteredCatalogItems().length" class="store-catalog-state">Nenhum item encontrado.</p>
         <div class="inventory-modal-grid" *ngIf="!catalogLoading()" (scroll)="onCatalogScroll($event)">
           <button type="button" class="inventory-modal-option" *ngFor="let item of visibleCatalogItems(); trackBy: trackByCatalogItem" (click)="useCatalogItem(item)">
-            <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" loading="lazy" decoding="async" (error)="hideBrokenPreview($event)" />
+            <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" loading="lazy" decoding="async" (error)="preserveBrokenPreviewSpace($event)" />
             <span class="item-empty-dot" *ngIf="!item.sprite">?</span>
             <strong>{{ item.name }}</strong>
             <small>{{ item.category || 'Item' }}</small>
@@ -238,8 +238,10 @@ export class LojaPageComponent implements OnInit {
     this.brokenItemIcons.update((ids) => new Set(ids).add(item.id));
   }
 
-  protected hideBrokenPreview(event: Event): void {
-    (event.target as HTMLImageElement).style.display = 'none';
+  protected preserveBrokenPreviewSpace(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    image.style.visibility = 'hidden';
+    image.setAttribute('aria-hidden', 'true');
   }
 
   protected saveItem(): void {
