@@ -1,6 +1,7 @@
 package com.br.pokefichas.commons.useraccess;
 
 public record UserAccessDTO(
+        Long id,
         String username,
         String name,
         Long idEntidade,

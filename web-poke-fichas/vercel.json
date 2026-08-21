@@ -9,6 +9,8 @@
       "destination": "https://p01--kingdom-platinum--y7pyslnljzqn.code.run/api/:path*"
     },
     { "source": "/login", "destination": "/index.html" },
+    { "source": "/npcs", "destination": "/index.html" },
+    { "source": "/loja", "destination": "/index.html" },
     { "source": "/ficha/:path*", "destination": "/index.html" }
   ],
   "headers": [

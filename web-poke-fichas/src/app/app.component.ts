@@ -24,8 +24,11 @@ import { PasswordResetComponent } from './components/password-reset/password-res
         </a>
 
         <nav class="topbar-actions">
-          <a class="topbar-library-link" routerLink="/">Fich&aacute;rio</a>
-          <a class="topbar-library-link" routerLink="/npcs">Fich&aacute;rio NPC</a>
+          <div class="topbar-library-nav" aria-label="Navegação dos fichários">
+            <a class="topbar-library-link" routerLink="/">Fich&aacute;rio</a>
+            <a class="topbar-library-link" routerLink="/npcs">Fich&aacute;rio NPC</a>
+            <a class="topbar-library-link" routerLink="/loja">Loja</a>
+          </div>
           <button
             type="button"
             class="topbar-admin-link"

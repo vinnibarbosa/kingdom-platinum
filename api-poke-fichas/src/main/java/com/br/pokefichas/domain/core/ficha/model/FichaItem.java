@@ -104,6 +104,10 @@ public class FichaItem extends OrgBaseEntity<Long> {
             return new Builder(new FichaItem(), EntityState.NEW);
         }
 
+        public static Builder from(final FichaItem item) {
+            return new Builder(item, EntityState.BUILT);
+        }
+
         @Override
         protected void afterValidate() {
         }

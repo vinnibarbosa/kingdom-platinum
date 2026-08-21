@@ -86,11 +86,8 @@ export class FichaListPageComponent implements OnInit {
   protected readonly creating = signal(false);
   protected readonly error = signal('');
   private readonly brokenPokemonSprites = signal(new Set<string>());
-  protected readonly ownFichaCount = computed(() => {
-    const idOrganizacao = this.auth.currentUser()?.idOrganizacao;
-    return this.fichas().filter((ficha) => ficha.idOrganizacao === idOrganizacao).length;
-  });
-  protected readonly canCreate = computed(() => this.ownFichaCount() < 2);
+  // O limite e conferido pela API, que conhece o proprietario real de cada ficha.
+  protected readonly canCreate = computed(() => true);
 
   ngOnInit(): void {
     this.load();
@@ -128,8 +125,8 @@ export class FichaListPageComponent implements OnInit {
       registros: [],
     }).subscribe({
       next: (ficha) => this.router.navigate(['/ficha', this.fichaSlug(ficha), 'editar']),
-      error: () => {
-        this.error.set('Não foi possível criar uma ficha agora.');
+      error: (error) => {
+        this.error.set(error?.error?.message || 'Não foi possível criar uma ficha agora.');
         this.creating.set(false);
       },
     });

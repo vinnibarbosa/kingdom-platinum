@@ -72,6 +72,25 @@ public class FichaQuery {
         return repository.count(Ficha.class, ficha.npc.isFalse());
     }
 
+    public long countByUsuario(final Long idUsuario) {
+        return repository.count(Ficha.class, ficha.npc.isFalse().and(ficha.idUsuario.eq(idUsuario)));
+    }
+
+    public List<Ficha> findByUsuario(final Long idUsuario) {
+        return repository.findAll(
+                Ficha.class,
+                Sort.of(ficha.nome.asc(), ficha.id.asc()),
+                ficha.npc.isFalse().and(ficha.idUsuario.eq(idUsuario))
+        );
+    }
+
+    public Optional<FichaItem> findItemByFichaAndCodigo(final Long idFicha, final String codigo) {
+        return repository.findUniqueOptional(
+                FichaItem.class,
+                fichaItem.idFicha.eq(idFicha).and(fichaItem.codigo.eq(codigo))
+        );
+    }
+
     public List<FichaPokemon> findPokemonsWithoutContextByFichaIds(final List<Long> idsFicha) {
         if (idsFicha == null || idsFicha.isEmpty()) {
             return List.of();

@@ -38,11 +38,21 @@ public class FichaMapper {
     private static final BigDecimal INITIAL_MONEY = BigDecimal.valueOf(1_000L);
 
     public Ficha toEntity(final CriarFichaRequest request, final Long idOrganizacao) {
-        return toEntity(request, idOrganizacao, false);
+        return toEntity(request, idOrganizacao, false, null);
     }
 
     public Ficha toEntity(final CriarFichaRequest request, final Long idOrganizacao, final boolean npc) {
-        return apply(Ficha.Builder.create().idOrganizacao(idOrganizacao).npc(npc), request).build();
+        return toEntity(request, idOrganizacao, npc, null);
+    }
+
+    public Ficha toEntity(final CriarFichaRequest request,
+                          final Long idOrganizacao,
+                          final boolean npc,
+                          final Long idUsuario) {
+        return apply(Ficha.Builder.create()
+                .idOrganizacao(idOrganizacao)
+                .npc(npc)
+                .idUsuario(idUsuario), request).build();
     }
 
     public Ficha toEntity(final Ficha ficha, final AtualizarFichaRequest request) {

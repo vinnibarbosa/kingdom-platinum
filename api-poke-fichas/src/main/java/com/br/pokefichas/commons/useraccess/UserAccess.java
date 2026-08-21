@@ -29,6 +29,10 @@ public class UserAccess {
         return getCurrentUser().map(UserAccessDTO::username);
     }
 
+    public Optional<Long> getId() {
+        return getCurrentUser().map(UserAccessDTO::id);
+    }
+
     public Optional<String> getRole() {
         return getCurrentUser().map(UserAccessDTO::role);
     }
@@ -72,6 +76,7 @@ public class UserAccess {
 
     private UserAccessDTO createUserAccessDTO(final Usuario usuario) {
         return new UserAccessDTO(
+                usuario.getId(),
                 usuario.getUsername(),
                 usuario.getNome(),
                 usuario.getIdEntidade(),
