@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './services/auth.service';
 import { FichaActivityLogComponent } from './components/ficha-activity-log/ficha-activity-log.component';
@@ -9,7 +9,7 @@ import { PasswordResetComponent } from './components/password-reset/password-res
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FichaActivityLogComponent, PasswordResetComponent, RouterLink, RouterOutlet],
+  imports: [CommonModule, FichaActivityLogComponent, PasswordResetComponent, RouterOutlet],
   template: `
     <div class="shell">
       <header class="topbar" *ngIf="isLoggedIn()">
@@ -25,9 +25,9 @@ import { PasswordResetComponent } from './components/password-reset/password-res
 
         <nav class="topbar-actions">
           <div class="topbar-library-nav" aria-label="Navegação dos fichários">
-            <a class="topbar-library-link" routerLink="/">Fich&aacute;rio</a>
-            <a class="topbar-library-link" routerLink="/npcs">Fich&aacute;rio NPC</a>
-            <a class="topbar-library-link" routerLink="/loja">Loja</a>
+            <a class="topbar-library-link" href="/">Fich&aacute;rio</a>
+            <a class="topbar-library-link" href="/npcs">Fich&aacute;rio NPC</a>
+            <a class="topbar-library-link" href="/loja">Loja</a>
           </div>
           <button
             type="button"
