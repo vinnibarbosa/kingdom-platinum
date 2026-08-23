@@ -24,12 +24,13 @@ interface PokeApiItemRow { name?: string | null; }
 
 interface RemoteCatalogRow {
   id?: string | number; code?: string; codigo?: string; name?: string; nome?: string; label?: string;
-  description?: string; descricao?: string; desc?: string; category?: string; categoria?: string;
+  description?: string; descricao?: string; desc?: string; item_desc?: string; category?: string; categoria?: string;
   sprite?: string; icon?: string; icone?: string; image?: string; imagem?: string;
   price?: number | string; preco?: number | string; valor?: number | string;
 }
 
-const KINGDOM_CATALOG_URL = 'https://raw.githubusercontent.com/alphx-r/kingdomplatinum/main/items.json';
+const KINGDOM_CATALOG_URL = '/data/items.json';
+const KINGDOM_CATALOG_SOURCE_URL = 'https://raw.githubusercontent.com/alphx-r/kingdomplatinum/main/items.json';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogItemApiService {
@@ -143,9 +144,9 @@ export class CatalogItemApiService {
     const image = String(row.sprite ?? row.icon ?? row.icone ?? row.image ?? row.imagem ?? '').trim();
     return {
       name,
-      description: String(row.description ?? row.descricao ?? row.desc ?? '').trim(),
+      description: String(row.description ?? row.descricao ?? row.desc ?? row.item_desc ?? '').trim(),
       category: String(row.category ?? row.categoria ?? 'Item').trim() || 'Item',
-      sprite: image && !/^https?:|^data:/i.test(image) ? new URL(image, KINGDOM_CATALOG_URL).toString() : image,
+      sprite: image && !/^https?:|^data:/i.test(image) ? new URL(image, KINGDOM_CATALOG_SOURCE_URL).toString() : image,
       code: String(row.code ?? row.codigo ?? row.id ?? '').trim() || undefined,
       price: numericValue(row.price ?? row.preco ?? row.valor),
     };
