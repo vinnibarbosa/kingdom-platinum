@@ -1,5 +1,3 @@
-import { FichaItem } from './ficha.model';
-
 export interface LojaItem {
   id: number;
   categoria: string;
@@ -33,6 +31,15 @@ export interface FichaCompra {
 export interface CompraLojaResponse {
   idFicha: number;
   dinheiroRestante: number;
-  item: FichaItem;
+  itens: string[];
+  subtotal: number;
+  desconto: number;
   totalPago: number;
 }
+
+export interface CompraLojaItem { idItem: number; quantidade: number; }
+
+export interface CatalogoLojaImportacao { importados: number; ignorados: number; }
+
+export interface LojaCupom { id: number; codigo: string; percentual: number; ativo: boolean; }
+export interface LojaCupomPayload { codigo: string; percentual: number; ativo: boolean; }

@@ -71,6 +71,25 @@ public class FichaHistoricoWriter {
         )));
     }
 
+    public void recordStorePurchase(final Long idFicha,
+                                    final Long idOrganizacao,
+                                    final List<String> items,
+                                    final BigDecimal totalPaid,
+                                    final String coupon) {
+        final String products = String.join(", ", items);
+        final String couponText = coupon == null || coupon.isBlank() ? "" : " Cupom " + coupon + " aplicado.";
+        final String description = "Adicionado " + products + ", removido " + formatMoney(totalPaid) + "C$." + couponText;
+        command.saveHistoricos(List.of(build(
+                idFicha,
+                idOrganizacao,
+                UUID.randomUUID().toString(),
+                "COMPRA",
+                "compra",
+                null,
+                description
+        )));
+    }
+
     private void recordUpdate(final FichaResponse before,
                               final FichaResponse after,
                               final boolean withoutContext) {

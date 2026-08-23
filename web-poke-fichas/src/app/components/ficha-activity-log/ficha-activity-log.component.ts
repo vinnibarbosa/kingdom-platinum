@@ -173,7 +173,10 @@ export class FichaActivityLogComponent {
     this.history.set([]);
     this.api.list(0, 500).subscribe({
       next: (page) => {
-        this.fichas.set(page.content ?? []);
+        this.fichas.set([...(page.content ?? [])].sort((first, second) => {
+          const dateDifference = this.updatedAt(second) - this.updatedAt(first);
+          return dateDifference || second.id - first.id;
+        }));
         this.loadingFichas.set(false);
       },
       error: () => {
@@ -186,5 +189,10 @@ export class FichaActivityLogComponent {
   private capitalize(value: string): string {
     const words = value.replace(/([a-z])([A-Z])/g, '$1 $2');
     return words ? words[0].toUpperCase() + words.slice(1) : 'Campo';
+  }
+
+  private updatedAt(ficha: FichaResumo): number {
+    const timestamp = ficha.updatedAt ? new Date(ficha.updatedAt).getTime() : 0;
+    return Number.isFinite(timestamp) ? timestamp : 0;
   }
 }

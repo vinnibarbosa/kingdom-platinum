@@ -137,6 +137,11 @@ label {
   gap: 0.45rem;
 }
 
+.mobile-menu-toggle,
+.mobile-menu-backdrop {
+  display: none;
+}
+
 .topbar-library-nav {
   position: absolute;
   left: 50%;
@@ -2972,6 +2977,56 @@ button.public-pokemon-card:focus-visible {
   padding-bottom: 3rem;
 }
 
+.store-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.store-head-actions .button {
+  min-height: 2.55rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.store-cart-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.store-cart-button.has-items {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.store-cart-button.has-items:hover {
+  background: color-mix(in srgb, var(--ink) 88%, white);
+}
+
+.store-cart-button .store-cart-count {
+  display: inline-grid;
+  min-width: 1.5rem;
+  height: 1.3rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--paper) 34%, transparent);
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  padding: 0 0.35rem;
+  font-size: 0.68rem;
+  line-height: 1;
+  animation: store-cart-count-in 220ms ease-out;
+}
+
+@keyframes store-cart-count-in {
+  from { opacity: 0; transform: scale(0.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .section-copy {
   margin: 0.25rem 0 0;
   color: var(--muted);
@@ -2979,25 +3034,40 @@ button.public-pokemon-card:focus-visible {
 
 .store-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 0.75rem;
 }
 
 .store-card {
   display: grid;
-  grid-template-columns: 68px minmax(0, 1fr);
-  gap: 0.85rem;
+  grid-template-columns: 62px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 0.75rem 0.85rem;
   align-items: start;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--paper);
-  padding: 1rem;
+  padding: 0.85rem;
+  box-shadow: 0 3px 12px rgb(28 34 39 / 3%);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.store-card.in-cart {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 2.5%, var(--paper));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 78%, transparent), 0 5px 16px rgb(28 34 39 / 5%);
+}
+
+.store-card.just-added {
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px rgb(28 34 39 / 10%);
+  transform: translateY(-2px);
 }
 
 .store-item-icon {
   display: grid;
-  width: 68px;
-  height: 68px;
+  width: 62px;
+  height: 62px;
   place-items: center;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -3014,8 +3084,8 @@ button.public-pokemon-card:focus-visible {
 }
 
 .store-card-content h2 {
-  margin: 0.1rem 0 0.35rem;
-  font-size: 1.02rem;
+  margin: 0.08rem 0 0.25rem;
+  font-size: 1rem;
 }
 
 .store-card-content p {
@@ -3023,29 +3093,191 @@ button.public-pokemon-card:focus-visible {
   color: var(--muted);
   font-size: 0.86rem;
   line-height: 1.35;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .store-card-footer {
   grid-column: 1 / -1;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.65rem;
   border-top: 1px solid var(--line);
-  padding-top: 0.75rem;
+  padding-top: 0.65rem;
 }
 
-.store-card-footer strong {
+.store-price-block {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+}
+
+.store-price-block small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.store-price-block strong {
   color: var(--ink);
-  font-size: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.store-price-block strong:not(:only-child) {
+  letter-spacing: 0;
 }
 
 .store-card-actions,
 .modal-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.35rem;
+}
+
+.store-edit-button {
+  min-height: 2.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.45rem 0.4rem;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.store-edit-button:hover,
+.store-edit-button:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.store-quantity-control {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(4rem, auto) 2.35rem;
+  min-height: 2.5rem;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.store-quantity-control button {
+  border: 0;
+  background: color-mix(in srgb, var(--ink) 7%, var(--paper));
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.store-quantity-control button:hover,
+.store-quantity-control button:focus-visible {
+  background: color-mix(in srgb, var(--ink) 15%, var(--paper));
+}
+
+.store-quantity-control span {
+  display: grid;
+  min-width: 0;
+  place-content: center;
+  border-right: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  padding: 0 0.55rem;
+  text-align: center;
+}
+
+.store-quantity-control strong {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.store-quantity-control small {
+  margin-top: 0.13rem;
+  color: var(--muted);
+  font-size: 0.59rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.store-add-button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.store-unavailable {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--ink) 2%, var(--paper));
+  color: var(--muted);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.73rem;
+  line-height: 1;
+}
+
+.store-cart-feedback {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 45;
+  display: flex;
+  width: min(390px, calc(100vw - 2rem));
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 42%, var(--line));
+  border-radius: 7px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.8rem 0.85rem 0.8rem 1rem;
+  box-shadow: 0 12px 30px rgb(28 34 39 / 24%);
+  animation: store-feedback-in 220ms ease-out;
+}
+
+.store-cart-feedback > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+}
+
+.store-cart-feedback strong {
+  overflow: hidden;
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-cart-feedback small {
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
+  font-size: 0.75rem;
+}
+
+.store-cart-feedback button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  padding: 0.45rem 0.35rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@keyframes store-feedback-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .store-empty {
@@ -3081,6 +3313,82 @@ button.public-pokemon-card:focus-visible {
   color: var(--ink);
   white-space: nowrap;
 }
+
+.store-cart-lines,
+.store-coupon-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.store-cart-lines article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px auto 32px;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffdf7;
+  padding: 0.6rem;
+}
+
+.store-cart-lines article > div,
+.store-coupon-list article > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.store-cart-lines small,
+.store-coupon-list small {
+  color: var(--muted);
+}
+
+.store-cart-lines label {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.store-cart-lines input { width: 100%; box-sizing: border-box; }
+
+.icon-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.store-coupon-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px auto;
+  align-items: end;
+  gap: 0.7rem;
+}
+
+.store-coupon-form label:not(.store-checkbox) {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.store-coupon-form input { width: 100%; box-sizing: border-box; }
+
+.store-coupon-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.55rem;
+}
+
+.store-coupon-list article > span { color: var(--green); font-size: 0.78rem; }
+.store-coupon-list article > span.inactive { color: var(--muted); }
 
 .store-character-picker {
   display: grid;
@@ -3234,6 +3542,7 @@ button.public-pokemon-card:focus-visible {
 }
 
 @media (max-width: 620px) {
+  .store-head-actions { justify-content: flex-start; }
   .store-grid {
     grid-template-columns: 1fr;
   }
@@ -3249,16 +3558,24 @@ button.public-pokemon-card:focus-visible {
   }
 
   .store-card-footer {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .store-card-actions {
-    width: 100%;
+    width: auto;
   }
 
   .store-card-actions .button {
-    flex: 1;
+    flex: 0 0 auto;
+  }
+
+  .store-card-actions .store-edit-button {
+    flex: 0 0 auto;
+  }
+
+  .store-quantity-control {
+    flex: 0 0 auto;
   }
 
   .store-form-grid {
@@ -3268,6 +3585,19 @@ button.public-pokemon-card:focus-visible {
   .store-form-full,
   .store-checkbox {
     grid-column: auto;
+  }
+
+  .store-cart-lines article { grid-template-columns: minmax(0, 1fr) 78px 30px; }
+  .store-cart-lines article > strong { grid-column: 1 / 2; }
+  .store-coupon-form { grid-template-columns: 1fr; }
+  .store-coupon-list article { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .store-coupon-list article > span { display: none; }
+
+  .store-cart-feedback {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    width: auto;
   }
 }
 
@@ -4104,11 +4434,8 @@ button.public-pokemon-card:focus-visible {
     flex-direction: column;
   }
 
-  .topbar-actions {
-    flex-wrap: wrap;
-  }
-
   .topbar {
+    z-index: 30;
     height: 52px;
     min-height: 52px;
     align-items: center;
@@ -4124,31 +4451,115 @@ button.public-pokemon-card:focus-visible {
     width: 6.7rem;
   }
 
+  .mobile-menu-toggle {
+    display: grid;
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-left: auto;
+    place-content: center;
+    gap: 4px;
+    border: 1px solid color-mix(in srgb, var(--green) 20%, var(--line));
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--green) 6%, #fffdf7);
+    color: var(--green-dark);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .mobile-menu-toggle span {
+    display: block;
+    width: 1.05rem;
+    height: 1px;
+    background: currentColor;
+    transition: transform 160ms ease, opacity 160ms ease;
+  }
+
+  .mobile-menu-toggle.open span:first-child {
+    transform: translateY(5px) rotate(45deg);
+  }
+
+  .mobile-menu-toggle.open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-menu-toggle.open span:last-child {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+
   .topbar-actions {
-    width: auto;
-    justify-content: flex-end;
-    flex-wrap: nowrap;
+    position: fixed;
+    top: 58px;
+    right: 0.65rem;
+    z-index: 32;
+    display: grid;
+    width: min(18rem, calc(100vw - 1.3rem));
+    align-items: stretch;
     gap: 0.35rem;
-    font-size: 0.76rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    padding: 0.55rem;
+    box-shadow: 0 18px 45px rgb(28 34 39 / 20%);
+    font-size: 0.82rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  .topbar-actions.mobile-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .mobile-menu-backdrop {
+    position: fixed;
+    inset: 52px 0 0;
+    z-index: 29;
+    display: block;
+    width: 100%;
+    height: calc(100vh - 52px);
+    border: 0;
+    background: rgb(28 34 39 / 20%);
+    padding: 0;
   }
 
   .topbar-library-nav {
-    gap: 0.25rem;
+    position: static;
+    display: grid;
+    gap: 0.2rem;
+    transform: none;
   }
 
   .topbar-library-link {
-    padding: 0.34rem 0.66rem;
-    font-size: 0.7rem;
+    display: flex;
+    min-height: 2.45rem;
+    align-items: center;
+    border: 0;
+    border-radius: 6px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.82rem;
   }
 
   .topbar-admin-link,
   .topbar-user-chip {
-    min-height: 1.85rem;
-    padding: 0.34rem 0.58rem;
+    width: 100%;
+    min-height: 2.45rem;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    border: 0;
+    border-radius: 6px;
+    padding: 0.55rem 0.7rem;
   }
 
   .topbar-user-chip {
-    max-width: 6.6rem;
+    max-width: none;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    margin-top: 0.2rem;
+    padding-top: 0.7rem;
   }
 
   .sheet-header {

@@ -23,18 +23,32 @@ import { PasswordResetComponent } from './components/password-reset/password-res
           <img class="brand-logo" src="/assets/kingdom-platinum-logo.png" alt="Kingdom Platinum KP" />
         </a>
 
-        <nav class="topbar-actions">
+        <button
+          type="button"
+          class="mobile-menu-toggle"
+          [class.open]="mobileMenuOpen()"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          aria-controls="main-navigation"
+          aria-label="Abrir menu principal"
+          (click)="toggleMobileMenu()"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav id="main-navigation" class="topbar-actions" [class.mobile-open]="mobileMenuOpen()">
           <div class="topbar-library-nav" aria-label="Navegação dos fichários">
-            <a class="topbar-library-link" href="/">Fich&aacute;rio</a>
-            <a class="topbar-library-link" href="/npcs">Fich&aacute;rio NPC</a>
-            <a class="topbar-library-link" href="/loja">Loja</a>
+            <a class="topbar-library-link" href="/" (click)="closeMobileMenu()">Fich&aacute;rio</a>
+            <a class="topbar-library-link" href="/npcs" (click)="closeMobileMenu()">Fich&aacute;rio NPC</a>
+            <a class="topbar-library-link" href="/loja" (click)="closeMobileMenu()">Loja</a>
           </div>
           <button
             type="button"
             class="topbar-admin-link"
             *ngIf="isAdmin()"
             title="Ver todas as edicoes das fichas"
-            (click)="activityLogOpen.set(true)"
+            (click)="openActivityLog()"
           >
             Registros
           </button>
@@ -43,7 +57,7 @@ import { PasswordResetComponent } from './components/password-reset/password-res
             class="topbar-admin-link"
             *ngIf="isAdmin()"
             title="Redefinir senha de usuario"
-            (click)="passwordResetOpen.set(true)"
+            (click)="openPasswordReset()"
           >
             Senha
           </button>
@@ -53,6 +67,14 @@ import { PasswordResetComponent } from './components/password-reset/password-res
           </span>
         </nav>
       </header>
+
+      <button
+        type="button"
+        class="mobile-menu-backdrop"
+        *ngIf="isLoggedIn() && mobileMenuOpen()"
+        aria-label="Fechar menu principal"
+        (click)="closeMobileMenu()"
+      ></button>
 
       <app-password-reset
         *ngIf="isAdmin()"
@@ -81,8 +103,28 @@ export class AppComponent {
   protected readonly username = computed(() => this.auth.currentUser()?.nome ?? this.auth.currentUser()?.username ?? '');
   protected readonly passwordResetOpen = signal(false);
   protected readonly activityLogOpen = signal(false);
+  protected readonly mobileMenuOpen = signal(false);
+
+  protected toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  protected closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
+  protected openActivityLog(): void {
+    this.closeMobileMenu();
+    this.activityLogOpen.set(true);
+  }
+
+  protected openPasswordReset(): void {
+    this.closeMobileMenu();
+    this.passwordResetOpen.set(true);
+  }
 
   protected logout(): void {
+    this.closeMobileMenu();
     this.auth.logout().subscribe({
       next: () => this.router.navigateByUrl('/login'),
       error: () => this.router.navigateByUrl('/login'),

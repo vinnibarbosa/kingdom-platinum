@@ -9,6 +9,8 @@ export interface CatalogItem {
   description: string;
   category: string;
   sprite: string;
+  code?: string;
+  price?: number;
 }
 
 interface SupabaseItemRow {
@@ -19,6 +21,15 @@ interface SupabaseItemRow {
 }
 
 interface PokeApiItemRow { name?: string | null; }
+
+interface RemoteCatalogRow {
+  id?: string | number; code?: string; codigo?: string; name?: string; nome?: string; label?: string;
+  description?: string; descricao?: string; desc?: string; category?: string; categoria?: string;
+  sprite?: string; icon?: string; icone?: string; image?: string; imagem?: string;
+  price?: number | string; preco?: number | string; valor?: number | string;
+}
+
+const KINGDOM_CATALOG_URL = 'https://raw.githubusercontent.com/alphx-r/kingdomplatinum/main/items.json';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogItemApiService {
@@ -37,12 +48,17 @@ export class CatalogItemApiService {
         catchError(() => of([] as CatalogItem[])),
       );
 
-      this.catalog$ = forkJoin({ officialItems, customItems: this.loadCustomItems() }).pipe(
-        map(({ officialItems, customItems }) => this.merge(officialItems, customItems)),
+      this.catalog$ = forkJoin({ officialItems, githubItems: this.loadKingdomCatalog(), customItems: this.loadCustomItems() }).pipe(
+        map(({ officialItems, githubItems, customItems }) => this.merge(officialItems, githubItems, customItems)),
         shareReplay({ bufferSize: 1, refCount: false }),
       );
     }
     return this.catalog$;
+  }
+
+  /** Curated items explicitly published for the Kingdom Platinum store. */
+  listKingdomCatalog(): Observable<CatalogItem[]> {
+    return this.loadKingdomCatalog();
   }
 
   details(item: CatalogItem): Observable<CatalogItem> {
@@ -93,6 +109,48 @@ export class CatalogItemApiService {
     );
   }
 
+  private loadKingdomCatalog(): Observable<CatalogItem[]> {
+    return this.http.get<unknown>(KINGDOM_CATALOG_URL).pipe(
+      map((payload) => this.extractRows(payload)
+        .map((row) => this.toRemoteItem(row))
+        .filter((item): item is CatalogItem => !!item)),
+      catchError(() => of([] as CatalogItem[])),
+    );
+  }
+
+  private extractRows(payload: unknown): RemoteCatalogRow[] {
+    const rows: RemoteCatalogRow[] = [];
+    const visit = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      if (!value || typeof value !== 'object') return;
+      const row = value as RemoteCatalogRow;
+      if (typeof row.name === 'string' || typeof row.nome === 'string' || typeof row.label === 'string') {
+        rows.push(row);
+        return;
+      }
+      Object.values(value as Record<string, unknown>).forEach(visit);
+    };
+    visit(payload);
+    return rows;
+  }
+
+  private toRemoteItem(row: RemoteCatalogRow): CatalogItem | null {
+    const name = String(row.name ?? row.nome ?? row.label ?? '').trim();
+    if (!name) return null;
+    const image = String(row.sprite ?? row.icon ?? row.icone ?? row.image ?? row.imagem ?? '').trim();
+    return {
+      name,
+      description: String(row.description ?? row.descricao ?? row.desc ?? '').trim(),
+      category: String(row.category ?? row.categoria ?? 'Item').trim() || 'Item',
+      sprite: image && !/^https?:|^data:/i.test(image) ? new URL(image, KINGDOM_CATALOG_URL).toString() : image,
+      code: String(row.code ?? row.codigo ?? row.id ?? '').trim() || undefined,
+      price: numericValue(row.price ?? row.preco ?? row.valor),
+    };
+  }
+
   private toOfficialItem(name: string): CatalogItem {
     return {
       name: displayName(name),
@@ -102,10 +160,10 @@ export class CatalogItemApiService {
     };
   }
 
-  private merge(officialItems: CatalogItem[], customItems: CatalogItem[]): CatalogItem[] {
+  private merge(officialItems: CatalogItem[], githubItems: CatalogItem[], customItems: CatalogItem[]): CatalogItem[] {
     const byName = new Map<string, CatalogItem>();
     officialItems.forEach((item) => byName.set(normalize(item.name), item));
-    customItems.forEach((item) => {
+    [...githubItems, ...customItems].forEach((item) => {
       const key = normalize(item.name);
       const official = byName.get(key);
       byName.set(key, {
@@ -145,4 +203,9 @@ function slugify(value: string): string {
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
+}
+
+function numericValue(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }

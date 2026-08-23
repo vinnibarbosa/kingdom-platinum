@@ -1,12 +1,13 @@
 package com.br.pokefichas.domain.core.loja.dto;
 
-import com.br.pokefichas.domain.core.ficha.dto.FichaItemResponse;
-
 import java.math.BigDecimal;
+import java.util.List;
 
 public record CompraLojaResponse(
         Long idFicha,
         BigDecimal dinheiroRestante,
-        FichaItemResponse item,
+        List<String> itens,
+        BigDecimal subtotal,
+        BigDecimal desconto,
         BigDecimal totalPago
 ) { }

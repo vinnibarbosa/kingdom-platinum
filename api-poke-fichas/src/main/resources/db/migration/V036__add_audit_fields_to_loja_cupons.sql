@@ -1,0 +1,3 @@
+ALTER TABLE loja_cupons
+    ADD COLUMN IF NOT EXISTS created_by VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS updated_by VARCHAR(150);
