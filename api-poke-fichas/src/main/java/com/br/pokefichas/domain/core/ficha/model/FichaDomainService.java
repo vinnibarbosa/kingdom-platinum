@@ -20,7 +20,10 @@ public class FichaDomainService {
     }
 
     public void validarUnicidadeNome(final Ficha ficha) {
-        if (query.existsByNome(ficha.getIdOrganizacao(), ficha.getNome(), ficha.getId())) {
+        final boolean nomeEmUso = ficha.isNpc() || ficha.getIdUsuario() == null
+                ? query.existsByNomeNaOrganizacao(ficha.getIdOrganizacao(), ficha.getNome(), ficha.getId())
+                : query.existsByNomeDoUsuario(ficha.getIdUsuario(), ficha.getNome(), ficha.getId());
+        if (nomeEmUso) {
             throw new BusinessException("Ja existe uma ficha com este nome para este usuario");
         }
     }

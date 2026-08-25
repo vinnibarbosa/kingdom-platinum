@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -18,9 +17,6 @@ import java.util.Objects;
 @Entity
 @Table(
         name = "fichas",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_fichas_organizacao_nome", columnNames = {"id_organizacao", "nome"})
-        },
         indexes = {
                 @Index(name = "idx_fichas_id_organizacao", columnList = "id_organizacao"),
                 @Index(name = "idx_fichas_nome", columnList = "nome")

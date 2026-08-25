@@ -135,7 +135,7 @@ public class FichaQuery {
                 .toList();
     }
 
-    public boolean existsByNome(final Long idOrganizacao, final String nome, final Long id) {
+    public boolean existsByNomeNaOrganizacao(final Long idOrganizacao, final String nome, final Long id) {
         if (id == null) {
             return repository.existsWithoutTenant(
                     Ficha.class,
@@ -145,6 +145,21 @@ public class FichaQuery {
         return repository.existsWithoutTenant(
                 Ficha.class,
                 ficha.idOrganizacao.eq(idOrganizacao)
+                        .and(ficha.nome.equalsIgnoreCase(nome))
+                        .and(ficha.id.ne(id))
+        );
+    }
+
+    public boolean existsByNomeDoUsuario(final Long idUsuario, final String nome, final Long id) {
+        if (id == null) {
+            return repository.existsWithoutTenant(
+                    Ficha.class,
+                    ficha.idUsuario.eq(idUsuario).and(ficha.nome.equalsIgnoreCase(nome))
+            );
+        }
+        return repository.existsWithoutTenant(
+                Ficha.class,
+                ficha.idUsuario.eq(idUsuario)
                         .and(ficha.nome.equalsIgnoreCase(nome))
                         .and(ficha.id.ne(id))
         );

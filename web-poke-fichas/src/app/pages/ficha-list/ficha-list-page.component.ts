@@ -100,7 +100,7 @@ export class FichaListPageComponent implements OnInit {
     }
     this.creating.set(true);
     this.api.create({
-      nome: 'Nova ficha',
+      nome: this.nextDraftName(),
       frase: '',
       naturalidade: '',
       classePersonagem: '',
@@ -167,6 +167,19 @@ export class FichaListPageComponent implements OnInit {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
     return slug || String(ficha.id);
+  }
+
+  private nextDraftName(): string {
+    const names = new Set(this.fichas().map((ficha) => ficha.nome.trim().toLocaleLowerCase('pt-BR')));
+    let suffix = 1;
+    let candidate = 'Nova ficha';
+
+    while (names.has(candidate.toLocaleLowerCase('pt-BR'))) {
+      suffix += 1;
+      candidate = `Nova ficha ${suffix}`;
+    }
+
+    return candidate;
   }
 
   protected initials(name: string): string {
