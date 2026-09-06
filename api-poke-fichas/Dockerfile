@@ -20,7 +20,7 @@ COPY --from=build --chown=pokefichas:pokefichas /app/target/api-poke-fichas-0.0.
 
 USER pokefichas
 
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Dfile.encoding=UTF-8"
+ENV JAVA_TOOL_OPTIONS="-XX:InitialRAMPercentage=20 -XX:MaxRAMPercentage=55 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m -XX:+UseSerialGC -Xss512k -Dfile.encoding=UTF-8"
 
 EXPOSE 8080
 
