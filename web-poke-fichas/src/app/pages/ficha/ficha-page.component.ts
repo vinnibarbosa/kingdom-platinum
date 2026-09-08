@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { CdkDrag, CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { Component, HostListener, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
@@ -297,7 +297,11 @@ const ITEMDEX_ICONS: Record<string, string> = {
   standalone: true,
   imports: [CommonModule, DragDropModule, FichaDeleteComponent, FichaHistoryComponent, FichaTimelineComponent, FormsModule, ImageCropperComponent, RouterLink],
   template: `
-    <section class="page-wrap sheet-wrap">
+    <section
+      class="page-wrap sheet-wrap"
+      [class.mobile-keyboard-open]="keyboardOpen()"
+      [style.--keyboard-inset]="keyboardInset() + 'px'"
+    >
       <a class="back-link" routerLink="/">Voltar para fichas</a>
 
       <div class="state-card" *ngIf="loading()">Abrindo ficha...</div>
@@ -350,7 +354,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
             </div>
             <div class="sheet-actions">
               <a class="button ghost" [routerLink]="['/ficha', fichaSlug(current)]">Visualizar</a>
-              <app-ficha-history [fichaId]="current.id" />
+              <app-ficha-history [fichaId]="current.id" [pokemons]="current.pokemons" />
               <app-ficha-delete
                 [fichaId]="current.id"
                 [fichaNome]="current.nome"
@@ -1598,7 +1602,7 @@ const ITEMDEX_ICONS: Record<string, string> = {
     </section>
   `,
 })
-export class FichaPageComponent implements OnInit {
+export class FichaPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(FichaApiService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
@@ -1613,6 +1617,11 @@ export class FichaPageComponent implements OnInit {
   private nextPokemonIdentity = 1;
   private suppressPokemonClick = false;
   private pokemonClickTimer?: ReturnType<typeof setTimeout>;
+  private keyboardScrollTimer?: ReturnType<typeof setTimeout>;
+  private readonly handleVisualViewportResize = () => {
+    this.updateKeyboardInset();
+    this.scheduleFocusedFieldScroll();
+  };
   @ViewChild(ImageCropperComponent) private imageCropper?: ImageCropperComponent;
 
   protected readonly ficha = signal<Ficha | null>(null);
@@ -1620,6 +1629,8 @@ export class FichaPageComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly error = signal('');
   protected readonly success = signal('');
+  protected readonly keyboardOpen = signal(false);
+  protected readonly keyboardInset = signal(0);
   protected readonly tab = signal<FichaTab>('dados');
   protected readonly selectedPokemonIndex = signal<number | null>(null);
   protected readonly selectedPokemonPreviewIndex = signal<number | null>(null);
@@ -1880,6 +1891,7 @@ export class FichaPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    window.visualViewport?.addEventListener('resize', this.handleVisualViewportResize);
     this.loadPokemonNames();
     this.loadHeldItems();
     this.loadInventoryItems();
@@ -1908,6 +1920,37 @@ export class FichaPageComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    window.visualViewport?.removeEventListener('resize', this.handleVisualViewportResize);
+    if (this.keyboardScrollTimer) {
+      window.clearTimeout(this.keyboardScrollTimer);
+    }
+  }
+
+  @HostListener('document:focusin', ['$event'])
+  protected handleEditorFocus(event: FocusEvent): void {
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !this.opensVirtualKeyboard(target)) {
+      return;
+    }
+
+    this.keyboardOpen.set(true);
+    this.updateKeyboardInset();
+    this.scheduleFocusedFieldScroll(target);
+  }
+
+  @HostListener('document:focusout')
+  protected handleEditorBlur(): void {
+    window.setTimeout(() => {
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement && this.opensVirtualKeyboard(activeElement)) {
+        return;
+      }
+      this.keyboardOpen.set(false);
+      this.keyboardInset.set(0);
+    }, 180);
+  }
+
   @HostListener('document:click', ['$event'])
   protected closePickersOnOutsideClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
@@ -1925,6 +1968,47 @@ export class FichaPageComponent implements OnInit {
     this.heldItemPickerIndex.set(null);
     this.pokeballSearch.set('');
     this.natureSearch.set('');
+  }
+
+  private opensVirtualKeyboard(element: HTMLElement): boolean {
+    if (element instanceof HTMLTextAreaElement || element.isContentEditable) {
+      return true;
+    }
+    if (!(element instanceof HTMLInputElement)) {
+      return false;
+    }
+
+    return !['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit']
+      .includes(element.type);
+  }
+
+  private updateKeyboardInset(): void {
+    if (!this.keyboardOpen()) {
+      this.keyboardInset.set(0);
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    const inset = viewport
+      ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+      : 0;
+    this.keyboardInset.set(Math.round(inset));
+  }
+
+  private scheduleFocusedFieldScroll(target?: HTMLElement): void {
+    if (!this.keyboardOpen()) {
+      return;
+    }
+    if (this.keyboardScrollTimer) {
+      window.clearTimeout(this.keyboardScrollTimer);
+    }
+
+    this.keyboardScrollTimer = window.setTimeout(() => {
+      const field = target ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+      if (field && this.opensVirtualKeyboard(field)) {
+        field.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      }
+    }, 360);
   }
 
   protected save(): void {

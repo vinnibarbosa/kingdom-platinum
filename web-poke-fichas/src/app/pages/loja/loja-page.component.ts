@@ -284,7 +284,7 @@ export class LojaPageComponent implements OnInit, OnDestroy {
           descricao: item.description || '',
           icone: item.sprite || '',
           preco: item.price ?? 0,
-          ativo: true,
+          ativo: item.available ?? true,
           ordem: index,
         }));
         if (!items.length) {
@@ -426,6 +426,11 @@ export class LojaPageComponent implements OnInit, OnDestroy {
       'key-items': 'Trainer itens (Keys)',
       'all-machines': 'TM / Pill case',
       'type-enhancement': 'Itens de batalha',
+      'hold items': 'Itens de batalha',
+      'trainer items': 'Trainer itens (Keys)',
+      'evolutionary items': 'Evolutionary',
+      'pokéball': 'Pokébolas',
+      pokeball: 'Pokébolas',
     };
     if (apiCategoryMap[normalized]) return apiCategoryMap[normalized];
     return this.categories.find((category) => category.toLocaleLowerCase('pt-BR') === normalized)

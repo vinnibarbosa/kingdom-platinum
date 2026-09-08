@@ -20,9 +20,14 @@ public class ListarHistoricoFichaUseCase {
 
     @Transactional(readOnly = true)
     public List<FichaHistoricoResponse> handle(final Long idFicha) {
+        return handle(idFicha, 0, 300);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FichaHistoricoResponse> handle(final Long idFicha, final int offset, final int limit) {
         query.findByIdWithoutContext(idFicha)
                 .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + idFicha));
-        return query.findHistoricosWithoutContext(idFicha).stream()
+        return query.findHistoricosWithoutContext(idFicha, offset, limit).stream()
                 .map(this::toResponse)
                 .toList();
     }

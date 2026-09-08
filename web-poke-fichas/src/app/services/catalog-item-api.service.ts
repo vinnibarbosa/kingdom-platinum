@@ -11,6 +11,7 @@ export interface CatalogItem {
   sprite: string;
   code?: string;
   price?: number;
+  available?: boolean;
 }
 
 interface SupabaseItemRow {
@@ -27,6 +28,7 @@ interface RemoteCatalogRow {
   description?: string; descricao?: string; desc?: string; item_desc?: string; category?: string; categoria?: string;
   sprite?: string; icon?: string; icone?: string; image?: string; imagem?: string;
   price?: number | string; preco?: number | string; valor?: number | string;
+  flags?: { pokemart?: { enabled?: boolean } };
 }
 
 const KINGDOM_CATALOG_URL = '/data/items.json';
@@ -149,6 +151,7 @@ export class CatalogItemApiService {
       sprite: image && !/^https?:|^data:/i.test(image) ? new URL(image, KINGDOM_CATALOG_SOURCE_URL).toString() : image,
       code: String(row.code ?? row.codigo ?? row.id ?? '').trim() || undefined,
       price: numericValue(row.price ?? row.preco ?? row.valor),
+      available: row.flags?.pokemart?.enabled,
     };
   }
 

@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -123,8 +124,13 @@ public class FichaController {
     @GetMapping("/{id}/historico")
     @Secured("ROLE_ADMIN")
     @Operation(summary = "Listar historico administrativo da ficha")
-    public ResponseEntity<List<FichaHistoricoResponse>> findHistory(@PathVariable final Long id) {
-        return ResponseEntity.ok(listarHistorico.handle(id));
+    public ResponseEntity<List<FichaHistoricoResponse>> findHistory(
+            @PathVariable final Long id,
+            @RequestParam(defaultValue = "0") final int offset,
+            @RequestParam(defaultValue = "150") final int limit) {
+        final int safeOffset = Math.max(0, offset);
+        final int safeLimit = Math.max(1, Math.min(limit, 300));
+        return ResponseEntity.ok(listarHistorico.handle(id, safeOffset, safeLimit));
     }
 
     @GetMapping("/historico")

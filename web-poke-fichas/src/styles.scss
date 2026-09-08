@@ -2463,6 +2463,234 @@ dd {
   gap: 0.7rem;
 }
 
+.public-pokemon-team-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.85rem;
+}
+
+.public-inventory-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.public-inventory-card {
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: start;
+  min-height: 126px;
+}
+
+.public-inventory-card .inventory-card-icon {
+  width: 62px;
+  height: 62px;
+}
+
+.public-inventory-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.38rem;
+}
+
+.public-inventory-card .public-inventory-copy > strong {
+  overflow: visible;
+  padding: 0;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.public-inventory-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.public-inventory-meta span {
+  border: 1px solid color-mix(in srgb, var(--green) 20%, var(--line));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--green) 5%, #fffdf7);
+  padding: 0.12rem 0.3rem;
+  color: var(--muted);
+  font-size: 0.58rem;
+  line-height: 1.2;
+}
+
+.public-inventory-copy p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.42;
+  white-space: pre-wrap;
+}
+
+.public-pokemon-profile-card {
+  display: grid;
+  min-width: 0;
+  gap: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--green) 22%, var(--line));
+  border-radius: 8px;
+  background: #fffaf0;
+  padding: 0.85rem;
+}
+
+.public-pokemon-profile-head {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.public-pokemon-profile-card .public-pokemon-meta {
+  margin-top: 0.3rem;
+}
+
+.public-pokemon-profile-head .public-pokemon-info > strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-pokemon-profile-head .public-pokemon-info > small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-pokemon-profile-card .public-pokeball-meta {
+  width: 100%;
+  margin-top: 0.08rem;
+}
+
+.public-pokemon-card-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.public-pokemon-card-facts div {
+  min-width: 0;
+  padding: 0.55rem 0.25rem;
+}
+
+.public-pokemon-card-facts div:nth-child(n + 3) {
+  border-top: 1px solid var(--line);
+}
+
+.public-pokemon-card-facts div:nth-child(odd) {
+  padding-left: 0;
+  padding-right: 0.55rem;
+}
+
+.public-pokemon-card-facts div:nth-child(even) {
+  border-left: 1px solid var(--line);
+  padding-left: 0.55rem;
+}
+
+.public-pokemon-card-facts dt {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.public-pokemon-card-facts dd {
+  margin: 0.13rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.public-pokemon-card-moves,
+.public-pokemon-card-combo {
+  display: grid;
+  min-width: 0;
+  gap: 0.45rem;
+}
+
+.public-pokemon-card-moves h3,
+.public-pokemon-card-combo h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
+}
+
+.public-compact-move-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.public-compact-move {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+  border: 1px solid color-mix(in srgb, var(--public-move-color) 25%, var(--line));
+  border-left: 3px solid var(--public-move-color);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--public-move-color) 4%, #fffdf7);
+  padding: 0.45rem 0.5rem;
+}
+
+.public-compact-move > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.public-compact-move strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-compact-move span {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--public-move-color) 70%, var(--ink));
+  font-size: 0.55rem;
+  font-weight: 600;
+}
+
+.public-compact-move small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.57rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-pokemon-card-combo {
+  border-top: 1px solid var(--line);
+  padding-top: 0.7rem;
+}
+
+.public-pokemon-card-combo p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
 .public-collection-modal {
   width: min(1000px, 100%);
   max-height: min(760px, 88vh);
@@ -3752,7 +3980,7 @@ button.public-pokemon-card:focus-visible {
 .pokemon-editor-modal {
   display: grid;
   width: min(980px, 100%);
-  max-height: min(860px, calc(100vh - 2rem));
+  max-height: min(860px, calc(100dvh - 2rem));
   gap: 0.85rem;
   overflow: auto;
   overscroll-behavior: contain;
@@ -3766,7 +3994,7 @@ button.public-pokemon-card:focus-visible {
 .inventory-editor-modal {
   display: grid;
   width: min(760px, 100%);
-  max-height: min(780px, calc(100vh - 2rem));
+  max-height: min(780px, calc(100dvh - 2rem));
   gap: 0.85rem;
   overflow: auto;
   overscroll-behavior: contain;
@@ -3780,7 +4008,7 @@ button.public-pokemon-card:focus-visible {
 .achievement-editor-modal {
   display: grid;
   width: min(560px, 100%);
-  max-height: min(680px, calc(100vh - 2rem));
+  max-height: min(680px, calc(100dvh - 2rem));
   gap: 1rem;
   overflow: auto;
   overscroll-behavior: contain;
@@ -3991,6 +4219,35 @@ button.public-pokemon-card:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.history-group-count {
+  font-weight: 600;
+}
+
+.history-group-changes {
+  display: grid;
+  gap: 0;
+  border-block: 1px solid var(--line);
+}
+
+.history-change {
+  display: grid;
+  gap: 0.35rem;
+  padding-block: 0.65rem;
+}
+
+.history-change + .history-change {
+  border-top: 1px solid var(--line);
+}
+
+.history-group-author {
+  justify-self: end;
+}
+
+.history-load-more {
+  justify-self: center;
+  margin-block: 0.35rem;
+}
+
 .history-action {
   border-radius: 4px;
   padding: 0.22rem 0.42rem;
@@ -4014,6 +4271,10 @@ button.public-pokemon-card:focus-visible {
 
 .history-action.action-compra {
   background: #4f6f9a;
+}
+
+.history-action.action-atualizacao {
+  background: #596574;
 }
 
 .history-values {
@@ -4428,6 +4689,23 @@ button.public-pokemon-card:focus-visible {
 }
 
 @media (max-width: 860px) {
+  .sheet-wrap.mobile-keyboard-open {
+    padding-bottom: max(calc(var(--keyboard-inset, 0px) + 1.5rem), 48vh);
+    scroll-padding-bottom: max(calc(var(--keyboard-inset, 0px) + 1.5rem), 48vh);
+  }
+
+  .sheet-wrap.mobile-keyboard-open input,
+  .sheet-wrap.mobile-keyboard-open textarea,
+  .sheet-wrap.mobile-keyboard-open [contenteditable='true'] {
+    scroll-margin-top: 5rem;
+    scroll-margin-bottom: max(calc(var(--keyboard-inset, 0px) + 1.5rem), 45vh);
+  }
+
+  .sheet-wrap.mobile-keyboard-open .modal-backdrop {
+    align-items: flex-start;
+    padding-bottom: max(calc(var(--keyboard-inset, 0px) + 1rem), 45vh);
+  }
+
   .section-head,
   .sheet-header {
     align-items: stretch;
@@ -4657,6 +4935,18 @@ button.public-pokemon-card:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .public-pokemon-team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-inventory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-compact-move-list {
+    grid-template-columns: 1fr;
+  }
+
   .public-move-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -4772,6 +5062,18 @@ button.public-pokemon-card:focus-visible {
 
   .public-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-pokemon-team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-inventory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-compact-move-list {
+    grid-template-columns: 1fr;
   }
 
   .public-move-list {

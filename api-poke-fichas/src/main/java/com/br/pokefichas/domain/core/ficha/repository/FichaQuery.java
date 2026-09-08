@@ -103,10 +103,17 @@ public class FichaQuery {
     }
 
     public List<FichaHistorico> findHistoricosWithoutContext(final Long idFicha) {
+        return findHistoricosWithoutContext(idFicha, 0, 300);
+    }
+
+    public List<FichaHistorico> findHistoricosWithoutContext(final Long idFicha,
+                                                              final int offset,
+                                                              final int limit) {
         return repository.findAllWithoutTenantFilter(
                 FichaHistorico.class,
                 Sort.of(fichaHistorico.createdAt.desc(), fichaHistorico.id.desc()),
-                300,
+                offset,
+                limit,
                 fichaHistorico.idFicha.eq(idFicha)
         );
     }

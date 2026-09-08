@@ -40,8 +40,8 @@ export class FichaApiService {
     return this.http.get<Ficha>(`${API_BASE}/fichas/publicas/slug/${encodeURIComponent(slug)}`);
   }
 
-  getHistory(id: number): Observable<FichaHistorico[]> {
-    return this.http.get<FichaHistorico[]>(`${API_BASE}/fichas/${id}/historico`, {
+  getHistory(id: number, offset = 0, limit = 150): Observable<FichaHistorico[]> {
+    return this.http.get<FichaHistorico[]>(`${API_BASE}/fichas/${id}/historico?offset=${offset}&limit=${limit}`, {
       withCredentials: true,
     });
   }

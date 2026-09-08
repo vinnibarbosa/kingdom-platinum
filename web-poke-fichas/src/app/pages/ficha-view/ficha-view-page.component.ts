@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { FichaHistoryComponent } from '../../components/ficha-history/ficha-history.component';
 import { FichaDeleteComponent } from '../../components/ficha-delete/ficha-delete.component';
-import { Ficha, FichaConquista, FichaItem, FichaPokemon, FichaRelacionado } from '../../models/ficha.model';
+import { Ficha, FichaConquista, FichaPokemon, FichaRelacionado } from '../../models/ficha.model';
 import { FichaApiService } from '../../services/ficha-api.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomPokemonApiService } from '../../services/custom-pokemon-api.service';
@@ -31,7 +31,7 @@ interface BadgeOption {
       <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="themeAccent(current.corTema)">
         <div class="public-admin-actions">
           <a class="button ghost" *ngIf="canEdit(current)" [routerLink]="['/ficha', fichaSlug(current), 'editar']">Editar ficha</a>
-          <app-ficha-history [fichaId]="current.id" />
+          <app-ficha-history [fichaId]="current.id" [pokemons]="current.pokemons" />
           <app-ficha-delete
             [fichaId]="current.id"
             [fichaNome]="current.nome"
@@ -117,29 +117,73 @@ interface BadgeOption {
             </div>
           </div>
 
-          <div class="public-pokemon-grid">
-            <button
-              type="button"
-              class="public-pokemon-card"
-              *ngFor="let pokemon of teamPokemons(current)"
-              (click)="openPokemon(pokemon)"
-              [attr.aria-label]="'Ver detalhes de ' + (pokemon.apelido || pokemon.especie || 'Pokémon')"
-            >
-              <div class="public-pokemon-sprite">
-                <img
-                  *ngIf="pokemonImage(pokemon) as sprite"
-                  [class.custom-pokemon-art]="pokemon.sprite?.startsWith('data:image/')"
-                  [src]="sprite"
-                  [alt]="pokemonTitle(pokemon)"
-                />
-                <span *ngIf="!pokemonImage(pokemon)">?</span>
-              </div>
+          <div class="public-pokemon-grid public-pokemon-team-grid">
+            <article class="public-pokemon-profile-card" *ngFor="let pokemon of teamPokemons(current)">
+              <header class="public-pokemon-profile-head">
+                <div class="public-pokemon-sprite">
+                  <img
+                    *ngIf="pokemonImage(pokemon) as sprite"
+                    [class.custom-pokemon-art]="pokemon.sprite?.startsWith('data:image/')"
+                    [src]="sprite"
+                    [alt]="pokemonTitle(pokemon)"
+                  />
+                  <span *ngIf="!pokemonImage(pokemon)">?</span>
+                </div>
 
-              <div class="public-pokemon-info">
-                <strong>{{ pokemonTitle(pokemon) }}</strong>
-                <small>{{ pokemonSpeciesText(pokemon) }}</small>
-              </div>
-            </button>
+                <div class="public-pokemon-info">
+                  <strong>{{ pokemonTitle(pokemon) }}</strong>
+                  <small>{{ pokemonSpeciesText(pokemon) }}</small>
+                  <div class="public-pokemon-meta">
+                    <span
+                      class="public-type-chip"
+                      *ngFor="let type of pokemonTypesFor(pokemon)"
+                      [style.--pokemon-type-color]="moveTypeColor(type)"
+                    >{{ titleCase(type) }}</span>
+                    <span class="public-pokeball-meta">
+                      <img [src]="pokeballIcon(pokemon)" [alt]="pokeballLabel(pokemon)" />
+                      {{ pokeballLabel(pokemon) }}
+                    </span>
+                  </div>
+                </div>
+              </header>
+
+              <dl class="public-pokemon-card-facts">
+                <div><dt>Ability</dt><dd>{{ pokemonText(pokemon.ability) }}</dd></div>
+                <div><dt>Gênero</dt><dd>{{ pokemonText(pokemon.genero) }}</dd></div>
+                <div><dt>Feature</dt><dd>{{ pokemonText(pokemon.feature) }}</dd></div>
+                <div><dt>Nature</dt><dd>{{ pokemonText(pokemon.nature) }}</dd></div>
+                <div><dt>Hold Item</dt><dd>{{ pokemonText(pokemon.holdItem) }}</dd></div>
+                <div><dt>Happiness</dt><dd>{{ displayValue(pokemon.happinessAtual) }}</dd></div>
+              </dl>
+
+              <section class="public-pokemon-card-moves">
+                <h3>Moveset</h3>
+                <div class="public-compact-move-list" *ngIf="moveset(pokemon).length">
+                  <article
+                    class="public-compact-move"
+                    *ngFor="let move of moveset(pokemon)"
+                    [style.--public-move-color]="moveTypeColor(move.tipo)"
+                  >
+                    <div>
+                      <strong>{{ titleCase(move.nome) }}</strong>
+                      <span *ngIf="move.tipo">{{ titleCase(move.tipo) }}</span>
+                    </div>
+                    <small>
+                      {{ pokemonText(move.categoria) }}
+                      <ng-container *ngIf="move.poder !== undefined && move.poder !== null"> &middot; PWR {{ move.poder }}</ng-container>
+                      <ng-container *ngIf="move.accuracy !== undefined && move.accuracy !== null"> &middot; ACC {{ move.accuracy }}</ng-container>
+                      <ng-container *ngIf="move.style"> &middot; {{ pokemonText(move.style) }}</ng-container>
+                    </small>
+                  </article>
+                </div>
+                <p class="public-empty-copy" *ngIf="!moveset(pokemon).length">Nenhum movimento cadastrado.</p>
+              </section>
+
+              <section class="public-pokemon-card-combo" *ngIf="pokemon.combo">
+                <h3>Combo</h3>
+                <p>{{ pokemon.combo }}</p>
+              </section>
+            </article>
           </div>
         </section>
 
@@ -196,20 +240,23 @@ interface BadgeOption {
             <h2>Inventário</h2>
             <div class="public-section-actions">
               <span>{{ current.itens.length }} itens</span>
-              <button type="button" class="button ghost compact" *ngIf="current.itens.length > visibleItems(current.itens).length" (click)="inventoryOpen.set(true)">Ver tudo</button>
             </div>
           </div>
 
-          <div class="public-item-grid">
-            <article class="public-item-card" *ngFor="let item of visibleItems(current.itens)">
+          <div class="public-item-grid public-inventory-grid">
+            <article class="public-item-card public-inventory-card" *ngFor="let item of current.itens">
               <span class="inventory-card-icon">
                 <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome" />
                 <span *ngIf="!item.icone">?</span>
                 <small class="inventory-card-qty" *ngIf="(item.quantidade || 1) > 1">x{{ item.quantidade }}</small>
               </span>
-              <div>
+              <div class="public-inventory-copy">
                 <strong>{{ item.nome }}</strong>
-                <small>{{ item.descricao || item.categoria }}</small>
+                <div class="public-inventory-meta">
+                  <span>{{ item.categoria }}</span>
+                  <span *ngIf="item.codigo">{{ item.codigo }}</span>
+                </div>
+                <p>{{ item.descricao || 'Sem descrição cadastrada.' }}</p>
               </div>
             </article>
           </div>
@@ -247,32 +294,6 @@ interface BadgeOption {
         </div>
       </div>
 
-      <div class="modal-backdrop" *ngIf="inventoryOpen() && ficha() as current" (click)="inventoryOpen.set(false)">
-        <div class="achievement-editor-modal public-collection-modal" (click)="$event.stopPropagation()">
-          <div class="modal-head">
-            <div>
-              <span class="eyebrow">Inventário</span>
-              <h3>Inventário de {{ current.nome }}</h3>
-            </div>
-            <button type="button" class="button ghost" (click)="inventoryOpen.set(false)">Fechar</button>
-          </div>
-
-          <div class="public-item-grid public-collection-grid">
-            <article class="public-item-card" *ngFor="let item of current.itens">
-              <span class="inventory-card-icon">
-                <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome" />
-                <span *ngIf="!item.icone">?</span>
-                <small class="inventory-card-qty" *ngIf="(item.quantidade || 1) > 1">x{{ item.quantidade }}</small>
-              </span>
-              <div>
-                <strong>{{ item.nome }}</strong>
-                <small>{{ item.descricao || item.categoria }}</small>
-              </div>
-            </article>
-          </div>
-        </div>
-      </div>
-
       <div class="modal-backdrop" *ngIf="selectedRelacionado() as pessoa" (click)="selectedRelacionado.set(null)">
         <div class="achievement-editor-modal public-relacionado-modal" (click)="$event.stopPropagation()">
           <div class="modal-head">
@@ -306,7 +327,7 @@ interface BadgeOption {
         <div class="achievement-editor-modal public-pokemon-modal" (click)="$event.stopPropagation()">
           <div class="modal-head">
             <div>
-              <span class="eyebrow">Pokémon da equipe</span>
+              <span class="eyebrow">Pokémon da Box</span>
               <h3>{{ pokemonTitle(pokemon) }}</h3>
             </div>
             <button type="button" class="button ghost" (click)="selectedPokemon.set(null)">Fechar</button>
@@ -396,7 +417,6 @@ export class FichaViewPageComponent implements OnInit {
   protected readonly selectedPokemon = signal<FichaPokemon | null>(null);
   protected readonly pokemonTypes = signal<Record<string, string[]>>({});
   protected readonly boxOpen = signal(false);
-  protected readonly inventoryOpen = signal(false);
   protected readonly defaultTheme = '#aeb5bf';
 
   protected themeAccent(theme?: string): string {
@@ -422,6 +442,7 @@ export class FichaViewPageComponent implements OnInit {
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
         this.ficha.set(normalized);
+        this.teamPokemons(normalized).forEach((pokemon) => this.loadPokemonTypes(pokemon));
         this.hydrateMissingMoveStyles(normalized);
         this.loading.set(false);
       },
@@ -656,10 +677,6 @@ export class FichaViewPageComponent implements OnInit {
 
   protected conquistasPorTipo(ficha: Ficha, tipo: string): FichaConquista[] {
     return ficha.conquistas.filter((conquista) => conquista.tipo === tipo);
-  }
-
-  protected visibleItems(itens: FichaItem[]): FichaItem[] {
-    return itens.slice(0, 12);
   }
 
   private pokemonLocation(pokemon: FichaPokemon): 'equipe' | 'box' {
