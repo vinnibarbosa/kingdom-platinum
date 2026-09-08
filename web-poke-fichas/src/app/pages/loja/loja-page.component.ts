@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { CompraLojaItem, FichaCompra, LojaCupom, LojaCupomPayload, LojaItem, LojaItemPayload } from '../../models/loja.model';
 import { AuthService } from '../../services/auth.service';
 import { CatalogItem, CatalogItemApiService } from '../../services/catalog-item-api.service';
+import { nextItemIcon } from '../../services/item-icon-utils';
 import { LojaApiService } from '../../services/loja-api.service';
 
 interface ItemDraft extends LojaItemPayload { id?: number; }
@@ -48,7 +50,7 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
           [class.just-added]="lastAddedItemId() === item.id"
         >
           <div class="store-item-icon">
-            <img *ngIf="item.icone && !brokenItemIcons().has(item.id)" [src]="item.icone" [alt]="item.nome" (error)="markItemImageBroken(item)" />
+            <img *ngIf="item.icone && !brokenItemIcons().has(item.id)" [src]="item.icone" [alt]="item.nome" (error)="recoverItemImage($event, item)" />
             <span *ngIf="!item.icone || brokenItemIcons().has(item.id)">?</span>
           </div>
           <div class="store-card-content">
@@ -157,7 +159,7 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
         <p *ngIf="!catalogLoading() && !filteredCatalogItems().length" class="store-catalog-state">Nenhum item encontrado.</p>
         <div class="inventory-modal-grid" *ngIf="!catalogLoading()" (scroll)="onCatalogScroll($event)">
           <button type="button" class="inventory-modal-option" *ngFor="let item of visibleCatalogItems(); trackBy: trackByCatalogItem" (click)="useCatalogItem(item)">
-            <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" loading="lazy" decoding="async" (error)="preserveBrokenPreviewSpace($event)" />
+            <img *ngIf="item.sprite" [src]="item.sprite" [alt]="item.name" loading="lazy" decoding="async" (error)="recoverCatalogItemImage($event, item)" />
             <span class="item-empty-dot" *ngIf="!item.sprite">?</span>
             <strong>{{ item.name }}</strong>
             <small>{{ item.category || 'Item' }}</small>
@@ -274,34 +276,22 @@ export class LojaPageComponent implements OnInit, OnDestroy {
     this.editorError.set(''); this.closeCatalogPicker(); this.editorOpen.set(true);
   }
 
-  private syncStoreCatalog(): void {
-    this.catalog.listKingdomCatalog().subscribe({
-      next: (catalog) => {
-        const items: LojaItemPayload[] = catalog.map((item, index) => ({
-          nome: item.name,
-          categoria: this.storeCategory(item.category),
-          codigo: item.code || this.itemCode(item.name),
-          descricao: item.description || '',
-          icone: item.sprite || '',
-          preco: item.price ?? 0,
-          ativo: item.available ?? true,
-          ordem: index,
-        }));
-        if (!items.length) {
-          this.error.set('Não foi possível obter os itens do catálogo Kingdom Platinum.');
-          return;
-        }
-        this.api.importCatalog(items).subscribe({
-          next: () => {
-            this.load();
-          },
-          error: (error) => {
-            this.error.set(this.apiErrorMessage(error, 'Não foi possível importar o catálogo da loja.'));
-          },
-        });
-      },
-      error: () => {
-        this.error.set('Não foi possível obter os itens do catálogo Kingdom Platinum.');
+  private syncStoreCatalog(catalog: CatalogItem[]): void {
+    const items: LojaItemPayload[] = catalog.map((item, index) => ({
+      nome: item.name,
+      categoria: this.storeCategory(item.category),
+      codigo: item.code || this.itemCode(item.name),
+      descricao: item.description || '',
+      icone: item.sprite || '',
+      preco: item.price ?? 0,
+      ativo: item.available ?? true,
+      ordem: index,
+    }));
+    if (!items.length) return;
+    this.api.importCatalog(items).subscribe({
+      next: () => this.load(),
+      error: (error) => {
+        this.error.set(this.apiErrorMessage(error, 'Não foi possível importar o catálogo da loja.'));
       },
     });
   }
@@ -369,14 +359,24 @@ export class LojaPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected markItemImageBroken(item: LojaItem): void {
+  protected recoverItemImage(_: Event, item: LojaItem): void {
+    const fallback = nextItemIcon(item.icone, item.codigo || item.nome);
+    if (fallback) {
+      item.icone = fallback;
+      return;
+    }
     this.brokenItemIcons.update((ids) => new Set(ids).add(item.id));
   }
 
-  protected preserveBrokenPreviewSpace(event: Event): void {
-    const image = event.target as HTMLImageElement;
-    image.style.visibility = 'hidden';
-    image.setAttribute('aria-hidden', 'true');
+  protected recoverCatalogItemImage(_: Event, item: CatalogItem): void {
+    const fallback = nextItemIcon(item.sprite, item.code || item.name);
+    if (fallback) {
+      item.sprite = fallback;
+      this.catalogItems.set([...this.catalogItems()]);
+      return;
+    }
+    item.sprite = '';
+    this.catalogItems.set([...this.catalogItems()]);
   }
 
   protected saveItem(): void {
@@ -453,13 +453,25 @@ export class LojaPageComponent implements OnInit, OnDestroy {
 
   private load(): void {
     this.loading.set(true); this.error.set('');
-    (this.isAdmin() ? this.api.listAdmin() : this.api.list()).subscribe({
-      next: (items) => {
-        this.items.set(items);
+    forkJoin({
+      storeItems: this.isAdmin() ? this.api.listAdmin() : this.api.list(),
+      catalog: this.catalog.listKingdomCatalog().pipe(catchError(() => of([] as CatalogItem[]))),
+    }).subscribe({
+      next: ({ storeItems, catalog }) => {
+        const catalogByCode = new Map(catalog.map((item) => [this.itemCode(item.code || item.name), item]));
+        this.brokenItemIcons.set(new Set());
+        this.items.set(storeItems.map((item) => {
+          const catalogItem = catalogByCode.get(this.itemCode(item.codigo || item.nome));
+          return {
+            ...item,
+            icone: item.icone || catalogItem?.sprite || '',
+            descricao: item.descricao || catalogItem?.description || '',
+          };
+        }));
         this.loading.set(false);
         if (this.isAdmin() && !this.initialCatalogImportAttempted) {
           this.initialCatalogImportAttempted = true;
-          this.syncStoreCatalog();
+          this.syncStoreCatalog(catalog);
         }
       },
       error: () => { this.error.set('Não foi possível carregar a loja.'); this.loading.set(false); },

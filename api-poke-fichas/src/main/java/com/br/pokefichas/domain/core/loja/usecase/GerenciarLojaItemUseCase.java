@@ -13,9 +13,9 @@ import com.br.pokefichas.domain.core.loja.repository.LojaItemQuery;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 
 @Component
 public class GerenciarLojaItemUseCase {
@@ -48,22 +48,44 @@ public class GerenciarLojaItemUseCase {
     @Transactional
     public ImportarCatalogoLojaResponse importarCatalogo(final ImportarCatalogoLojaRequest request) {
         final Long organizacaoId = organizacaoContext.getRequiredOrganizacaoId();
-        final Set<String> chavesExistentes = new HashSet<>();
+        final Map<String, LojaItem> itensExistentes = new HashMap<>();
         query.findTodos().stream()
-                .forEach(item -> chavesExistentes.add(chave(item.getCodigo(), item.getNome())));
+                .forEach(item -> itensExistentes.put(chave(item.getCodigo(), item.getNome()), item));
 
         int importados = 0;
         int ignorados = 0;
         for (final LojaItemRequest item : request.itens()) {
             final String chave = chave(item.codigo(), item.nome());
-            if (!chavesExistentes.add(chave)) {
+            final LojaItem existente = itensExistentes.get(chave);
+            if (existente != null) {
+                preencherDadosAusentes(existente, item);
                 ignorados++;
                 continue;
             }
-            command.save(mapper.toEntity(item, organizacaoId));
+            final LojaItem novo = command.save(mapper.toEntity(item, organizacaoId));
+            itensExistentes.put(chave, novo);
             importados++;
         }
         return new ImportarCatalogoLojaResponse(importados, ignorados);
+    }
+
+    private void preencherDadosAusentes(final LojaItem existente, final LojaItemRequest catalogo) {
+        final boolean preencherIcone = vazio(existente.getIcone()) && !vazio(catalogo.icone());
+        final boolean preencherDescricao = vazio(existente.getDescricao()) && !vazio(catalogo.descricao());
+        final boolean preencherCodigo = vazio(existente.getCodigo()) && !vazio(catalogo.codigo());
+        if (!preencherIcone && !preencherDescricao && !preencherCodigo) {
+            return;
+        }
+
+        final LojaItem.Builder builder = LojaItem.Builder.from(existente);
+        if (preencherIcone) builder.icone(catalogo.icone());
+        if (preencherDescricao) builder.descricao(catalogo.descricao());
+        if (preencherCodigo) builder.codigo(catalogo.codigo());
+        command.save(builder.build());
+    }
+
+    private boolean vazio(final String value) {
+        return value == null || value.isBlank();
     }
 
     private String chave(final String codigo, final String nome) {

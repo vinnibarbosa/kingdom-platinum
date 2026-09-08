@@ -24,6 +24,7 @@ import { AuthService } from '../../services/auth.service';
 import { CustomPokemonApiService, CustomPokemonDetails } from '../../services/custom-pokemon-api.service';
 import { display, fichaToPayload, money } from '../../services/ficha-utils';
 import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
+import { ITEMDEX_ICONS, nextItemIcon } from '../../services/item-icon-utils';
 
 type FichaTab = 'dados' | 'historia' | 'pokemon' | 'inventario' | 'conquistas' | 'extras' | 'timeline';
 
@@ -215,81 +216,6 @@ const ITEMDEX_DETAILS: Record<string, { category: string; description: string }>
   stardust: { category: 'Treasure Items', description: 'Areia vermelha adorável que flui entre os dedos de forma sedosa. Pode ser vendido por 1.600C$.' },
   'star-piece': { category: 'Treasure Items', description: 'Um fragmento de estrela que emite um brilho distintamente vermelho. Pode ser vendido por 600C$.' },
   'tropical-shell': { category: 'Treasure Items', description: 'Uma concha branca que flutuou para uma praia. É possível ouvir o som do mar dentro dela. Pode ser vendida por 500C$.' },
-};
-
-const ITEMDEX_ICONS: Record<string, string> = {
-  'beast-ball': 'image55.png',
-  'cherish-ball': 'image72.png',
-  'dive-ball': 'image43.png',
-  'dusk-ball': 'image1.png',
-  'fast-ball': 'image37.png',
-  'friend-ball': 'image42.png',
-  'great-ball': 'image49.png',
-  'heal-ball': 'image2.png',
-  'heavy-ball': 'image46.png',
-  'level-ball': 'image50.png',
-  'love-ball': 'image73.png',
-  'lure-ball': 'image34.png',
-  'luxury-ball': 'image13.png',
-  'master-ball': 'image25.png',
-  'moon-ball': 'image30.png',
-  'net-ball': 'image47.png',
-  'poke-ball': 'image58.png',
-  'premier-ball': 'image51.png',
-  'quick-ball': 'image22.png',
-  'repeat-ball': 'image26.png',
-  'safari-ball': 'image5.png',
-  'strange-ball': 'image35.png',
-  'timer-ball': 'image16.png',
-  'ultra-ball': 'image3.png',
-  'amulet-coin': 'image67.png',
-  'ability-capsule': 'image9.png',
-  'ability-patch': 'image11.png',
-  'big-bamboo-shot': 'image21.png',
-  'apricorn-box': 'image44.png',
-  'berry-pouch': 'image59.png',
-  'berry-pot': 'image31.png',
-  'bioskill-key': 'image4.png',
-  'camping-gear': 'image8.png',
-  'discount-coupon': 'image45.png',
-  'explorer-kit': 'image53.png',
-  'escape-rope': 'image38.png',
-  'fluffy-tail': 'image19.png',
-  'old-rod': 'image61.png',
-  'good-rod': 'image17.png',
-  'super-rod': 'image54.png',
-  'mini-slot-upgrade': 'image32.png',
-  'slot-upgrade': 'image48.png',
-  repel: 'image70.png',
-  'super-repel': 'image6.png',
-  'max-repel': 'image60.png',
-  'tm-case': 'image29.png',
-  'pokeblock-case': 'image62.png',
-  'pokeblock-kit': 'image27.png',
-  poketch: 'image52.png',
-  'alpha-poketch': 'image41.png',
-  'poffin-case': 'image56.png',
-  'stun-grenade': 'image63.png',
-  'armorite-ore': 'image40.png',
-  'comet-shard': 'image15.png',
-  'common-stone': 'image64.png',
-  envelope: 'image65.png',
-  'envelope-m': 'image66.png',
-  'envelope-l': 'image68.png',
-  'envelope-xl': 'image20.png',
-  'mysterious-stone': 'image33.png',
-  'small-nugget': 'image36.png',
-  nugget: 'image36.png',
-  'big-nugget': 'image14.png',
-  'small-pearl': 'image12.png',
-  pearl: 'image12.png',
-  'big-pearl': 'image10.png',
-  'pearl-string': 'image69.png',
-  'qr-code': 'image7.png',
-  'rare-bone': 'image24.png',
-  stardust: 'image28.png',
-  'star-piece': 'image71.png',
-  'tropical-shell': 'image18.png',
 };
 
 @Component({
@@ -3432,23 +3358,37 @@ export class FichaPageComponent implements OnInit, OnDestroy {
   }
 
   protected clearBrokenInventoryOptionIcon(event: Event, option: InventoryItemOption): void {
+    const fallback = nextItemIcon(option.icon, option.name);
+    if (fallback) {
+      option.icon = fallback;
+      this.inventoryItems.set([...this.inventoryItems()]);
+      return;
+    }
     this.hideBrokenImage(event);
     option.icon = undefined;
     this.inventoryItems.set([...this.inventoryItems()]);
   }
 
   protected clearBrokenHeldItemIcon(event: Event, item: HeldItemOption): void {
+    const fallback = nextItemIcon(item.icon, item.name);
+    if (fallback) {
+      item.icon = fallback;
+      this.heldItems.set([...this.heldItems()]);
+      return;
+    }
     this.hideBrokenImage(event);
     item.icon = undefined;
     this.heldItems.set([...this.heldItems()]);
   }
 
   protected clearBrokenInventoryItemIcon(event: Event, item: FichaItem): void {
-    this.hideBrokenImage(event);
-    if (item.icone) {
-      item.icone = '';
-      this.scheduleAutoSave();
+    const fallback = nextItemIcon(item.icone, item.codigo || item.nome);
+    if (fallback) {
+      item.icone = fallback;
+      return;
     }
+    this.hideBrokenImage(event);
+    item.icone = '';
   }
 
   protected clearInventoryItemImage(item: FichaItem): void {

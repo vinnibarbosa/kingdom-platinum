@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth.service';
 import { CustomPokemonApiService } from '../../services/custom-pokemon-api.service';
 import { display, money } from '../../services/ficha-utils';
 import { loadPokemonMoveStyle, pokemonContestStyleColor, pokemonMoveTypeColor } from '../../services/pokemon-move-utils';
+import { nextItemIcon, resolveItemIcon } from '../../services/item-icon-utils';
 
 interface BadgeOption {
   id: string;
@@ -246,7 +247,7 @@ interface BadgeOption {
           <div class="public-item-grid public-inventory-grid">
             <article class="public-item-card public-inventory-card" *ngFor="let item of current.itens">
               <span class="inventory-card-icon">
-                <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome" />
+                <img *ngIf="item.icone" [src]="item.icone" [alt]="item.nome" (error)="recoverInventoryItemImage($event, item)" />
                 <span *ngIf="!item.icone">?</span>
                 <small class="inventory-card-qty" *ngIf="(item.quantidade || 1) > 1">x{{ item.quantidade }}</small>
               </span>
@@ -764,9 +765,17 @@ export class FichaViewPageComponent implements OnInit {
       habilidades: ficha.habilidades ?? [],
       conquistas: ficha.conquistas ?? [],
       pokemons: ficha.pokemons ?? [],
-      itens: ficha.itens ?? [],
+      itens: (ficha.itens ?? []).map((item) => ({
+        ...item,
+        icone: resolveItemIcon(item.icone, item.codigo || item.nome),
+      })),
       registros: ficha.registros ?? [],
     };
+  }
+
+  protected recoverInventoryItemImage(_: Event, item: Ficha['itens'][number]): void {
+    item.icone = nextItemIcon(item.icone, item.codigo || item.nome) || '';
+    this.ficha.update((current) => current ? { ...current } : current);
   }
 
   protected isAdmin(): boolean {

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, forkJoin, map, of, shareReplay } from 'rxjs';
 
 import { environment } from '../../environments/environment';
+import { resolveItemIcon } from './item-icon-utils';
 
 export interface CatalogItem {
   name: string;
@@ -144,11 +145,14 @@ export class CatalogItemApiService {
     const name = String(row.name ?? row.nome ?? row.label ?? '').trim();
     if (!name) return null;
     const image = String(row.sprite ?? row.icon ?? row.icone ?? row.image ?? row.imagem ?? '').trim();
+    const resolvedImage = image && !/^https?:|^data:|^\//i.test(image)
+      ? new URL(image, KINGDOM_CATALOG_SOURCE_URL).toString()
+      : image;
     return {
       name,
       description: String(row.description ?? row.descricao ?? row.desc ?? row.item_desc ?? '').trim(),
       category: String(row.category ?? row.categoria ?? 'Item').trim() || 'Item',
-      sprite: image && !/^https?:|^data:/i.test(image) ? new URL(image, KINGDOM_CATALOG_SOURCE_URL).toString() : image,
+      sprite: resolveItemIcon(resolvedImage, name),
       code: String(row.code ?? row.codigo ?? row.id ?? '').trim() || undefined,
       price: numericValue(row.price ?? row.preco ?? row.valor),
       available: row.flags?.pokemart?.enabled,
