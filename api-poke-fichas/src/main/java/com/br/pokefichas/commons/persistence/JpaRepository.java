@@ -236,6 +236,16 @@ public class JpaRepository {
         return query(entityClass, true).where(where).fetch();
     }
 
+    public <T> List<T> findAllWithoutTenantFilter(final Class<T> entityClass, final Sort sort,
+                                                   final Predicate... where) {
+        return applySorting(query(entityClass, true).where(where), sort).fetch();
+    }
+
+    public <T> List<T> findAllWithoutTenantFilter(final Class<T> entityClass, final Sort sort, final long limit,
+                                                   final Predicate... where) {
+        return applySorting(query(entityClass, true).where(where), sort).limit(limit).fetch();
+    }
+
     public <T> List<T> findAll(final Class<T> entityClass, final Sort sort, final Predicate... where) {
         return applySorting(query(entityClass).where(where), sort).fetch();
     }

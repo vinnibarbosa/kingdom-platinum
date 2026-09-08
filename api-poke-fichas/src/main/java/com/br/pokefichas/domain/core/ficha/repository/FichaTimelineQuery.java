@@ -1,11 +1,13 @@
 package com.br.pokefichas.domain.core.ficha.repository;
 
 import com.br.pokefichas.commons.persistence.JpaRepository;
+import com.br.pokefichas.commons.page.Sort;
 import com.br.pokefichas.domain.core.ficha.model.FichaTimelineEntry;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.List;
+
+import static com.br.pokefichas.domain.core.ficha.model.QFichaTimelineEntry.fichaTimelineEntry;
 
 @Component
 public class FichaTimelineQuery {
@@ -17,10 +19,10 @@ public class FichaTimelineQuery {
     }
 
     public List<FichaTimelineEntry> findByFichaWithoutContext(final Long idFicha) {
-        return repository.findAllWithoutTenantFilter(FichaTimelineEntry.class).stream()
-                .filter(entry -> idFicha.equals(entry.getIdFicha()))
-                .sorted(Comparator.comparing(FichaTimelineEntry::getOrdem, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(FichaTimelineEntry::getId, Comparator.nullsLast(Long::compareTo)))
-                .toList();
+        return repository.findAllWithoutTenantFilter(
+                FichaTimelineEntry.class,
+                Sort.of(fichaTimelineEntry.ordem.asc(), fichaTimelineEntry.id.asc()),
+                fichaTimelineEntry.idFicha.eq(idFicha)
+        );
     }
 }

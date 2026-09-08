@@ -50,6 +50,11 @@ server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
   shutdown: graceful
+  tomcat:
+    threads:
+      max: ${SERVER_TOMCAT_THREADS_MAX:40}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:4}
+    accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:50}
   servlet:
     context-path: /api
   compression:
