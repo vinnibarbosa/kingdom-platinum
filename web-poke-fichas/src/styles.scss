@@ -2475,7 +2475,7 @@ dd {
   gap: 0.75rem;
 }
 
-.public-inventory-card {
+.public-item-card.public-inventory-card {
   grid-template-columns: 62px minmax(0, 1fr);
   align-items: start;
   min-height: 126px;
@@ -3370,6 +3370,7 @@ button.public-pokemon-card:focus-visible {
   gap: 0.35rem;
 }
 
+.store-details-button,
 .store-edit-button {
   min-height: 2.2rem;
   border: 0;
@@ -3380,6 +3381,8 @@ button.public-pokemon-card:focus-visible {
   font-size: 0.82rem;
 }
 
+.store-details-button:hover,
+.store-details-button:focus-visible,
 .store-edit-button:hover,
 .store-edit-button:focus-visible {
   color: var(--ink);
@@ -3523,6 +3526,55 @@ button.public-pokemon-card:focus-visible {
   background: var(--paper);
   padding: 1rem;
   box-shadow: var(--shadow);
+}
+
+.store-detail-modal {
+  width: min(620px, 100%);
+}
+
+.store-detail-content {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.store-detail-icon {
+  display: grid;
+  width: 96px;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffdf7;
+  color: var(--accent);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.store-detail-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.35rem;
+}
+
+.store-detail-content p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.store-detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
 }
 
 .store-purchase-summary {
@@ -3800,6 +3852,18 @@ button.public-pokemon-card:focus-visible {
 
   .store-card-actions .store-edit-button {
     flex: 0 0 auto;
+  }
+
+  .store-detail-content {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .store-detail-icon {
+    width: 72px;
+  }
+
+  .store-detail-footer {
+    align-items: flex-end;
   }
 
   .store-quantity-control {

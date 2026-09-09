@@ -64,6 +64,7 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
               <strong>{{ item.preco > 0 ? money(item.preco) : 'Não definido' }}</strong>
             </div>
             <div class="store-card-actions">
+              <button type="button" class="store-details-button" (click)="openItemDetails(item)">Detalhes</button>
               <button type="button" class="store-edit-button" *ngIf="isAdmin()" (click)="openEditor(item)">Editar</button>
               <button
                 *ngIf="cartQuantity(item.id) === 0 && item.ativo && item.preco > 0"
@@ -86,6 +87,34 @@ interface ItemDraft extends LojaItemPayload { id?: number; }
 
       <p class="store-empty" *ngIf="!loading() && !items().length">Nenhum item disponível no momento.</p>
     </section>
+
+    <div class="modal-backdrop" *ngIf="detailItem() as item" (click)="closeItemDetails()">
+      <section class="store-modal store-detail-modal" (click)="$event.stopPropagation()" aria-modal="true" role="dialog" [attr.aria-labelledby]="'store-detail-title-' + item.id">
+        <div class="modal-head">
+          <div><span class="eyebrow">{{ item.categoria }}</span><h3 [id]="'store-detail-title-' + item.id">{{ item.nome }}</h3></div>
+          <button type="button" class="button secondary" (click)="closeItemDetails()">Fechar</button>
+        </div>
+        <div class="store-detail-content">
+          <div class="store-detail-icon">
+            <img *ngIf="item.icone && !brokenItemIcons().has(item.id)" [src]="item.icone" [alt]="item.nome" (error)="recoverItemImage($event, item)" />
+            <span *ngIf="!item.icone || brokenItemIcons().has(item.id)">?</span>
+          </div>
+          <p>{{ item.descricao || 'Sem descrição cadastrada.' }}</p>
+        </div>
+        <div class="store-detail-footer">
+          <div class="store-price-block"><small>Preço</small><strong>{{ item.preco > 0 ? money(item.preco) : 'Não definido' }}</strong></div>
+          <div class="store-card-actions">
+            <button *ngIf="cartQuantity(item.id) === 0 && item.ativo && item.preco > 0" type="button" class="button primary" (click)="addToCart(item)">Adicionar ao carrinho</button>
+            <span class="store-unavailable" *ngIf="cartQuantity(item.id) === 0 && (!item.ativo || item.preco <= 0)">Indisponível</span>
+            <div class="store-quantity-control" *ngIf="cartQuantity(item.id) > 0" [attr.aria-label]="item.nome + ': ' + cartQuantity(item.id) + ' no carrinho'">
+              <button type="button" (click)="decreaseCartItem(item.id)" [attr.aria-label]="'Diminuir quantidade de ' + item.nome">−</button>
+              <span><strong>{{ cartQuantity(item.id) }}</strong><small>no carrinho</small></span>
+              <button type="button" (click)="addToCart(item)" [attr.aria-label]="'Aumentar quantidade de ' + item.nome">+</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <div class="store-cart-feedback" *ngIf="cartFeedback()" role="status" aria-live="polite">
       <div>
@@ -177,6 +206,7 @@ export class LojaPageComponent implements OnInit, OnDestroy {
   protected readonly items = signal<LojaItem[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
+  protected readonly detailItem = signal<LojaItem | null>(null);
   protected readonly cartOpen = signal(false);
   protected readonly cart = signal<{ item: LojaItem; quantidade: number }[]>([]);
   protected readonly cartFeedback = signal('');
@@ -219,6 +249,10 @@ export class LojaPageComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.cartFeedbackTimer) clearTimeout(this.cartFeedbackTimer);
   }
+
+  protected openItemDetails(item: LojaItem): void { this.detailItem.set(item); }
+
+  protected closeItemDetails(): void { this.detailItem.set(null); }
 
   protected addToCart(item: LojaItem): void {
     this.cart.update((cart) => {

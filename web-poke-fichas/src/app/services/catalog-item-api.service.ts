@@ -119,12 +119,20 @@ export class CatalogItemApiService {
   }
 
   private loadKingdomCatalog(): Observable<CatalogItem[]> {
-    return this.http.get<unknown>(KINGDOM_CATALOG_URL).pipe(
-      map((payload) => this.extractRows(payload)
-        .map((row) => this.toRemoteItem(row))
-        .filter((item): item is CatalogItem => !!item)),
-      catchError(() => of([] as CatalogItem[])),
+    const remoteUrl = `${KINGDOM_CATALOG_SOURCE_URL}?v=${Date.now()}`;
+    return this.http.get<unknown>(remoteUrl).pipe(
+      map((payload) => this.toKingdomCatalog(payload)),
+      catchError(() => this.http.get<unknown>(KINGDOM_CATALOG_URL).pipe(
+        map((payload) => this.toKingdomCatalog(payload)),
+        catchError(() => of([] as CatalogItem[])),
+      )),
     );
+  }
+
+  private toKingdomCatalog(payload: unknown): CatalogItem[] {
+    return this.extractRows(payload)
+      .map((row) => this.toRemoteItem(row))
+      .filter((item): item is CatalogItem => !!item && item.available !== undefined);
   }
 
   private extractRows(payload: unknown): RemoteCatalogRow[] {

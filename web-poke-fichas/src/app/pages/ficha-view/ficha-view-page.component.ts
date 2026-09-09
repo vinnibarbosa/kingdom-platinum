@@ -255,7 +255,6 @@ interface BadgeOption {
                 <strong>{{ item.nome }}</strong>
                 <div class="public-inventory-meta">
                   <span>{{ item.categoria }}</span>
-                  <span *ngIf="item.codigo">{{ item.codigo }}</span>
                 </div>
                 <p>{{ item.descricao || 'Sem descrição cadastrada.' }}</p>
               </div>
