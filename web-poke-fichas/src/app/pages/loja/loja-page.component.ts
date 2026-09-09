@@ -464,7 +464,7 @@ export class LojaPageComponent implements OnInit, OnDestroy {
           const catalogItem = catalogByCode.get(this.itemCode(item.codigo || item.nome));
           return {
             ...item,
-            icone: item.icone || catalogItem?.sprite || '',
+            icone: catalogItem?.sprite || item.icone || '',
             descricao: item.descricao || catalogItem?.description || '',
           };
         }));

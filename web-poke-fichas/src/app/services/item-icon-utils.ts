@@ -1,3 +1,5 @@
+import { environment } from '../../environments/environment';
+
 export const ITEMDEX_ICONS: Readonly<Record<string, string>> = {
   'beast-ball': 'image55.png',
   'cherish-ball': 'image72.png',
@@ -88,12 +90,21 @@ export function pokeApiItemIcon(value: string): string | undefined {
   return code ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${code}.png` : undefined;
 }
 
+export function supabaseItemIcon(value: string): string | undefined {
+  const code = itemCode(value);
+  const baseUrl = environment.supabasePokemonUrl?.replace(/\/+$/, '');
+  return code && baseUrl
+    ? `${baseUrl}/storage/v1/object/public/pokemons/items/${code}.png`
+    : undefined;
+}
+
 export function resolveItemIcon(preferred: string | null | undefined, value: string): string {
-  return preferred?.trim() || localItemIcon(value) || pokeApiItemIcon(value) || '';
+  return preferred?.trim() || supabaseItemIcon(value) || localItemIcon(value) || pokeApiItemIcon(value) || '';
 }
 
 export function nextItemIcon(current: string | null | undefined, value: string): string | undefined {
-  const candidates = [localItemIcon(value), pokeApiItemIcon(value)].filter((icon): icon is string => !!icon);
+  const candidates = [supabaseItemIcon(value), localItemIcon(value), pokeApiItemIcon(value)]
+    .filter((icon): icon is string => !!icon);
   const normalizedCurrent = current?.trim() ?? '';
   const currentIndex = candidates.indexOf(normalizedCurrent);
   if (currentIndex >= 0) return candidates[currentIndex + 1];

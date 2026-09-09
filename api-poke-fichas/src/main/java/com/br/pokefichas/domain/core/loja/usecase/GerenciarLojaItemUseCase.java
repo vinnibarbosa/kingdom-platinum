@@ -70,7 +70,8 @@ public class GerenciarLojaItemUseCase {
     }
 
     private void preencherDadosAusentes(final LojaItem existente, final LojaItemRequest catalogo) {
-        final boolean preencherIcone = vazio(existente.getIcone()) && !vazio(catalogo.icone());
+        final boolean preencherIcone = !vazio(catalogo.icone())
+                && (vazio(existente.getIcone()) || iconeAutomaticoInvalido(existente.getIcone()));
         final boolean preencherDescricao = vazio(existente.getDescricao()) && !vazio(catalogo.descricao());
         final boolean preencherCodigo = vazio(existente.getCodigo()) && !vazio(catalogo.codigo());
         if (!preencherIcone && !preencherDescricao && !preencherCodigo) {
@@ -86,6 +87,10 @@ public class GerenciarLojaItemUseCase {
 
     private boolean vazio(final String value) {
         return value == null || value.isBlank();
+    }
+
+    private boolean iconeAutomaticoInvalido(final String value) {
+        return value != null && value.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/");
     }
 
     private String chave(final String codigo, final String nome) {

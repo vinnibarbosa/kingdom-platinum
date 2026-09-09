@@ -62,7 +62,12 @@ export class CatalogItemApiService {
 
   /** Curated items explicitly published for the Kingdom Platinum store. */
   listKingdomCatalog(): Observable<CatalogItem[]> {
-    return this.loadKingdomCatalog();
+    return forkJoin({
+      kingdomItems: this.loadKingdomCatalog(),
+      supabaseItems: this.loadCustomItems(),
+    }).pipe(
+      map(({ kingdomItems, supabaseItems }) => this.enrichKingdomCatalog(kingdomItems, supabaseItems)),
+    );
   }
 
   details(item: CatalogItem): Observable<CatalogItem> {
@@ -99,7 +104,7 @@ export class CatalogItemApiService {
         Authorization: `Bearer ${environment.supabasePokemonAnonKey}`,
         Accept: 'application/json',
       }),
-      params: { select: 'name,item_desc,category,sprite', approved: 'eq.true', order: 'name.asc' },
+      params: { select: 'name,item_desc,category,sprite', order: 'name.asc', limit: '2000' },
     }).pipe(
       map((items) => items
         .filter((item) => item.name?.trim())
@@ -183,6 +188,18 @@ export class CatalogItemApiService {
       });
     });
     return [...byName.values()].sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'));
+  }
+
+  private enrichKingdomCatalog(kingdomItems: CatalogItem[], supabaseItems: CatalogItem[]): CatalogItem[] {
+    const supabaseByName = new Map(supabaseItems.map((item) => [normalize(item.name), item]));
+    return kingdomItems.map((item) => {
+      const supabaseItem = supabaseByName.get(normalize(item.name));
+      return {
+        ...item,
+        description: item.description || supabaseItem?.description || '',
+        sprite: supabaseItem?.sprite || item.sprite,
+      };
+    });
   }
 
   private isHiddenCatalogItem(name: string): boolean {
