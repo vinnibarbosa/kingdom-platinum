@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 
@@ -78,6 +78,7 @@ type AuthMode = 'login' | 'register';
 export class LoginPageComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly mode = signal<AuthMode>('login');
   protected username = '';
@@ -98,7 +99,7 @@ export class LoginPageComponent {
     this.loading.set(true);
 
     this.auth.login(this.username, this.senha).subscribe({
-      next: () => this.router.navigateByUrl('/'),
+      next: () => this.router.navigateByUrl(this.safeReturnUrl()),
       error: () => {
         this.error.set('Não foi possível entrar. Confira usuário e senha.');
         this.loading.set(false);
@@ -130,5 +131,10 @@ export class LoginPageComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  private safeReturnUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/';
   }
 }

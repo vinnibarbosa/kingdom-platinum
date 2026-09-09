@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -67,6 +68,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            if (JwtTokenProvider.ROLL_INTEGRATION_SCOPE.equals(claims.scope())
+                    && !normalizedPath(request).startsWith("/integracoes/rolagens")) {
+                return;
+            }
+
             if (!(userDetails instanceof Usuario usuario)
                     || !idOrganizacao.equals(usuario.getIdOrganizacao())) {
                 log.warn("Claim idOrganizacao={} divergente da Entidade {} no banco | URI: {}",
@@ -85,7 +91,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
-                            userDetails.getAuthorities()
+                            JwtTokenProvider.ROLL_INTEGRATION_SCOPE.equals(claims.scope())
+                                    ? java.util.List.of(new SimpleGrantedAuthority("ROLE_ROLL_INTEGRATION"))
+                                    : userDetails.getAuthorities()
                     );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -119,6 +127,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private boolean isPublicPath(final String path) {
         return path.startsWith("/auth/")
+                || path.equals("/integracoes/rolagens/sessoes")
                 || path.equals("/bootstrap")
                 || path.startsWith("/fichas/publicas")
                 || path.startsWith("/public/")

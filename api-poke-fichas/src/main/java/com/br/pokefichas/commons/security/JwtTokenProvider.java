@@ -28,6 +28,8 @@ public class JwtTokenProvider {
     private static final String CLAIM_ID_ORGANIZACAO = "idOrganizacao";
     private static final String CLAIM_PERFIL = "perfil";
     private static final String CLAIM_AUTH_VERSION = "authVersion";
+    private static final String CLAIM_SCOPE = "scope";
+    public static final String ROLL_INTEGRATION_SCOPE = "rolls";
 
     private final String secretKey;
     private final long accessTokenExpiration;
@@ -58,6 +60,16 @@ public class JwtTokenProvider {
         claims.put(CLAIM_PERFIL, usuario.getPerfil().name());
         claims.put(CLAIM_AUTH_VERSION, usuario.getAuthVersion());
 
+        return createToken(claims, usuario.getUsername(), accessTokenExpiration);
+    }
+
+    public String generateRollIntegrationToken(final Usuario usuario) {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_USUARIO_ID, usuario.getId().toString());
+        claims.put(CLAIM_ID_ENTIDADE, Objects.requireNonNull(usuario.getIdEntidade()).toString());
+        claims.put(CLAIM_ID_ORGANIZACAO, Objects.requireNonNull(usuario.getIdOrganizacao()).toString());
+        claims.put(CLAIM_AUTH_VERSION, usuario.getAuthVersion());
+        claims.put(CLAIM_SCOPE, ROLL_INTEGRATION_SCOPE);
         return createToken(claims, usuario.getUsername(), accessTokenExpiration);
     }
 
@@ -95,7 +107,8 @@ public class JwtTokenProvider {
                     parseLongClaim(claims, CLAIM_USUARIO_ID),
                     parseLongClaim(claims, CLAIM_ID_ENTIDADE),
                     parseLongClaim(claims, CLAIM_ID_ORGANIZACAO),
-                    parseIntegerClaim(claims, CLAIM_AUTH_VERSION)
+                    parseIntegerClaim(claims, CLAIM_AUTH_VERSION),
+                    claims.get(CLAIM_SCOPE, String.class)
             );
         } catch (final ExpiredJwtException e) {
             throw AuthenticationException.expiredToken();
@@ -191,7 +204,8 @@ public class JwtTokenProvider {
             Long idUsuario,
             Long idEntidade,
             Long idOrganizacao,
-            Integer authVersion
+            Integer authVersion,
+            String scope
     ) {
     }
 }

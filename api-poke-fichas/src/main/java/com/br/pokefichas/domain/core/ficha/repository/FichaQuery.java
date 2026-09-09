@@ -16,6 +16,7 @@ import com.br.pokefichas.domain.core.ficha.model.FichaPokemonMovimento;
 import com.br.pokefichas.domain.core.ficha.model.FichaRegistro;
 import com.br.pokefichas.domain.core.ficha.model.FichaRelacionado;
 import org.springframework.stereotype.Component;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,10 @@ public class FichaQuery {
 
     public Optional<Ficha> findById(final Long id) {
         return repository.findOptional(Ficha.class, id);
+    }
+
+    public Ficha findByIdForUpdate(final Long id) {
+        return repository.find(Ficha.class, id, LockModeType.PESSIMISTIC_WRITE);
     }
 
     public Optional<Ficha> findByIdWithoutContext(final Long id) {
@@ -88,6 +93,13 @@ public class FichaQuery {
         return repository.findUniqueOptional(
                 FichaItem.class,
                 fichaItem.idFicha.eq(idFicha).and(fichaItem.codigo.eq(codigo))
+        );
+    }
+
+    public Optional<FichaHistorico> findHistoricoByFichaAndLote(final Long idFicha, final String lote) {
+        return repository.findUniqueOptional(
+                FichaHistorico.class,
+                fichaHistorico.idFicha.eq(idFicha).and(fichaHistorico.lote.eq(lote))
         );
     }
 

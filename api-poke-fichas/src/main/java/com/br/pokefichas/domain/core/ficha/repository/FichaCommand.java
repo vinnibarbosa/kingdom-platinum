@@ -67,6 +67,10 @@ public class FichaCommand {
         return repository.saveAll(itens);
     }
 
+    public void deleteItem(final FichaItem item) {
+        repository.remove(item);
+    }
+
     public List<FichaRegistro> saveRegistros(final List<FichaRegistro> registros) {
         return repository.saveAll(registros);
     }

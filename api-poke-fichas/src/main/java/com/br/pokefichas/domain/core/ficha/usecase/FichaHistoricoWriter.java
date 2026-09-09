@@ -71,6 +71,22 @@ public class FichaHistoricoWriter {
         )));
     }
 
+    public void recordHoneyUse(final Long idFicha,
+                               final Long idOrganizacao,
+                               final UUID operationId,
+                               final int previousQuantity,
+                               final int remainingQuantity) {
+        command.saveHistoricos(List.of(build(
+                idFicha,
+                idOrganizacao,
+                operationId.toString(),
+                remainingQuantity == 0 ? "REMOVIDO" : "ALTERADO",
+                "Inventario > Honey > Quantidade",
+                String.valueOf(previousQuantity),
+                remainingQuantity == 0 ? "Usado em uma rolagem" : String.valueOf(remainingQuantity)
+        )));
+    }
+
     public void recordStorePurchase(final Long idFicha,
                                     final Long idOrganizacao,
                                     final List<String> items,

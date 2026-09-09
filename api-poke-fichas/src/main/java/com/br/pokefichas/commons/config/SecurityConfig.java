@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.LinkedHashSet;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +45,7 @@ public class SecurityConfig {
                         "/auth/registrar",
                         "/auth/refresh",
                         "/auth/csrf",
+                        "/integracoes/rolagens/sessoes",
                         "/bootstrap",
                         "/fichas/publicas/**",
                         "/public/**",
@@ -59,6 +61,7 @@ public class SecurityConfig {
                         "/api/auth/registrar",
                         "/api/auth/refresh",
                         "/api/auth/csrf",
+                        "/api/integracoes/rolagens/sessoes",
                         "/api/bootstrap",
                         "/api/fichas/publicas/**",
                         "/api/public/**",
@@ -92,6 +95,7 @@ public class SecurityConfig {
 
 
                         .requestMatchers("/auth/login", "/auth/registrar", "/auth/refresh", "/auth/csrf", "/bootstrap").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/integracoes/rolagens/sessoes").permitAll()
                         .requestMatchers("/public/**", "/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/fichas/publicas/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pokemon/custom", "/pokemon/custom/**").permitAll()
@@ -125,6 +129,7 @@ public class SecurityConfig {
                 "/auth/registrar",
                 "/auth/refresh",
                 "/auth/csrf",
+                "/integracoes/rolagens/sessoes",
                 "/bootstrap",
                 "/fichas/publicas/**",
                 "/public/**",
@@ -140,6 +145,7 @@ public class SecurityConfig {
                 "/api/auth/registrar",
                 "/api/auth/refresh",
                 "/api/auth/csrf",
+                "/api/integracoes/rolagens/sessoes",
                 "/api/bootstrap",
                 "/api/fichas/publicas/**",
                 "/api/public/**",
@@ -158,10 +164,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
 
-        final List<String> allowedOriginPatterns = corsProperties.getAllowedOriginPatterns().isEmpty()
-                ? List.of("https://*.vercel.app", "http://localhost:*", "http://127.0.0.1:*")
-                : corsProperties.getAllowedOriginPatterns();
-        configuration.setAllowedOriginPatterns(allowedOriginPatterns);
+        final LinkedHashSet<String> allowedOriginPatterns = new LinkedHashSet<>();
+        if (corsProperties.getAllowedOriginPatterns().isEmpty()) {
+            allowedOriginPatterns.addAll(List.of("https://*.vercel.app", "http://localhost:*", "http://127.0.0.1:*"));
+        } else {
+            allowedOriginPatterns.addAll(corsProperties.getAllowedOriginPatterns());
+        }
+        allowedOriginPatterns.add("https://kingdomplatinum.vercel.app");
+        configuration.setAllowedOriginPatterns(List.copyOf(allowedOriginPatterns));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
