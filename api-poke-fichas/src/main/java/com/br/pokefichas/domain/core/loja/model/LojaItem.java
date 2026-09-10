@@ -45,6 +45,9 @@ public class LojaItem extends OrgBaseEntity<Long> {
     @Column(name = "ordem", nullable = false)
     private Integer ordem = 0;
 
+    @Column(name = "gerenciado_catalogo", nullable = false)
+    private boolean gerenciadoCatalogo;
+
     protected LojaItem() { }
 
     @Override public Long getId() { return id; }
@@ -57,6 +60,7 @@ public class LojaItem extends OrgBaseEntity<Long> {
     public BigDecimal getPreco() { return preco; }
     public boolean isAtivo() { return ativo; }
     public Integer getOrdem() { return ordem; }
+    public boolean isGerenciadoCatalogo() { return gerenciadoCatalogo; }
 
     public static class Builder extends DefaultEntityBuilder<LojaItem> {
         private Builder(final LojaItem item, final EntityState state) { super(item, state); }
@@ -72,5 +76,6 @@ public class LojaItem extends OrgBaseEntity<Long> {
         public Builder preco(final BigDecimal value) { entity.preco = value; return this; }
         public Builder ativo(final boolean value) { entity.ativo = value; return this; }
         public Builder ordem(final Integer value) { entity.ordem = value; return this; }
+        public Builder gerenciadoCatalogo(final boolean value) { entity.gerenciadoCatalogo = value; return this; }
     }
 }

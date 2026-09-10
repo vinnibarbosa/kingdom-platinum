@@ -10,6 +10,8 @@ import com.br.pokefichas.domain.core.ficha.repository.FichaCommand;
 import com.br.pokefichas.domain.core.ficha.repository.FichaQuery;
 import com.br.pokefichas.domain.core.ficha.usecase.FichaHistoricoWriter;
 import com.br.pokefichas.domain.core.integracao.dto.ConsumirHoneyRequest;
+import com.br.pokefichas.domain.core.integracao.dto.ConsumirBonusRolagemRequest;
+import com.br.pokefichas.domain.core.integracao.dto.ConsumirShinyCharmRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -118,6 +120,68 @@ class IntegrarRolagemUseCaseTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting(error -> ((BusinessException) error).getCode())
                 .isEqualTo("FICHA_NOT_OWNED");
+    }
+
+    @Test
+    void shouldConsumeShinyCharmForOwnedFicha() {
+        final UUID operationId = UUID.randomUUID();
+        final Ficha ficha = ficha(10L, 7L);
+        final FichaItem shinyCharm = item(21L, "Shiny Charm", "shiny-charm", 2);
+        givenConsumption(ficha, operationId, List.of(shinyCharm));
+
+        final var response = useCase.consumirShinyCharm(new ConsumirShinyCharmRequest(10L, operationId));
+
+        assertThat(response.quantidadeRestante()).isEqualTo(1);
+        verify(fichaCommand).saveItens(anyList());
+        verify(historicoWriter).recordShinyCharmUse(10L, 3L, operationId, 2, 1);
+    }
+
+    @Test
+    void shouldRejectWhenFichaHasNoShinyCharm() {
+        final UUID operationId = UUID.randomUUID();
+        final Ficha ficha = ficha(10L, 7L);
+        givenConsumption(ficha, operationId, List.of());
+
+        assertThatThrownBy(() -> useCase.consumirShinyCharm(new ConsumirShinyCharmRequest(10L, operationId)))
+                .isInstanceOf(BusinessException.class)
+                .extracting(error -> ((BusinessException) error).getCode())
+                .isEqualTo("SHINY_CHARM_NOT_AVAILABLE");
+    }
+
+    @Test
+    void shouldConsumeHoneyAndShinyCharmAtomically() {
+        final UUID operationId = UUID.randomUUID();
+        final Ficha ficha = ficha(10L, 7L);
+        final FichaItem honey = item(20L, "Honey", "honey", 2);
+        final FichaItem shinyCharm = item(21L, "Shiny Charm", "shiny-charm", 1);
+        givenConsumption(ficha, operationId, List.of(honey, shinyCharm));
+
+        final var response = useCase.consumirBonus(
+                new ConsumirBonusRolagemRequest(10L, operationId, true, true)
+        );
+
+        assertThat(response.quantidadeHoneyRestante()).isEqualTo(1);
+        assertThat(response.quantidadeShinyCharmRestante()).isZero();
+        verify(fichaCommand).deleteItem(shinyCharm);
+        verify(fichaCommand).saveItens(anyList());
+        verify(historicoWriter).recordRollBonusUse(10L, 3L, operationId, 2, 1);
+    }
+
+    @Test
+    void shouldNotConsumeHoneyWhenShinyCharmIsMissing() {
+        final UUID operationId = UUID.randomUUID();
+        final Ficha ficha = ficha(10L, 7L);
+        final FichaItem honey = item(20L, "Honey", "honey", 2);
+        givenConsumption(ficha, operationId, List.of(honey));
+
+        assertThatThrownBy(() -> useCase.consumirBonus(
+                new ConsumirBonusRolagemRequest(10L, operationId, true, true)
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting(error -> ((BusinessException) error).getCode())
+                .isEqualTo("SHINY_CHARM_NOT_AVAILABLE");
+        verify(fichaCommand, never()).saveItens(anyList());
+        verify(fichaCommand, never()).deleteItem(honey);
     }
 
     private void givenConsumption(final Ficha ficha, final UUID operationId, final List<FichaItem> items) {

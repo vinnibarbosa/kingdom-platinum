@@ -13,6 +13,7 @@ import com.br.pokefichas.domain.core.loja.usecase.ComprarItemLojaUseCase;
 import com.br.pokefichas.domain.core.loja.usecase.GerenciarLojaCupomUseCase;
 import com.br.pokefichas.domain.core.loja.usecase.GerenciarLojaItemUseCase;
 import com.br.pokefichas.domain.core.loja.usecase.ListarLojaUseCase;
+import com.br.pokefichas.domain.core.loja.usecase.SincronizarCatalogoLojaUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +36,13 @@ public class LojaController {
     private final GerenciarLojaItemUseCase gerenciar;
     private final ComprarItemLojaUseCase comprar;
     private final GerenciarLojaCupomUseCase cupons;
+    private final SincronizarCatalogoLojaUseCase sincronizarCatalogo;
 
     public LojaController(final ListarLojaUseCase listar, final GerenciarLojaItemUseCase gerenciar,
-                          final ComprarItemLojaUseCase comprar, final GerenciarLojaCupomUseCase cupons) {
+                          final ComprarItemLojaUseCase comprar, final GerenciarLojaCupomUseCase cupons,
+                          final SincronizarCatalogoLojaUseCase sincronizarCatalogo) {
         this.listar = listar; this.gerenciar = gerenciar; this.comprar = comprar; this.cupons = cupons;
+        this.sincronizarCatalogo = sincronizarCatalogo;
     }
 
     @GetMapping("/itens")
@@ -61,6 +65,11 @@ public class LojaController {
     @Secured("ROLE_ADMIN")
     public ResponseEntity<ImportarCatalogoLojaResponse> importarCatalogo(@Valid @RequestBody final ImportarCatalogoLojaRequest request) {
         return ResponseEntity.ok(gerenciar.importarCatalogo(request));
+    }
+
+    @PostMapping("/itens/sincronizar")
+    public ResponseEntity<ImportarCatalogoLojaResponse> sincronizarCatalogo() {
+        return ResponseEntity.ok(sincronizarCatalogo.sincronizar());
     }
 
     @PutMapping("/itens/{id}")

@@ -87,6 +87,45 @@ public class FichaHistoricoWriter {
         )));
     }
 
+    public void recordShinyCharmUse(final Long idFicha,
+                                    final Long idOrganizacao,
+                                    final UUID operationId,
+                                    final int previousQuantity,
+                                    final int remainingQuantity) {
+        command.saveHistoricos(List.of(build(
+                idFicha,
+                idOrganizacao,
+                operationId.toString(),
+                remainingQuantity == 0 ? "REMOVIDO" : "ALTERADO",
+                "Inventario > Shiny Charm > Quantidade",
+                String.valueOf(previousQuantity),
+                remainingQuantity == 0 ? "Usado em uma rolagem" : String.valueOf(remainingQuantity)
+        )));
+    }
+
+    public void recordRollBonusUse(final Long idFicha,
+                                   final Long idOrganizacao,
+                                   final UUID operationId,
+                                   final Integer honeyBefore,
+                                   final Integer shinyCharmBefore) {
+        final List<String> changes = new ArrayList<>();
+        if (honeyBefore != null) {
+            changes.add("Honey: " + honeyBefore + " -> " + (honeyBefore - 1));
+        }
+        if (shinyCharmBefore != null) {
+            changes.add("Shiny Charm: " + shinyCharmBefore + " -> " + (shinyCharmBefore - 1));
+        }
+        command.saveHistoricos(List.of(build(
+                idFicha,
+                idOrganizacao,
+                operationId.toString(),
+                "ALTERADO",
+                "Bonus de rolagem",
+                null,
+                "Consumido " + String.join("; ", changes)
+        )));
+    }
+
     public void recordStorePurchase(final Long idFicha,
                                     final Long idOrganizacao,
                                     final List<String> items,

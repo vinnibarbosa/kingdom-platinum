@@ -14,8 +14,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class GerenciarLojaItemUseCase {
@@ -49,40 +52,59 @@ public class GerenciarLojaItemUseCase {
     public ImportarCatalogoLojaResponse importarCatalogo(final ImportarCatalogoLojaRequest request) {
         final Long organizacaoId = organizacaoContext.getRequiredOrganizacaoId();
         final Map<String, LojaItem> itensExistentes = new HashMap<>();
-        query.findTodos().stream()
-                .forEach(item -> itensExistentes.put(chave(item.getCodigo(), item.getNome()), item));
+        final List<LojaItem> todosExistentes = query.findTodos();
+        todosExistentes.forEach(item -> itensExistentes.putIfAbsent(chave(item.getCodigo(), item.getNome()), item));
 
         int importados = 0;
+        int atualizados = 0;
         int ignorados = 0;
+        final Set<Long> itensEncontrados = new HashSet<>();
         for (final LojaItemRequest item : request.itens()) {
             final String chave = chave(item.codigo(), item.nome());
-            final LojaItem existente = itensExistentes.get(chave);
-            if (existente != null) {
-                preencherDadosAusentes(existente, item);
+            if (chave.isBlank()) {
                 ignorados++;
                 continue;
             }
-            final LojaItem novo = command.save(mapper.toEntity(item, organizacaoId));
+            final LojaItem existente = itensExistentes.get(chave);
+            if (existente != null) {
+                command.save(sincronizarDadosCatalogo(existente, item));
+                itensEncontrados.add(existente.getId());
+                atualizados++;
+                continue;
+            }
+            final LojaItem novo = command.save(LojaItem.Builder.from(mapper.toEntity(item, organizacaoId))
+                    .gerenciadoCatalogo(true)
+                    .build());
             itensExistentes.put(chave, novo);
+            itensEncontrados.add(novo.getId());
             importados++;
         }
-        return new ImportarCatalogoLojaResponse(importados, ignorados);
+
+        int removidos = 0;
+        for (final LojaItem existente : todosExistentes) {
+            if (existente.isGerenciadoCatalogo() && !itensEncontrados.contains(existente.getId())) {
+                command.delete(existente);
+                removidos++;
+            }
+        }
+        return new ImportarCatalogoLojaResponse(importados, atualizados, removidos, ignorados);
     }
 
-    private void preencherDadosAusentes(final LojaItem existente, final LojaItemRequest catalogo) {
-        final boolean preencherIcone = !vazio(catalogo.icone())
-                && (vazio(existente.getIcone()) || iconeAutomaticoInvalido(existente.getIcone()));
-        final boolean preencherDescricao = vazio(existente.getDescricao()) && !vazio(catalogo.descricao());
-        final boolean preencherCodigo = vazio(existente.getCodigo()) && !vazio(catalogo.codigo());
-        if (!preencherIcone && !preencherDescricao && !preencherCodigo) {
-            return;
-        }
-
-        final LojaItem.Builder builder = LojaItem.Builder.from(existente);
-        if (preencherIcone) builder.icone(catalogo.icone());
-        if (preencherDescricao) builder.descricao(catalogo.descricao());
-        if (preencherCodigo) builder.codigo(catalogo.codigo());
-        command.save(builder.build());
+    private LojaItem sincronizarDadosCatalogo(final LojaItem existente, final LojaItemRequest catalogo) {
+        final boolean atualizarIcone = !vazio(catalogo.icone())
+                && (vazio(existente.getIcone()) || iconeAutomaticoInvalido(existente.getIcone())
+                || !catalogo.icone().equals(existente.getIcone()));
+        final boolean atualizarDescricao = !vazio(catalogo.descricao());
+        final boolean atualizarCodigo = !vazio(catalogo.codigo());
+        final LojaItem.Builder builder = LojaItem.Builder.from(existente)
+                .nome(catalogo.nome().trim())
+                .categoria(catalogo.categoria().trim())
+                .ordem(catalogo.ordem() == null ? 0 : catalogo.ordem())
+                .gerenciadoCatalogo(true);
+        if (atualizarIcone) builder.icone(catalogo.icone());
+        if (atualizarDescricao) builder.descricao(catalogo.descricao());
+        if (atualizarCodigo) builder.codigo(catalogo.codigo());
+        return builder.build();
     }
 
     private boolean vazio(final String value) {

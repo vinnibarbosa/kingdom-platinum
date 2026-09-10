@@ -26,11 +26,15 @@ export class LojaApiService {
     return this.http.post<LojaItem>(`${API_BASE}/itens`, payload, { withCredentials: true });
   }
 
-    importCatalog(items: LojaItemPayload[]): Observable<CatalogoLojaImportacao> {
-      return this.http.post<CatalogoLojaImportacao>(`${API_BASE}/itens/importar-catalogo`, {
-        itens: items,
-      }, { withCredentials: true });
-    }
+  importCatalog(items: LojaItemPayload[]): Observable<CatalogoLojaImportacao> {
+    return this.http.post<CatalogoLojaImportacao>(`${API_BASE}/itens/importar-catalogo`, {
+      itens: items,
+    }, { withCredentials: true });
+  }
+
+  syncCatalog(): Observable<CatalogoLojaImportacao> {
+    return this.http.post<CatalogoLojaImportacao>(`${API_BASE}/itens/sincronizar`, {}, { withCredentials: true });
+  }
 
   update(id: number, payload: LojaItemPayload): Observable<LojaItem> {
     return this.http.put<LojaItem>(`${API_BASE}/itens/${id}`, payload, { withCredentials: true });

@@ -66,7 +66,10 @@ export class CatalogItemApiService {
       kingdomItems: this.loadKingdomCatalog(),
       supabaseItems: this.loadCustomItems(),
     }).pipe(
-      map(({ kingdomItems, supabaseItems }) => this.enrichKingdomCatalog(kingdomItems, supabaseItems)),
+      map(({ kingdomItems, supabaseItems }) => this.enrichKingdomCatalog(
+        kingdomItems.filter((item) => item.available === true),
+        supabaseItems,
+      )),
     );
   }
 

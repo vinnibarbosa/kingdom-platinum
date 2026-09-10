@@ -2,6 +2,10 @@ package com.br.pokefichas.infra.web.controller;
 
 import com.br.pokefichas.domain.core.integracao.dto.ConsumirHoneyRequest;
 import com.br.pokefichas.domain.core.integracao.dto.ConsumirHoneyResponse;
+import com.br.pokefichas.domain.core.integracao.dto.ConsumirBonusRolagemRequest;
+import com.br.pokefichas.domain.core.integracao.dto.ConsumirBonusRolagemResponse;
+import com.br.pokefichas.domain.core.integracao.dto.ConsumirShinyCharmRequest;
+import com.br.pokefichas.domain.core.integracao.dto.ConsumirShinyCharmResponse;
 import com.br.pokefichas.domain.core.integracao.dto.CriarAutorizacaoRolagemResponse;
 import com.br.pokefichas.domain.core.integracao.dto.FichaRolagemResponse;
 import com.br.pokefichas.domain.core.integracao.dto.SessaoRolagemResponse;
@@ -57,5 +61,19 @@ public class IntegracaoRolagemController {
     public ResponseEntity<ConsumirHoneyResponse> consumirHoney(
             @Valid @RequestBody final ConsumirHoneyRequest request) {
         return ResponseEntity.ok(integrarRolagem.consumirHoney(request));
+    }
+
+    @PostMapping("/bonus")
+    @Secured({"ROLE_ROLL_INTEGRATION", "ROLE_ADMIN", "ROLE_DONO", "ROLE_GERENTE", "ROLE_OPERADOR"})
+    public ResponseEntity<ConsumirBonusRolagemResponse> consumirBonus(
+            @Valid @RequestBody final ConsumirBonusRolagemRequest request) {
+        return ResponseEntity.ok(integrarRolagem.consumirBonus(request));
+    }
+
+    @PostMapping("/shiny-charm")
+    @Secured({"ROLE_ROLL_INTEGRATION", "ROLE_ADMIN", "ROLE_DONO", "ROLE_GERENTE", "ROLE_OPERADOR"})
+    public ResponseEntity<ConsumirShinyCharmResponse> consumirShinyCharm(
+            @Valid @RequestBody final ConsumirShinyCharmRequest request) {
+        return ResponseEntity.ok(integrarRolagem.consumirShinyCharm(request));
     }
 }

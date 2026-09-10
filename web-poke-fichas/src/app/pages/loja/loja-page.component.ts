@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, timeout } from 'rxjs';
 
 import { CompraLojaItem, FichaCompra, LojaCupom, LojaCupomPayload, LojaItem, LojaItemPayload } from '../../models/loja.model';
 import { AuthService } from '../../services/auth.service';
@@ -232,7 +232,6 @@ export class LojaPageComponent implements OnInit, OnDestroy {
   protected readonly editingCouponId = signal<number | null>(null);
   protected readonly couponError = signal('');
   protected couponDraft: LojaCupomPayload = { codigo: '', percentual: 10, ativo: true };
-  private initialCatalogImportAttempted = false;
   private cartFeedbackTimer?: ReturnType<typeof setTimeout>;
   protected readonly categories = ['Restauração HP / PP', 'Restaurar status', 'Pokébolas', 'Itens de batalha', 'Contest itens', 'Evolutionary', 'Berries', 'Treasure', 'Thrash itens', 'Trainer itens (Keys)', 'TM / Pill case'];
   protected draft: ItemDraft = this.emptyDraft();
@@ -244,7 +243,9 @@ export class LojaPageComponent implements OnInit, OnDestroy {
     return count ? `Abrir carrinho com ${count} ${count === 1 ? 'item' : 'itens'}` : 'Abrir carrinho vazio';
   });
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.api.syncCatalog().pipe(timeout(8000), catchError(() => of(null))).subscribe(() => this.load());
+  }
 
   ngOnDestroy(): void {
     if (this.cartFeedbackTimer) clearTimeout(this.cartFeedbackTimer);
@@ -310,25 +311,6 @@ export class LojaPageComponent implements OnInit, OnDestroy {
     this.editorError.set(''); this.closeCatalogPicker(); this.editorOpen.set(true);
   }
 
-  private syncStoreCatalog(catalog: CatalogItem[]): void {
-    const items: LojaItemPayload[] = catalog.map((item, index) => ({
-      nome: item.name,
-      categoria: this.storeCategory(item.category),
-      codigo: item.code || this.itemCode(item.name),
-      descricao: item.description || '',
-      icone: item.sprite || '',
-      preco: item.price ?? 0,
-      ativo: item.available ?? true,
-      ordem: index,
-    }));
-    if (!items.length) return;
-    this.api.importCatalog(items).subscribe({
-      next: () => this.load(),
-      error: (error) => {
-        this.error.set(this.apiErrorMessage(error, 'Não foi possível importar o catálogo da loja.'));
-      },
-    });
-  }
   protected closeEditor(): void { this.editorOpen.set(false); this.closeCatalogPicker(); }
 
   protected openCatalogPicker(): void {
@@ -503,10 +485,6 @@ export class LojaPageComponent implements OnInit, OnDestroy {
           };
         }));
         this.loading.set(false);
-        if (this.isAdmin() && !this.initialCatalogImportAttempted) {
-          this.initialCatalogImportAttempted = true;
-          this.syncStoreCatalog(catalog);
-        }
       },
       error: () => { this.error.set('Não foi possível carregar a loja.'); this.loading.set(false); },
     });

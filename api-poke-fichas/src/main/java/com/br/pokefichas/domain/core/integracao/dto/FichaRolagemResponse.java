@@ -4,5 +4,6 @@ public record FichaRolagemResponse(
         Long id,
         String nome,
         Integer ranking,
-        int quantidadeHoney
+        int quantidadeHoney,
+        int quantidadeShinyCharm
 ) { }

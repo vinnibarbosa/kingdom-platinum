@@ -3330,11 +3330,22 @@ button.public-pokemon-card:focus-visible {
 .store-card-footer {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.45rem;
   border-top: 1px solid var(--line);
   padding-top: 0.65rem;
+}
+
+.store-card-footer > .store-card-actions {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.store-card-footer .store-add-button,
+.store-card-footer .store-quantity-control,
+.store-card-footer .store-unavailable {
+  margin-left: auto;
 }
 
 .store-price-block {
@@ -3838,12 +3849,12 @@ button.public-pokemon-card:focus-visible {
   }
 
   .store-card-footer {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
   }
 
   .store-card-actions {
-    width: auto;
+    width: 100%;
   }
 
   .store-card-actions .button {

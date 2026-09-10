@@ -39,7 +39,12 @@ export interface CompraLojaResponse {
 
 export interface CompraLojaItem { idItem: number; quantidade: number; }
 
-export interface CatalogoLojaImportacao { importados: number; ignorados: number; }
+export interface CatalogoLojaImportacao {
+  importados: number;
+  atualizados: number;
+  removidos: number;
+  ignorados: number;
+}
 
 export interface LojaCupom { id: number; codigo: string; percentual: number; ativo: boolean; }
 export interface LojaCupomPayload { codigo: string; percentual: number; ativo: boolean; }
