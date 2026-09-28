@@ -32,8 +32,8 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     schemas: public
-    table: flyway_schema_history
-    baseline-version: 0
+    table: flyway_schema_history_kp
+    baseline-version: 42
   security:
     jwt:
       secret: ${JWT_SECRET}

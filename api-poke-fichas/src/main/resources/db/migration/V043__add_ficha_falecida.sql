@@ -1,3 +1,3 @@
-ALTER TABLE fichas ADD COLUMN falecida BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE fichas ADD COLUMN IF NOT EXISTS falecida BOOLEAN NOT NULL DEFAULT FALSE;
 
-CREATE INDEX idx_fichas_falecida ON fichas (falecida);
+CREATE INDEX IF NOT EXISTS idx_fichas_falecida ON fichas (falecida);

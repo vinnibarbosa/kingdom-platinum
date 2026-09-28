@@ -29,8 +29,8 @@ spring:
     validate-on-migrate: true
     clean-disabled: false
     schemas: public
-    table: flyway_schema_history
-    baseline-version: 0
+    table: flyway_schema_history_kp
+    baseline-version: 42
     baseline-description: "Initial baseline"
   security:
     jwt:
