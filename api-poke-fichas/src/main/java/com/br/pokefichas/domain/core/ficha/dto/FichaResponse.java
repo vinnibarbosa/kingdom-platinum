@@ -7,6 +7,7 @@ import java.util.List;
 public record FichaResponse(
         Long id,
         Long idOrganizacao,
+        boolean falecida,
         String nome,
         String frase,
         Integer idade,

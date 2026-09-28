@@ -38,6 +38,11 @@ public class ListarFichasUseCase {
         return toResumo(query.findAllNpcsWithoutContext(pageRequest));
     }
 
+    @Transactional(readOnly = true)
+    public Page<FichaResumoResponse> handleFalecidas(final PageRequest pageRequest) {
+        return toResumo(query.findAllFalecidasWithoutContext(pageRequest));
+    }
+
     private Page<FichaResumoResponse> toResumo(final Page<Ficha> fichas) {
         final List<Long> idsFicha = fichas.getContent().stream().map(Ficha::getId).toList();
         final Map<Long, List<FichaPokemon>> equipePorFicha = query.findPokemonsWithoutContextByFichaIds(idsFicha).stream()

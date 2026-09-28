@@ -122,6 +122,7 @@ export interface FichaPokemonResumo {
 export interface Ficha {
   id: number;
   idOrganizacao: number;
+  falecida?: boolean;
   nome: string;
   frase?: string;
   idade?: number;
@@ -159,11 +160,12 @@ export interface Ficha {
   updatedBy?: string;
 }
 
-export type FichaPayload = Omit<Ficha, 'id' | 'idOrganizacao' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
+export type FichaPayload = Omit<Ficha, 'id' | 'idOrganizacao' | 'falecida' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
 
 export interface FichaResumo {
   id: number;
   idOrganizacao: number;
+  falecida?: boolean;
   nome: string;
   classePersonagem?: string;
   ocupacao?: string;

@@ -41,6 +41,7 @@ import { PasswordResetComponent } from './components/password-reset/password-res
           <div class="topbar-library-nav" aria-label="Navegação dos fichários">
             <a class="topbar-library-link" href="/" (click)="closeMobileMenu()">Fich&aacute;rio</a>
             <a class="topbar-library-link" href="/npcs" (click)="closeMobileMenu()">Fich&aacute;rio NPC</a>
+            <a class="topbar-library-link" href="/memorial" (click)="closeMobileMenu()">Memorial</a>
             <a class="topbar-library-link" href="/loja" (click)="closeMobileMenu()">Loja</a>
           </div>
           <button

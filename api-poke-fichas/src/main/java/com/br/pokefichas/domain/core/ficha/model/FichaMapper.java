@@ -262,6 +262,7 @@ public class FichaMapper {
         return new FichaResumoResponse(
                 ficha.getId(),
                 ficha.getIdOrganizacao(),
+                ficha.isFalecida(),
                 ficha.getNome(),
                 ficha.getClassePersonagem(),
                 ficha.getOcupacao(),
@@ -287,6 +288,7 @@ public class FichaMapper {
         return new FichaResponse(
                 ficha.getId(),
                 ficha.getIdOrganizacao(),
+                ficha.isFalecida(),
                 ficha.getNome(),
                 ficha.getFrase(),
                 ficha.getIdade(),

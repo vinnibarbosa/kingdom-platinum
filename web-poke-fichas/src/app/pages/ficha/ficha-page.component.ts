@@ -1832,6 +1832,10 @@ export class FichaPageComponent implements OnInit, OnDestroy {
     request.subscribe({
       next: (ficha) => {
         const normalized = this.normalizeFicha(ficha);
+        if (normalized.falecida) {
+          this.router.navigate(['/ficha', identifier]);
+          return;
+        }
         this.ficha.set(normalized);
         this.fillMissingOfficialPokemonSpecies(this.pokemonNames());
         this.loadFichaPokemonDexData(normalized);

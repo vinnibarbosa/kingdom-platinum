@@ -18,6 +18,7 @@ import com.br.pokefichas.domain.core.ficha.usecase.ListarFichasUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.ListarHistoricoFichaUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.ListarHistoricoGlobalUseCase;
 import com.br.pokefichas.domain.core.ficha.usecase.GerenciarFichaTimelineUseCase;
+import com.br.pokefichas.domain.core.ficha.usecase.GerenciarFalecimentoFichaUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -49,6 +50,7 @@ public class FichaController {
     private final ListarHistoricoGlobalUseCase listarHistoricoGlobal;
     private final GerenciarFichaTimelineUseCase timeline;
     private final ExcluirFichaUseCase excluir;
+    private final GerenciarFalecimentoFichaUseCase falecimento;
 
     public FichaController(final CriarFichaUseCase criar,
                            final BuscarFichaUseCase buscar,
@@ -57,7 +59,8 @@ public class FichaController {
                            final ListarHistoricoFichaUseCase listarHistorico,
                            final ListarHistoricoGlobalUseCase listarHistoricoGlobal,
                            final GerenciarFichaTimelineUseCase timeline,
-                           final ExcluirFichaUseCase excluir) {
+                           final ExcluirFichaUseCase excluir,
+                           final GerenciarFalecimentoFichaUseCase falecimento) {
         this.criar = criar;
         this.buscar = buscar;
         this.listar = listar;
@@ -66,6 +69,7 @@ public class FichaController {
         this.listarHistoricoGlobal = listarHistoricoGlobal;
         this.timeline = timeline;
         this.excluir = excluir;
+        this.falecimento = falecimento;
     }
 
     @PostMapping
@@ -119,6 +123,26 @@ public class FichaController {
     @Operation(summary = "Listar fichas publicas de NPC")
     public ResponseEntity<Page<FichaResumoResponse>> findAllPublicNpcs(final PageRequest pageRequest) {
         return ResponseEntity.ok(listar.handleNpcs(pageRequest));
+    }
+
+    @GetMapping("/falecidas")
+    @Operation(summary = "Listar personagens falecidos")
+    public ResponseEntity<Page<FichaResumoResponse>> findAllFalecidas(final PageRequest pageRequest) {
+        return ResponseEntity.ok(listar.handleFalecidas(pageRequest));
+    }
+
+    @PutMapping("/{id}/falecimento")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Mover personagem para o Memorial")
+    public ResponseEntity<FichaResponse> registrarFalecimento(@PathVariable final Long id) {
+        return ResponseEntity.ok(falecimento.alterar(id, true));
+    }
+
+    @DeleteMapping("/{id}/falecimento")
+    @Secured("ROLE_ADMIN")
+    @Operation(summary = "Restaurar personagem do Memorial")
+    public ResponseEntity<FichaResponse> desfazerFalecimento(@PathVariable final Long id) {
+        return ResponseEntity.ok(falecimento.alterar(id, false));
     }
 
     @GetMapping("/{id}/historico")

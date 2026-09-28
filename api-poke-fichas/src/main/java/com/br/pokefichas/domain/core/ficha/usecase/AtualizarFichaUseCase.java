@@ -40,6 +40,9 @@ public class AtualizarFichaUseCase {
         if (ficha.isNpc()) {
             throw new BusinessException("Fichas de NPC so podem ser alteradas por administradores.", "NPC_ADMIN_ONLY");
         }
+        if (ficha.isFalecida()) {
+            throw new BusinessException("Fichas no Memorial nao podem ser editadas.", "FICHA_FALECIDA");
+        }
         final FichaResponse before = mapper.toResponse(ficha, query.findDetalhes(id));
         final Ficha saved = command.save(mapper.toEntity(ficha, request));
         detalhesWriter.replace(request, saved.getId(), saved.getIdOrganizacao());
@@ -53,6 +56,9 @@ public class AtualizarFichaUseCase {
     public FichaResponse handleAdmin(final Long id, final AtualizarFichaRequest request) {
         final Ficha ficha = query.findByIdWithoutContext(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ficha nao encontrada: " + id));
+        if (ficha.isFalecida()) {
+            throw new BusinessException("Restaure a ficha antes de edita-la.", "FICHA_FALECIDA");
+        }
         final FichaResponse before = mapper.toResponse(ficha, query.findDetalhesWithoutContext(id));
         final Ficha saved = command.saveWithoutContext(mapper.toEntity(ficha, request));
         detalhesWriter.replaceWithoutContext(request, saved.getId(), saved.getIdOrganizacao());

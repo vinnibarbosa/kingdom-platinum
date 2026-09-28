@@ -24,7 +24,7 @@ interface BadgeOption {
   imports: [CommonModule, FichaDeleteComponent, FichaHistoryComponent, RouterLink],
   template: `
     <section class="page-wrap public-sheet-wrap">
-      <a class="back-link" routerLink="/">Voltar</a>
+      <a class="back-link" [routerLink]="ficha()?.falecida ? '/memorial' : '/'">Voltar</a>
 
       <div class="state-card" *ngIf="loading()">Abrindo ficha...</div>
       <div class="state-card error" *ngIf="error()">{{ error() }}</div>
@@ -32,11 +32,22 @@ interface BadgeOption {
       <article class="public-sheet" *ngIf="ficha() as current" [style.--green]="themeAccent(current.corTema)">
         <div class="public-admin-actions">
           <a class="button ghost" *ngIf="canEdit(current)" [routerLink]="['/ficha', fichaSlug(current), 'editar']">Editar ficha</a>
+          <button type="button" class="button ghost" *ngIf="isAdmin()" (click)="confirmarFalecimento.set(true)" [disabled]="alterandoFalecimento()">
+            {{ current.falecida ? 'Restaurar ficha' : 'Mover para o Memorial' }}
+          </button>
           <app-ficha-history [fichaId]="current.id" [pokemons]="current.pokemons" />
           <app-ficha-delete
             [fichaId]="current.id"
             [fichaNome]="current.nome"
           />
+        </div>
+        <div class="state-card error" *ngIf="falecimentoError()">{{ falecimentoError() }}</div>
+        <div class="memorial-confirm" *ngIf="confirmarFalecimento() && isAdmin()">
+          <span>{{ current.falecida ? 'Restaurar esta ficha como ativa?' : 'Mover esta ficha para o Memorial e liberar a vaga do dono?' }}</span>
+          <button type="button" class="button primary" (click)="alterarFalecimento(current)" [disabled]="alterandoFalecimento()">
+            {{ alterandoFalecimento() ? 'Salvando...' : 'Confirmar' }}
+          </button>
+          <button type="button" class="button ghost" (click)="confirmarFalecimento.set(false)" [disabled]="alterandoFalecimento()">Cancelar</button>
         </div>
         <header class="public-hero">
           <span class="public-hero-banner" *ngIf="current.banner" aria-hidden="true">
@@ -50,6 +61,7 @@ interface BadgeOption {
           <div class="public-hero-main">
             <span class="eyebrow">{{ current.classePersonagem || 'Personagem' }}</span>
             <h1>{{ current.nome }}</h1>
+            <span class="memorial-status" *ngIf="current.falecida">Personagem falecido</span>
             <p>{{ current.frase || 'Sem frase cadastrada.' }}</p>
           </div>
 
@@ -413,6 +425,9 @@ export class FichaViewPageComponent implements OnInit {
   protected readonly ficha = signal<Ficha | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
+  protected readonly confirmarFalecimento = signal(false);
+  protected readonly alterandoFalecimento = signal(false);
+  protected readonly falecimentoError = signal('');
   protected readonly selectedRelacionado = signal<FichaRelacionado | null>(null);
   protected readonly selectedPokemon = signal<FichaPokemon | null>(null);
   protected readonly pokemonTypes = signal<Record<string, string[]>>({});
@@ -783,6 +798,24 @@ export class FichaViewPageComponent implements OnInit {
 
   protected canEdit(ficha: Ficha): boolean {
     const currentUser = this.auth.currentUser();
-    return this.isAdmin() || Boolean(currentUser?.idOrganizacao && currentUser.idOrganizacao === ficha.idOrganizacao);
+    return !ficha.falecida && (this.isAdmin() || Boolean(currentUser?.idOrganizacao && currentUser.idOrganizacao === ficha.idOrganizacao));
+  }
+
+  protected alterarFalecimento(ficha: Ficha): void {
+    if (!this.isAdmin() || this.alterandoFalecimento()) return;
+    this.alterandoFalecimento.set(true);
+    this.falecimentoError.set('');
+    const request = ficha.falecida ? this.api.desfazerFalecimento(ficha.id) : this.api.registrarFalecimento(ficha.id);
+    request.subscribe({
+      next: (updated) => {
+        this.ficha.set(this.normalizeFicha(updated));
+        this.confirmarFalecimento.set(false);
+        this.alterandoFalecimento.set(false);
+      },
+      error: (error) => {
+        this.falecimentoError.set(error?.error?.message || 'Não foi possível alterar o estado da ficha.');
+        this.alterandoFalecimento.set(false);
+      },
+    });
   }
 }

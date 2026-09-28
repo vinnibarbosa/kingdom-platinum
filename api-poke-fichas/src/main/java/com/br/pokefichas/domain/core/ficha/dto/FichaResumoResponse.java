@@ -6,6 +6,7 @@ import java.util.List;
 public record FichaResumoResponse(
         Long id,
         Long idOrganizacao,
+        boolean falecida,
         String nome,
         String classePersonagem,
         String ocupacao,

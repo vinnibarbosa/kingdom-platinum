@@ -20,6 +20,10 @@ export class FichaApiService {
     return this.http.get<Page<FichaResumo>>(`${API_BASE}/fichas/publicas/npcs?offset=${offset}&limit=${limit}`);
   }
 
+  listFalecidas(offset = 0, limit = 50): Observable<Page<FichaResumo>> {
+    return this.http.get<Page<FichaResumo>>(`${API_BASE}/fichas/falecidas?offset=${offset}&limit=${limit}`);
+  }
+
   get(id: number): Observable<Ficha> {
     return this.http.get<Ficha>(`${API_BASE}/fichas/${id}`, {
       withCredentials: true,
@@ -68,6 +72,14 @@ export class FichaApiService {
     return this.http.put<Ficha>(`${API_BASE}/fichas/${id}/administracao`, payload, {
       withCredentials: true,
     });
+  }
+
+  registrarFalecimento(id: number): Observable<Ficha> {
+    return this.http.put<Ficha>(`${API_BASE}/fichas/${id}/falecimento`, {}, { withCredentials: true });
+  }
+
+  desfazerFalecimento(id: number): Observable<Ficha> {
+    return this.http.delete<Ficha>(`${API_BASE}/fichas/${id}/falecimento`, { withCredentials: true });
   }
 
   create(payload: FichaPayload): Observable<Ficha> {

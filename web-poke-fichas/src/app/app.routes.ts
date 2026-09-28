@@ -12,6 +12,7 @@ import { NpcListPageComponent } from './pages/npc-list/npc-list-page.component';
 export const routes: Routes = [
   { path: 'login', component: LoginPageComponent },
   { path: 'npcs', component: NpcListPageComponent },
+  { path: 'memorial', component: FichaListPageComponent, canActivate: [authGuard], data: { memorial: true } },
   { path: 'loja', component: LojaPageComponent, canActivate: [authGuard] },
   { path: 'integrar-rolagens', component: IntegracaoRolagensPageComponent, canActivate: [authGuard] },
   { path: 'ficha/:id/visualizar', component: FichaViewPageComponent },

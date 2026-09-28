@@ -65,7 +65,12 @@ public class FichaQuery {
 
     public Page<Ficha> findAllWithoutContext(final PageRequest pageRequest) {
         final Pageable pageable = pageRequest.toPageable(Sort.of(ficha.nome.asc(), ficha.id.asc()));
-        return repository.findAll(Ficha.class, pageable, true, ficha.npc.isFalse());
+        return repository.findAll(Ficha.class, pageable, true, ficha.npc.isFalse().and(ficha.falecida.isFalse()));
+    }
+
+    public Page<Ficha> findAllFalecidasWithoutContext(final PageRequest pageRequest) {
+        final Pageable pageable = pageRequest.toPageable(Sort.of(ficha.nome.asc(), ficha.id.asc()));
+        return repository.findAll(Ficha.class, pageable, true, ficha.npc.isFalse().and(ficha.falecida.isTrue()));
     }
 
     public Page<Ficha> findAllNpcsWithoutContext(final PageRequest pageRequest) {
@@ -78,14 +83,20 @@ public class FichaQuery {
     }
 
     public long countByUsuario(final Long idUsuario) {
-        return repository.count(Ficha.class, ficha.npc.isFalse().and(ficha.idUsuario.eq(idUsuario)));
+        return repository.count(Ficha.class, ficha.npc.isFalse().and(ficha.falecida.isFalse()).and(ficha.idUsuario.eq(idUsuario)));
+    }
+
+    public long countAtivasByUsuarioWithoutContext(final Long idUsuario) {
+        return repository.query(Ficha.class, true)
+                .where(ficha.npc.isFalse().and(ficha.falecida.isFalse()).and(ficha.idUsuario.eq(idUsuario)))
+                .fetchCount();
     }
 
     public List<Ficha> findByUsuario(final Long idUsuario) {
         return repository.findAll(
                 Ficha.class,
                 Sort.of(ficha.nome.asc(), ficha.id.asc()),
-                ficha.npc.isFalse().and(ficha.idUsuario.eq(idUsuario))
+                ficha.npc.isFalse().and(ficha.falecida.isFalse()).and(ficha.idUsuario.eq(idUsuario))
         );
     }
 

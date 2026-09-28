@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { FichaResumo } from '../../models/ficha.model';
@@ -15,12 +15,13 @@ import { FichaApiService } from '../../services/ficha-api.service';
     <section class="page-wrap">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Biblioteca</span>
-          <h1>Fichas</h1>
+          <span class="eyebrow">{{ memorial ? 'Personagens' : 'Biblioteca' }}</span>
+          <h1>{{ memorial ? 'Memorial' : 'Fichas' }}</h1>
         </div>
         <button
           type="button"
           class="button primary"
+          *ngIf="!memorial"
           (click)="createFicha()"
           [disabled]="creating() || !canCreate()"
           [title]="canCreate() ? 'Criar uma nova ficha' : 'Limite de 2 fichas atingido'"
@@ -31,6 +32,7 @@ import { FichaApiService } from '../../services/ficha-api.service';
 
       <div class="state-card" *ngIf="loading()">Carregando fichas...</div>
       <div class="state-card error" *ngIf="error()">{{ error() }}</div>
+      <div class="state-card" *ngIf="memorial && !loading() && !fichas().length">Nenhum personagem no Memorial.</div>
 
       <div class="ficha-grid" *ngIf="!loading()">
         <a
@@ -80,6 +82,8 @@ export class FichaListPageComponent implements OnInit {
   private readonly api = inject(FichaApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly memorial = this.route.snapshot.data['memorial'] === true;
 
   protected readonly fichas = signal<FichaResumo[]>([]);
   protected readonly loading = signal(true);
@@ -194,7 +198,7 @@ export class FichaListPageComponent implements OnInit {
   private load(): void {
     this.loading.set(true);
     this.error.set('');
-    this.api.list().subscribe({
+    (this.memorial ? this.api.listFalecidas(0, 500) : this.api.list(0, 500)).subscribe({
       next: (page) => {
         const fichas = page.content ?? [];
         this.fichas.set(fichas);

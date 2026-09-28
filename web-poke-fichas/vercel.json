@@ -10,6 +10,7 @@
     },
     { "source": "/login", "destination": "/index.html" },
     { "source": "/npcs", "destination": "/index.html" },
+    { "source": "/memorial", "destination": "/index.html" },
     { "source": "/loja", "destination": "/index.html" },
     { "source": "/integrar-rolagens", "destination": "/index.html" },
     { "source": "/ficha/:path*", "destination": "/index.html" }

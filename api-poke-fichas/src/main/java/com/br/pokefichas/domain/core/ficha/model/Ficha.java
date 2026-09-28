@@ -107,6 +107,9 @@ public class Ficha extends OrgBaseEntity<Long> {
     @Column(name = "npc", nullable = false)
     private boolean npc;
 
+    @Column(name = "falecida", nullable = false)
+    private boolean falecida;
+
     @Column(name = "id_usuario")
     private Long idUsuario;
 
@@ -225,6 +228,10 @@ public class Ficha extends OrgBaseEntity<Long> {
 
     public boolean isNpc() {
         return npc;
+    }
+
+    public boolean isFalecida() {
+        return falecida;
     }
 
     public Long getIdUsuario() {
@@ -412,6 +419,11 @@ public class Ficha extends OrgBaseEntity<Long> {
 
         public Builder npc(final boolean npc) {
             entity.npc = npc;
+            return this;
+        }
+
+        public Builder falecida(final boolean falecida) {
+            entity.falecida = falecida;
             return this;
         }
 

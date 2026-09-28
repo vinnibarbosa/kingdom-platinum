@@ -256,7 +256,7 @@ public class IntegrarRolagemUseCase {
     }
 
     private void validateOwnership(final Ficha ficha, final Long idUsuario) {
-        if (ficha.isNpc() || !idUsuario.equals(ficha.getIdUsuario())) {
+        if (ficha.isNpc() || ficha.isFalecida() || !idUsuario.equals(ficha.getIdUsuario())) {
             throw new BusinessException("A ficha escolhida nao pertence a sua conta.", "FICHA_NOT_OWNED");
         }
     }
