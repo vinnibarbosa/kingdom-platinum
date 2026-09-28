@@ -90,6 +90,7 @@ logging:
     com.br.pokefichas: INFO
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
+    org.hibernate.orm.connections.pooling: WARN
     org.flywaydb: INFO
 
 app:
